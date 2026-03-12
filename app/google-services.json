@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "243262934116",
-    "project_id": "pillmate-bc3eb",
-    "storage_bucket": "pillmate-bc3eb.firebasestorage.app"
+    "project_number": "19098316797",
+    "project_id": "pillmate-de811",
+    "storage_bucket": "pillmate-de811.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:243262934116:android:0743d56b568ae2afa12371",
+        "mobilesdk_app_id": "1:19098316797:android:069715450d9ec361457394",
         "android_client_info": {
           "package_name": "com.example.pillmate"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD_PO7vcJ4ctgZ45txiZHDWUVZONI0W_gY"
+          "current_key": "API_KEY_PLS"
         }
       ],
       "services": {
