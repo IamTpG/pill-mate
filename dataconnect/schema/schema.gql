@@ -1,0 +1,232 @@
+type Profile @table {
+  accountId: String!
+  fullName: String!
+  birthday: Date
+  height: Float
+  weight: Float
+  medicalConditions: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type CaregiverLink @table {
+  caregiverAccountId: String!
+  patientProfile: Profile!
+  permission: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type MedicationCatalog @table {
+  name: String!
+  description: String
+  unit: String
+  commonDosages: String
+  photo: String
+}
+
+type Medication @table {
+  profile: Profile!
+  name: String
+  description: String
+  unit: String
+  commonDosages: String
+  photo: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type MedicationSupply @table {
+  medication: Medication!
+  quantity: Float!
+  expirationDate: Date
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type Appointment @table {
+  profile: Profile!
+  name: String!
+  location: String
+  doctorName: String
+  category: String
+  description: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type Meal @table {
+  profile: Profile!
+  name: String!
+  description: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type ExerciseCatalog @table {
+  name: String!
+  category: String
+  muscleGroup: String
+  equipment: String
+  description: String
+  unit: String
+}
+
+type Exercise @table {
+  profile: Profile!
+  name: String
+  category: String
+  muscleGroup: String
+  equipment: String
+  description: String
+  unit: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type Task @table {
+  profile: Profile!
+  name: String!
+  description: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type MedicationEvent @table {
+  profile: Profile!
+  medication: Medication
+  catalog: MedicationCatalog
+  dose: Float!
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type AppointmentEvent @table {
+  profile: Profile!
+  appointment: Appointment
+  doctorName: String
+  location: String
+  notes: String
+  timestamp: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type MealEvent @table {
+  profile: Profile!
+  meal: Meal
+  calories: Int
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type ExerciseEvent @table {
+  profile: Profile!
+  exercise: Exercise
+  catalog: ExerciseCatalog
+  durationMinutes: Int
+  sets: Int
+  reps: Int
+  distance: Float
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type TaskEvent @table {
+  profile: Profile!
+  task: Task
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type Schedule @table {
+  profile: Profile!
+  type: String!
+  eventId: Int!
+  startTime: Timestamp!
+  endTime: Timestamp
+  recurrenceRule: String
+  enabled: Boolean
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type ScheduleReminder @table {
+  schedule: Schedule!
+  minutesBefore: Int!
+  type: String!
+  createdAt: Timestamp!
+}
+
+type Log @table {
+  profile: Profile!
+  type: String!
+  eventId: Int!
+  timestamp: Timestamp!
+  actualTime: Timestamp
+  status: String
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type MedicationInventoryLog @table {
+  medicationSupply: MedicationSupply!
+  changeAmount: Float!
+  reason: String!
+  createdAt: Timestamp!
+}
+
+type HealthMetric @table {
+  profile: Profile!
+  type: String!
+  valuePrimary: Float!
+  valueSecondary: Float
+  unit: String
+  recordedAt: Timestamp!
+}
+
+type Conversation @table {
+  profile: Profile!
+  createdAt: Timestamp!
+}
+
+type Message @table {
+  conversation: Conversation!
+  role: String!
+  content: String!
+  createdAt: Timestamp!
+}
+
+type LocalMedicalProvider @table {
+  name: String!
+  type: String!
+  address: String
+  phone: String
+  website: String
+  specialties: [String]
+  latitude: Float
+  longitude: Float
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
