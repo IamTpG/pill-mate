@@ -1,0 +1,148 @@
+/ (root)
+├── medicationCatalog (Collection)
+│   └── {catalogId} (Document)
+│       ├── name: String
+│       ├── description: String
+│       ├── unit: String
+│       ├── commonDosages: Array<String>
+│       └── photoUrl: String
+│
+├── exerciseCatalog (Collection)
+│   └── {catalogId} (Document)
+│       ├── name: String
+│       ├── category: Enum (STRENGTH, CARDIO, etc.)
+│       ├── muscleGroup: String
+│       ├── equipment: String
+│       ├── description: String
+│       └── unit: String
+│
+├── healthProvidersCatalog (Collection)
+│   └── {providerId}
+│       ├── name: String (e.g., "Dr. Alice Smith")
+│       ├── npi: String (National Provider Identifier - for unique ID)
+│       ├── specialty: Enum (CARDIOLOGY, GENERAL_PRACTICE, etc.)
+│       ├── organization: String (e.g., "City General Hospital")
+│       ├── contact: Map
+│       │   ├── phone: String
+│       │   ├── email: String
+│       │   └── website: String
+│       ├── address: Map
+│       │   ├── street: String
+│       │   ├── city: String
+│       │   ├── state: String
+│       │   └── zip: String
+│       └── geolocation: GeoPoint (For "Doctors near me" searches)
+│
+├── accounts (Collection)
+│   └── {accountId} (Document - Firebase Auth UID)
+│       ├── email: String
+│       ├── type: Enum (CAREGIVER, USER)
+│       ├── authProvider: String
+│       ├── createdAt: Timestamp
+│       └── updatedAt: Timestamp
+│
+└── profiles (Collection)
+    └── {profileId} (Document)
+        ├── accountId: String (Ref to accounts)
+        ├── fullName: String
+        ├── birthday: Timestamp
+        ├── height: Number
+        ├── weight: Number
+        ├── medicalConditions: String
+        ├── createdAt: Timestamp
+        │
+        ├── caregiverLinks (Subcollection)
+        │   └── {linkId}
+        │       ├── caregiverAccountId: String
+        │       ├── permission: String
+        │       └── createdAt: Timestamp
+        │
+        ├── medications (Subcollection) -- Custom User Meds
+        │   └── {medId}
+        │       ├── name: String
+        │       ├── description: String
+        │       ├── unit: String
+        │       ├── photoUrl: String
+        │       ├── supply (Subcollection)
+        │           └── {supplyId}
+        │               ├── expirationDate: Timestamp
+        │               └── logs: (Subcollection)
+        │                   └── {logId}
+        │                       ├── changeAmount: int
+        │                       ├── reason: String
+        │                       └── timestamp: Timestamp
+        │       ├── createdAt: Timestamp
+        │       └── deletedAt: Timestamp
+        │
+        ├── exercises (Subcollection) -- Custom User Exercises
+        │   └── {exerciseId}
+        │       ├── name: String
+        │       ├── category: String
+        │       ├── muscleGroup: String
+        │       ├── equipment: String
+        │       ├── description: String
+        │       ├── unit: String
+        │       └── deletedAt: Timestamp
+        │
+        ├── appointments (Subcollection) -- Templates
+        │   └── {apptId}
+        │       ├── name: String
+        │       ├── location: String
+        │       ├── doctorName: String
+        │       ├── category: String
+        │       └── description: String
+        │
+        ├── meals (Subcollection) -- Templates
+        │   └── {mealId}
+        │       ├── name: String
+        │       └── description: String
+        │
+        ├── tasks (Subcollection) -- Templates
+        │   └── {taskId}
+        │       ├── name: String
+        │       └── description: String
+        │
+        ├── schedules (Subcollection)
+        │   └── {scheduleId}
+        │       ├── type: Enum (MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE)
+        │       ├── startTime: String (e.g. "09:00")
+        │       ├── recurrenceRule: String (RRULE/JSON)
+        │       ├── enabled: Boolean
+        │       ├── reminders: Array [ { minutesBefore, type: Enum } ]
+        │       ├── eventSnapshot: Map -- The "What" details
+        │       │   ├── sourceId: String (Ref to medId, catalogId, apptId, etc.)
+        │       │   ├── origin: Enum (USER, CATALOG)
+        │       │   ├── title: String (Denormalized)
+        │       │   ├── instructions: String (Dose/Notes)
+        │       │   └── location: String (If Appointment)
+        │       ├── createdAt: Timestamp
+        │       └── updatedAt: Timestamp
+        │
+        ├── logs (Subcollection)
+        │   └── {logId}
+        │       ├── scheduleId: String
+        │       ├── type: Enum
+        │       ├── status: Enum (COMPLETED, MISSED, SKIPPED, LATE)
+        │       ├── scheduledTime: Timestamp
+        │       ├── actualTime: Timestamp
+        │       ├── eventSnapshot: Map (Immutable copy from Schedule)
+        │       │   ├── title: String
+        │       │   ├── instructions: String
+        │       │   └── ...other details
+        │       └── notes: String (User-added log note)
+        │
+        ├── healthMetrics (Subcollection)
+        │   └── {metricId}
+        │       ├── type: Enum (WEIGHT, BLOOD_PRESSURE, etc.)
+        │       ├── valuePrimary: Number
+        │       ├── valueSecondary: Number
+        │       ├── unit: String
+        │       └── recordedAt: Timestamp
+        │
+        └── conversations (Subcollection)
+            └── {convId}
+                └── messages (Subcollection)
+                    └── {msgId}
+                        ├── role: Enum (USER, ASSISTANT, SYSTEM)
+                        ├── content: String
+                        └── createdAt: Timestamp
