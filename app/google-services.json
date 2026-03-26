@@ -12,7 +12,20 @@
           "package_name": "com.example.pillmate"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "19098316797-7nam9hn03du4tiu794abujhir299a7j1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pillmate",
+            "certificate_hash": "304ad98b726b8cb7a896156215473353e7f93186"
+          }
+        },
+        {
+          "client_id": "19098316797-k9mk7l0ojchocrq44bg0kaa0jiq41sva.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB-HRQTCQEviqcYEJ2L6SkilADkjF9XUK0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "19098316797-k9mk7l0ojchocrq44bg0kaa0jiq41sva.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
