@@ -26,6 +26,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
 class SignUpOptionsActivity : AppCompatActivity() {
 
@@ -99,11 +101,32 @@ class SignUpOptionsActivity : AppCompatActivity() {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Đăng nhập thành công -> Chuyển vào MainActivity
-                    Toast.makeText(this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
+                    val user = auth.currentUser
+                    val uid = user?.uid ?: return@addOnCompleteListener
+
+                    val db = FirebaseFirestore.getInstance()
+                    val docRef = db.collection("profiles").document(uid)
+
+                    // Kiểm tra xem user này đã có Profile chưa
+                    docRef.get().addOnSuccessListener { document ->
+                        if (!document.exists()) {
+                            // Người mới -> Lưu profile
+                            val userProfile = hashMapOf(
+                                "accountId" to uid,
+                                "fullName" to user.displayName,
+                                "email" to user.email,
+                                "type" to "USER", // Mặc định tài khoản loại USER
+                                "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                            )
+
+                            docRef.set(userProfile)
+                        }
+
+                        Toast.makeText(this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                    }
                 } else {
                     Toast.makeText(this, "Firebase Authentication Failed.", Toast.LENGTH_SHORT).show()
                 }

@@ -9,27 +9,26 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import com.example.pillmate.MainActivity
 import com.example.pillmate.R
-import com.example.pillmate.dataconnect.PillmateConnector
-import com.example.pillmate.dataconnect.createUserProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.dataconnect.FirebaseDataConnect
-import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
 class SignUpWithEmailActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_sign_up_with_email)
 
-        // Initialize Firebase Auth
+        // Khởi tạo Firebase Auth và Firestore
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -47,7 +46,7 @@ class SignUpWithEmailActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
 
-            // Basic Validation
+            // Kiểm tra đầu vào
             if (fullname.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -57,37 +56,41 @@ class SignUpWithEmailActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Create User in Firebase
+            // 1. Tạo User trên Firebase Auth
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-
                         val user = auth.currentUser
-                        // LẤY UID TỪ USER Ở ĐÂY
                         val uid = user?.uid ?: return@addOnCompleteListener
 
+                        // Cập nhật tên hiển thị cho Auth
                         val profileUpdates = UserProfileChangeRequest.Builder()
                             .setDisplayName(fullname)
                             .build()
 
                         user.updateProfile(profileUpdates).addOnCompleteListener {
-                            // DÙNG LIFECYCLESCOPE ĐỂ CHẠY DATA CONNECT
-                            lifecycleScope.launch {
-                                try {
-                                    val dataConnect = FirebaseDataConnect.getInstance(PillmateConnector.instance)
-                                    // Hàm execute() giờ đã được chạy an toàn trong Coroutine
-                                    dataConnect.createUserProfile(accountId = uid, fullName = fullname).execute()
 
-                                    Toast.makeText(this@SignUpWithEmailActivity, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                            // 2. Tạo Profile lưu vào Firestore
+                            val userProfile = hashMapOf(
+                                "accountId" to uid,
+                                "fullName" to fullname,
+                                "email" to email,
+                                "type" to "USER", // Mặc định tài khoản loại USER
+                                "createdAt" to FieldValue.serverTimestamp(),
+                                "updatedAt" to FieldValue.serverTimestamp()
+                            )
 
-                                    val intent = Intent(this@SignUpWithEmailActivity, MainActivity::class.java)
+                            db.collection("profiles").document(uid).set(userProfile)
+                                .addOnSuccessListener {
+                                    Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                                    // Chuyển sang màn hình chính
+                                    val intent = Intent(this, MainActivity::class.java)
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                     startActivity(intent)
-
-                                } catch (e: Exception) {
-                                    Toast.makeText(this@SignUpWithEmailActivity, "Error saving profile: ${e.message}", Toast.LENGTH_LONG).show()
                                 }
-                            }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(this, "Error saving profile: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
                         }
                     } else {
                         Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
