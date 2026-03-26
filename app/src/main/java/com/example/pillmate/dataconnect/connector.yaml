@@ -1,0 +1,5 @@
+connectorId: "PillmateConnector"
+generate:
+  kotlinSdk:
+    outputDirectory: "../app/src/main/java"
+    package: "com.example.pillmate.dataconnect"

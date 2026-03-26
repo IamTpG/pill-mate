@@ -1,0 +1,7 @@
+# Định nghĩa mutation nhận 2 tham số là accountId và fullName
+mutation CreateUserProfile($accountId: String!, $fullName: String!) @auth(level: USER) {
+  profile_insert(data: {
+    accountId: $accountId,
+    fullName: $fullName
+  })
+}
