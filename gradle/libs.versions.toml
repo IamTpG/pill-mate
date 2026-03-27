@@ -10,7 +10,6 @@ material = "1.13.0"
 firebaseBomVersion = "34.10.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
-firebaseDataconnect = "17.2.0"
 room = "2.6.1"
 ksp = "1.9.0-1.0.13"
 
@@ -28,7 +27,6 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 firebase-storage = { module = "com.google.firebase:firebase-storage" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-firebase-dataconnect = { group = "com.google.firebase", name = "firebase-dataconnect", version.ref = "firebaseDataconnect" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
