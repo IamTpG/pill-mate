@@ -11,7 +11,7 @@ import com.example.pillmate.data.local.entity.SupplyLogEntity
 interface SupplyLogDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSupplyLog(log: SupplyLogEntity): Long
+    fun insertSupplyLog(log: SupplyLogEntity): Long
 
     @Query("SELECT * FROM supply_logs WHERE medicationId = :medicationId ORDER BY timestamp DESC")
     fun getLogsForMedication(medicationId: String): Flow<List<SupplyLogEntity>>
