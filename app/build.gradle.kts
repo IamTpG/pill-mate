@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
 
     alias(libs.plugins.google.services)
-
+    alias(libs.plugins.ksp)
     kotlin("plugin.serialization") version "1.9.0"
 }
 
@@ -44,6 +44,12 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.firebase.dataconnect)
+    
+    // Room
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
