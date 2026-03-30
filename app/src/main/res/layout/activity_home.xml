@@ -29,6 +29,19 @@
         app:layout_constraintTop_toTopOf="@id/headerOverlay" />
 
     <ImageButton
+        android:id="@+id/btnDebug"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Debug Menu"
+        android:src="@android:drawable/ic_menu_info_details"
+        app:layout_constraintBottom_toBottomOf="@id/headerOverlay"
+        app:layout_constraintEnd_toStartOf="@id/btnAdd"
+        app:layout_constraintTop_toTopOf="@id/headerOverlay"
+        app:tint="@color/white" />
+
+    <ImageButton
         android:id="@+id/btnAdd"
         android:layout_width="48dp"
         android:layout_height="48dp"

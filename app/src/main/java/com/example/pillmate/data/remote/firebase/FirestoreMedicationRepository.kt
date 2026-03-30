@@ -25,7 +25,14 @@ class FirestoreMedicationRepository(
                 
                 val supply = if (!supplyDocs.isEmpty) {
                     val supplyDoc = supplyDocs.documents[0]
-                    supplyDoc.toObject(MedicationSupply::class.java)?.copy(id = supplyDoc.id)
+                    // Sum up all logs to get total quantity
+                    val inventoryLogs = supplyDoc.reference.collection("logs").get().await()
+                    val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
+                    
+                    supplyDoc.toObject(MedicationSupply::class.java)?.copy(
+                        id = supplyDoc.id,
+                        quantity = totalQty
+                    )
                 } else null
                 
                 Result.success(med?.copy(supply = supply))
@@ -46,15 +53,11 @@ class FirestoreMedicationRepository(
             
             if (!supplyDocs.isEmpty) {
                 val supplyDoc = supplyDocs.documents[0]
-                val currentQty = supplyDoc.getDouble("quantity") ?: 0.0
-                val newQty = currentQty + changeAmount
                 
-                supplyDoc.reference.update("quantity", newQty).await()
-                
-                // Add inventory log
+                // Add inventory log (Quantity is inferred from these logs)
                 val inventoryLog = hashMapOf(
                     "changeAmount" to changeAmount,
-                    "reason" to "TAKEN",
+                    "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
                     "timestamp" to com.google.firebase.Timestamp.now()
                 )
                 supplyDoc.reference.collection("logs").add(inventoryLog).await()

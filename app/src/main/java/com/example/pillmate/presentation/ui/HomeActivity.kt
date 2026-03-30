@@ -44,6 +44,12 @@ class HomeActivity : AppCompatActivity() {
 
         setupObservers()
         viewModel.loadData()
+
+        binding.btnDebug.setOnClickListener {
+            val auth = FirebaseAuth.getInstance()
+            val profileId = auth.currentUser?.uid ?: "xY1SqtnTwiQqDkQDaZHGsZ6gHrh2" // Use provider's UID as fallback
+            DebugMenuFragment(profileId).show(supportFragmentManager, "DebugMenu")
+        }
     }
 
     private fun setupObservers() {
