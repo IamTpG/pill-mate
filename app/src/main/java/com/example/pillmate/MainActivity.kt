@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.pillmate.authentication.SignUpOptionsActivity
+import com.example.pillmate.presentation.ui.HomeActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -46,10 +47,13 @@ class MainActivity : AppCompatActivity() {
             // Nếu bằng null (đã đăng xuất), lập tức chuyển về màn hình đăng nhập
             val intent = Intent(this, SignUpOptionsActivity::class.java)
             // Xóa sạch lịch sử các màn hình trước đó để không thể bấm nút Back quay lại đây
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+
         }
+
+        val intent = Intent(this, (if (currentUser == null) SignUpOptionsActivity::class else HomeActivity::class).java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun performSignOut() {
