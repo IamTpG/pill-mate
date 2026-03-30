@@ -11,6 +11,7 @@ import com.example.pillmate.util.DataGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragment() {
 
@@ -57,10 +58,28 @@ class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragme
         }
 
         binding.btnTriggerAlarm.setOnClickListener {
-            val intent = android.content.Intent(requireContext(), TaskAlarmActivity::class.java)
-            intent.putExtra("MED_ID", "debug_pill_id")
-            startActivity(intent)
-            dismiss()
+            lifecycleScope.launch {
+                try {
+                    val snapshot = FirebaseFirestore.getInstance()
+                        .collection("profiles").document(profileId)
+                        .collection("schedules").get().await()
+                    
+                    if (!snapshot.isEmpty) {
+                        val randomDoc = snapshot.documents.random()
+                        // Use get() with dot notation for nested fields in Firestore
+                        val medId = randomDoc.get("eventSnapshot.sourceId") as? String ?: "debug_pill_id"
+                        
+                        val intent = android.content.Intent(requireContext(), TaskAlarmActivity::class.java)
+                        intent.putExtra("MED_ID", medId)
+                        startActivity(intent)
+                        dismiss()
+                    } else {
+                        Toast.makeText(requireContext(), "No schedules found! Generate data first.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
     
