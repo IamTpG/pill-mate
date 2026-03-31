@@ -66,12 +66,19 @@ class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragme
                     
                     if (!snapshot.isEmpty) {
                         val randomDoc = snapshot.documents.random()
-                        // Use get() with dot notation for nested fields in Firestore
                         val medId = randomDoc.get("eventSnapshot.sourceId") as? String ?: "debug_pill_id"
+                        val medName = randomDoc.getString("eventSnapshot.title") ?: "Medication"
+                        val dose = randomDoc.get("eventSnapshot.dose")?.toString() ?: "1.0"
                         
-                        val intent = android.content.Intent(requireContext(), TaskAlarmActivity::class.java)
-                        intent.putExtra("MED_ID", medId)
-                        startActivity(intent)
+                        // Schedule notification in 5 seconds via System AlarmManager
+                        val wasExact = com.example.pillmate.notification.MedicationNotificationManager(requireContext())
+                            .scheduleNotification(medId, medName, dose, 5)
+                        
+                        if (wasExact) {
+                            Toast.makeText(requireContext(), "Exact Alarm scheduled (5s)!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(requireContext(), "Alarm scheduled but might be delayed (Missing Permission)", Toast.LENGTH_LONG).show()
+                        }
                         dismiss()
                     } else {
                         Toast.makeText(requireContext(), "No schedules found! Generate data first.", Toast.LENGTH_SHORT).show()

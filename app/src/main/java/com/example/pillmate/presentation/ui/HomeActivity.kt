@@ -50,6 +50,18 @@ class HomeActivity : AppCompatActivity() {
             val profileId = auth.currentUser?.uid ?: "xY1SqtnTwiQqDkQDaZHGsZ6gHrh2" // Use provider's UID as fallback
             DebugMenuFragment(profileId).show(supportFragmentManager, "DebugMenu")
         }
+
+        checkNotificationPermission()
+    }
+
+    private fun checkNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != 
+                android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(permission), 101)
+            }
+        }
     }
 
     private fun setupObservers() {

@@ -51,6 +51,7 @@ class TaskAlarmActivity : AppCompatActivity() {
             if (result != null) {
                 if (result.isSuccess) {
                     Toast.makeText(this, "Dose logged successfully!", Toast.LENGTH_SHORT).show()
+                    com.example.pillmate.notification.MedicationNotificationManager(this).dismissNotification()
                     finish()
                 } else {
                     Toast.makeText(this, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
