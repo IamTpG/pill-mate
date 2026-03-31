@@ -142,7 +142,7 @@
                 android:layout_marginTop="24dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
-                
+
                 <!-- We'll use a HorizontalScrollView or RecyclerView for this later -->
                 <include layout="@layout/item_calendar_day" />
                 <include layout="@layout/item_calendar_day" />
