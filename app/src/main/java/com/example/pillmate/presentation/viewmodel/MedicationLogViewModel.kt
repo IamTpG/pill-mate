@@ -20,12 +20,13 @@ class MedicationLogViewModel(
     private val _logResult = MutableLiveData<Result<Unit>?>()
     val logResult: LiveData<Result<Unit>?> = _logResult
 
-    fun logMedication(medId: String, status: LogStatus, scheduledTime: Date, dose: Float = 1.0f) {
+    fun logMedication(medId: String, scheduleId: String, status: LogStatus, scheduledTime: Date, dose: Float = 1.0f) {
         viewModelScope.launch {
             _isLogging.value = true
             val result = logMedicationUseCase.execute(
                 profileId = profileId,
                 medId = medId,
+                scheduleId = scheduleId,
                 status = status,
                 scheduledTime = scheduledTime,
                 dose = dose
@@ -35,15 +36,15 @@ class MedicationLogViewModel(
         }
     }
 
-    fun onTakeClicked(medId: String, scheduledTime: Date, dose: Float) {
-        logMedication(medId, LogStatus.COMPLETED, scheduledTime, dose)
+    fun onTakeClicked(medId: String, scheduleId: String, scheduledTime: Date, dose: Float) {
+        logMedication(medId, scheduleId, LogStatus.COMPLETED, scheduledTime, dose)
     }
 
-    fun onSkipClicked(medId: String, scheduledTime: Date) {
-        logMedication(medId, LogStatus.SKIPPED, scheduledTime)
+    fun onSkipClicked(medId: String, scheduleId: String, scheduledTime: Date) {
+        logMedication(medId, scheduleId, LogStatus.SKIPPED, scheduledTime)
     }
 
-    fun onSnoozeClicked(medId: String, scheduledTime: Date) {
-        logMedication(medId, LogStatus.SNOOZED, scheduledTime)
+    fun onSnoozeClicked(medId: String, scheduleId: String, scheduledTime: Date) {
+        logMedication(medId, scheduleId, LogStatus.SNOOZED, scheduledTime)
     }
 }

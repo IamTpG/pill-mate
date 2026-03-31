@@ -66,13 +66,16 @@ class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragme
                     
                     if (!snapshot.isEmpty) {
                         val randomDoc = snapshot.documents.random()
+                        val scheduleId = randomDoc.id
                         val medId = randomDoc.get("eventSnapshot.sourceId") as? String ?: "debug_pill_id"
                         val medName = randomDoc.getString("eventSnapshot.title") ?: "Medication"
                         val dose = randomDoc.get("eventSnapshot.dose")?.toString() ?: "1.0"
+                        val unit = randomDoc.getString("eventSnapshot.unit") ?: "dose"
+                        val doseText = "$dose $unit"
                         
                         // Schedule notification in 5 seconds via System AlarmManager
                         val wasExact = com.example.pillmate.notification.MedicationNotificationManager(requireContext())
-                            .scheduleNotification(medId, medName, dose, 5)
+                            .scheduleNotification(medId, scheduleId, medName, doseText, 5)
                         
                         if (wasExact) {
                             Toast.makeText(requireContext(), "Exact Alarm scheduled (5s)!", Toast.LENGTH_SHORT).show()

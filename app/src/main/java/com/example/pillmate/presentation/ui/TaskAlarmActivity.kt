@@ -46,6 +46,10 @@ class TaskAlarmActivity : AppCompatActivity() {
             insets
         }
 
+        // Set UI from Intent
+        binding.tvMedName.text = intent.getStringExtra("MED_NAME") ?: "Medication"
+        binding.tvMedDosage.text = intent.getStringExtra("DOSE_TEXT") ?: "1.0 Dose"
+
         // Setup observers
         viewModel.logResult.observe(this) { result ->
             if (result != null) {
@@ -61,13 +65,12 @@ class TaskAlarmActivity : AppCompatActivity() {
 
         // Handle Click
         binding.btnLogDose.setOnClickListener {
-            // Mocking medId and scheduledTime for now
-            // In reality, these are passed via Intent
             val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
             val scheduledTime = Date() // Mock
             val dose = 1.0f // Mock
             
-            viewModel.onTakeClicked(medId, scheduledTime, dose)
+            viewModel.onTakeClicked(medId, scheduleId, scheduledTime, dose)
         }
     }
 }

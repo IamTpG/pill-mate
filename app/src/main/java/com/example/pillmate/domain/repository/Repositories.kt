@@ -2,6 +2,7 @@ package com.example.pillmate.domain.repository
 
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.model.TaskLog
+import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
 interface MedicationRepository {
@@ -12,5 +13,5 @@ interface MedicationRepository {
 
 interface LogRepository {
     suspend fun saveLog(profileId: String, log: TaskLog): Result<Unit>
-    suspend fun getLogsForDay(profileId: String, date: Date): Result<List<TaskLog>>
+    fun getLogsForDayFlow(profileId: String, date: Date): Flow<List<TaskLog>>
 }

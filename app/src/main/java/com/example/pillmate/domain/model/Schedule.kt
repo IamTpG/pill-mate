@@ -17,5 +17,6 @@ data class ScheduleEvent(
     val sourceId: String = "", // Ref to medId, apptId, etc.
     val title: String = "",
     val instructions: String = "",
-    val dose: Float = 1.0f
+    val dose: Float = 1.0f,
+    val unit: String? = null
 )

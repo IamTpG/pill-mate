@@ -20,6 +20,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val medId = intent.getStringExtra("MED_ID") ?: return
+        val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
         
         val auth = FirebaseAuth.getInstance()
         val profileId = auth.currentUser?.uid ?: "xY1SqtnTwiQqDkQDaZHGsZ6gHrh2" // Fallback for debug
@@ -37,7 +38,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 val medName = intent.getStringExtra("MED_NAME") ?: "Medication"
                 val dose = intent.getStringExtra("DOSE") ?: "1.0"
                 
-                MedicationNotificationManager(context).scheduleNotification(medId, medName, dose, 10) // Snooze for 10s for debug
+                MedicationNotificationManager(context).scheduleNotification(medId, scheduleId, medName, dose, 10) // Snooze for 10s for debug
                 android.widget.Toast.makeText(context, "Snoozed for 10 seconds", android.widget.Toast.LENGTH_SHORT).show()
                 MedicationNotificationManager(context).dismissNotification()
                 return
@@ -45,13 +46,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
             else -> return
         }
 
-        // Use GlobalScope or a custom scope for background work in Receiver
-        // Note: In a real app, use WorkManager for long-running tasks.
-        // For simple Firestore updates, a CoroutineScope is usually fine if it finishes within 10s.
         CoroutineScope(Dispatchers.IO).launch {
             useCase.execute(
                 profileId = profileId,
                 medId = medId,
+                scheduleId = scheduleId,
                 status = status,
                 scheduledTime = Date(), // In a real app, pass the scheduled time
                 dose = 1.0f

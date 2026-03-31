@@ -1,5 +1,6 @@
 package com.example.pillmate.presentation.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -11,7 +12,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
+import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
 import com.example.pillmate.databinding.ActivityHomeBinding
+import com.example.pillmate.presentation.ui.adapter.TaskAdapter
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
 import com.example.pillmate.presentation.viewmodel.HomeViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
@@ -20,6 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
+    private lateinit var taskAdapter: TaskAdapter
 
     private val viewModel: HomeViewModel by viewModels {
         val auth = FirebaseAuth.getInstance()
@@ -27,7 +31,8 @@ class HomeActivity : AppCompatActivity() {
         val profileId = auth.currentUser?.uid ?: ""
         val medicationRepo = FirestoreMedicationRepository(db, profileId)
         val logRepo = FirestoreLogRepository(db)
-        HomeViewModelFactory(medicationRepo, logRepo, profileId)
+        val scheduleRepo = FirestoreScheduleRepository(db)
+        HomeViewModelFactory(medicationRepo, logRepo, scheduleRepo, profileId)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +47,7 @@ class HomeActivity : AppCompatActivity() {
             insets
         }
 
+        setupRecyclerView()
         setupObservers()
         viewModel.loadData()
 
@@ -64,6 +70,22 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupRecyclerView() {
+        taskAdapter = TaskAdapter { task ->
+            val intent = Intent(this, TaskAlarmActivity::class.java).apply {
+                putExtra("MED_ID", task.medId)
+                putExtra("SCHEDULE_ID", task.scheduleId)
+                putExtra("MED_NAME", task.title)
+                putExtra("DOSE_TEXT", task.doseDescription)
+            }
+            startActivity(intent)
+        }
+        binding.rvTasks.apply {
+            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this@HomeActivity)
+            adapter = taskAdapter
+        }
+    }
+
     private fun setupObservers() {
         viewModel.todayProgress.observe(this) { (completed, total) ->
             binding.tvProgressCount.text = "$completed/$total"
@@ -72,6 +94,10 @@ class HomeActivity : AppCompatActivity() {
             } else {
                 binding.pbWeekly.progress = 0
             }
+        }
+
+        viewModel.todayTasks.observe(this) { tasks ->
+            taskAdapter.submitList(tasks)
         }
     }
 }

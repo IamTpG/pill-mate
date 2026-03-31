@@ -14,13 +14,14 @@ class LogMedicationUseCase(
     suspend fun execute(
         profileId: String,
         medId: String,
+        scheduleId: String,
         status: LogStatus,
         scheduledTime: Date,
         dose: Float = 1.0f,
         notes: String? = null
     ): Result<Unit> {
         val log = TaskLog(
-            scheduleId = medId, // Simplified for now
+            scheduleId = scheduleId,
             type = TaskType.MEDICATION,
             status = status,
             scheduledTime = scheduledTime,

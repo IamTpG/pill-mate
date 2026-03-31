@@ -44,7 +44,8 @@ class DataGenerator(private val db: FirebaseFirestore) {
                 eventSnapshot = ScheduleEvent(
                     sourceId = medRef.id,
                     title = medData["name"] as String,
-                    dose = 1.0f
+                    dose = 1.0f,
+                    unit = medData["unit"] as? String
                 )
             )
             profileRef.collection("schedules").add(schedule).await()
