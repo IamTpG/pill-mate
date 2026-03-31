@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="60dp"
-    android:layout_height="80dp"
-    android:layout_margin="4dp"
+    android:layout_width="@dimen/calendar_item_width"
+    android:layout_height="85dp"
+    android:layout_margin="@dimen/calendar_item_margin"
     android:background="@drawable/bg_card_white"
     android:gravity="center"
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/tvDayOfWeek"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="MON"
@@ -16,6 +17,7 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tvDayOfMonth"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="15"

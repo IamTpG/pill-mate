@@ -14,6 +14,7 @@ import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
 import com.example.pillmate.databinding.ActivityHomeBinding
+import com.example.pillmate.presentation.ui.adapter.CalendarAdapter
 import com.example.pillmate.presentation.ui.adapter.TaskAdapter
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
 import com.example.pillmate.presentation.viewmodel.HomeViewModelFactory
@@ -24,6 +25,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var taskAdapter: TaskAdapter
+    private lateinit var calendarAdapter: CalendarAdapter
 
     private val viewModel: HomeViewModel by viewModels {
         val auth = FirebaseAuth.getInstance()
@@ -71,6 +73,18 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
+        calendarAdapter = CalendarAdapter { day ->
+            viewModel.selectDate(day.date)
+        }
+        binding.rvCalendar.apply {
+            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+                this@HomeActivity,
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            adapter = calendarAdapter
+        }
+
         taskAdapter = TaskAdapter { task ->
             val intent = Intent(this, TaskAlarmActivity::class.java).apply {
                 putExtra("MED_ID", task.medId)
@@ -99,5 +113,31 @@ class HomeActivity : AppCompatActivity() {
         viewModel.todayTasks.observe(this) { tasks ->
             taskAdapter.submitList(tasks)
         }
+
+        viewModel.calendarDays.observe(this) { days ->
+            calendarAdapter.submitList(days) {
+                if (isFirstCalendarLoad) {
+                    val selectedIndex = days.indexOfFirst { it.isSelected }
+                    if (selectedIndex != -1) {
+                        scrollToCalendarPosition(selectedIndex)
+                    }
+                    isFirstCalendarLoad = false
+                }
+            }
+        }
+    }
+
+    private var isFirstCalendarLoad = true
+
+    private fun scrollToCalendarPosition(position: Int) {
+        val layoutManager = binding.rvCalendar.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager
+        val screenWidth = resources.displayMetrics.widthPixels
+        
+        val itemWidthPx = resources.getDimensionPixelSize(R.dimen.calendar_item_width)
+        val marginPx = resources.getDimensionPixelSize(R.dimen.calendar_item_margin)
+        val totalWidthPx = itemWidthPx + (marginPx * 2)
+        
+        val offset = (screenWidth / 2) - (totalWidthPx / 2)
+        layoutManager?.scrollToPositionWithOffset(position, offset)
     }
 }

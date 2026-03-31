@@ -136,20 +136,14 @@
             </androidx.cardview.widget.CardView>
 
             <!-- Calendar Filter Placeholder -->
-            <LinearLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvCalendar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <!-- We'll use a HorizontalScrollView or RecyclerView for this later -->
-                <include layout="@layout/item_calendar_day" />
-                <include layout="@layout/item_calendar_day" />
-                <include layout="@layout/item_calendar_day_selected" />
-                <include layout="@layout/item_calendar_day" />
-                <include layout="@layout/item_calendar_day" />
-            </LinearLayout>
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_calendar_day" />
 
             <!-- Task List Section -->
             <TextView

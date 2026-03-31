@@ -8,6 +8,7 @@
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/tvDayOfWeekSelected"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="WED"
@@ -16,6 +17,7 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tvDayOfMonthSelected"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="17"
