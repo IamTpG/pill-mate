@@ -14,22 +14,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Date
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class NotificationActionReceiver : BroadcastReceiver() {
+class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
+
+    private val useCase: LogMedicationUseCase by inject()
+    private val profileId: String by inject()
+    private val db: FirebaseFirestore by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val medId = intent.getStringExtra("MED_ID") ?: return
         val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
         
-        val auth = FirebaseAuth.getInstance()
-        val profileId = auth.currentUser?.uid ?: "xY1SqtnTwiQqDkQDaZHGsZ6gHrh2" // Fallback for debug
-
-        val db = FirebaseFirestore.getInstance()
-        val medicationRepo = FirestoreMedicationRepository(db, profileId)
-        val logRepo = FirestoreLogRepository(db)
-        val useCase = LogMedicationUseCase(medicationRepo, logRepo)
-
         val status = when (action) {
             "ACTION_TAKE" -> LogStatus.COMPLETED
             "ACTION_SKIP" -> LogStatus.SKIPPED

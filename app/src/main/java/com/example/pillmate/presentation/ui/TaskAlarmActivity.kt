@@ -13,26 +13,17 @@ import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.domain.usecase.LogMedicationUseCase
 import com.example.pillmate.presentation.viewmodel.MedicationLogViewModel
-import com.example.pillmate.presentation.viewmodel.MedicationLogViewModelFactory
 import com.example.pillmate.databinding.ActivityTaskAlarmBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.Date
 
 class TaskAlarmActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTaskAlarmBinding
     
-    // In a real app, these would come from DI
-    private val viewModel: MedicationLogViewModel by viewModels {
-        val auth = FirebaseAuth.getInstance()
-        val db = FirebaseFirestore.getInstance()
-        val profileId = auth.currentUser?.uid ?: ""
-        val medicationRepo = FirestoreMedicationRepository(db, profileId)
-        val logRepo = FirestoreLogRepository(db)
-        val useCase = LogMedicationUseCase(medicationRepo, logRepo)
-        MedicationLogViewModelFactory(useCase, profileId)
-    }
+    private val viewModel: MedicationLogViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
