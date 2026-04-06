@@ -13,10 +13,16 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragment() {
+import org.koin.android.ext.android.inject
+
+class DebugMenuFragment : BottomSheetDialogFragment() {
 
     private var _binding: FragmentDebugMenuBinding? = null
     private val binding get() = _binding!!
+    
+    private val generator: com.example.pillmate.util.DataGenerator by inject()
+    private val profileId: String by inject()
+    private val db: FirebaseFirestore by inject()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDebugMenuBinding.inflate(inflater, container, false)
@@ -25,8 +31,6 @@ class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragme
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val generator = DataGenerator(FirebaseFirestore.getInstance())
 
         binding.btnGenerateData.setOnClickListener {
             lifecycleScope.launch {
@@ -60,7 +64,7 @@ class DebugMenuFragment(private val profileId: String) : BottomSheetDialogFragme
         binding.btnTriggerAlarm.setOnClickListener {
             lifecycleScope.launch {
                 try {
-                    val snapshot = FirebaseFirestore.getInstance()
+                    val snapshot = db
                         .collection("profiles").document(profileId)
                         .collection("schedules").get().await()
                     

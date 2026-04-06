@@ -105,8 +105,8 @@
         ├── schedules (Subcollection)
         │   └── {scheduleId}
         │       ├── type: Enum (MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE)
-        │       ├── startTime: String (e.g. "09:00")
-        │       ├── recurrenceRule: String (RRULE/JSON)
+        │       ├── startTime: String (e.g. "2026-04-06 08:00:00")
+        │       ├── recurrenceRule: String (RRULE)
         │       ├── enabled: Boolean
         │       ├── reminders: Array [ { minutesBefore, type: Enum } ]
         │       ├── eventSnapshot: Map -- The "What" details
