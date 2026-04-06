@@ -29,12 +29,17 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
+import com.example.pillmate.util.FcmTokenManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class SignUpOptionsActivity : AppCompatActivity() {
 
     private val auth: FirebaseAuth by inject()
     private val db: FirebaseFirestore by inject()
+    private val fcmTokenManager: FcmTokenManager by inject()
     private lateinit var googleSignInClient: GoogleSignInClient
 
     // Bộ khởi chạy cho Google Sign In (Thay thế cho startActivityForResult cũ)
@@ -119,6 +124,11 @@ class SignUpOptionsActivity : AppCompatActivity() {
                             )
 
                             docRef.set(userProfile)
+                        }
+
+                        // Register FCM token for push notifications
+                        CoroutineScope(Dispatchers.IO).launch {
+                            fcmTokenManager.registerCurrentToken(uid)
                         }
 
                         Toast.makeText(this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show()
