@@ -28,9 +28,10 @@ val appModule = module {
     single { com.example.pillmate.util.DataGenerator(get()) }
 
     factory { LogMedicationUseCase(get(), get()) }
+    factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MedicationLogViewModel(get(), get()) }
 }
