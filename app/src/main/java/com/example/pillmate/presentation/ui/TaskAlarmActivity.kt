@@ -54,14 +54,32 @@ class TaskAlarmActivity : AppCompatActivity() {
             }
         }
 
-        // Handle Click
+        // Handle Click - Take
         binding.btnLogDose.setOnClickListener {
             val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
             val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
-            val scheduledTime = Date() // Mock
-            val dose = 1.0f // Mock
+            val scheduledTime = Date()
+            val dose = 1.0f
             
             viewModel.onTakeClicked(medId, scheduleId, scheduledTime, dose)
+        }
+
+        // Handle Click - Skip
+        binding.btnSkip.setOnClickListener {
+            val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
+            val scheduledTime = Date()
+            
+            viewModel.onSkipClicked(medId, scheduleId, scheduledTime)
+        }
+
+        // Handle Click - Snooze
+        binding.btnSnooze.setOnClickListener {
+            val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
+            val scheduledTime = Date()
+            
+            viewModel.onSnoozeClicked(medId, scheduleId, scheduledTime)
         }
     }
 }

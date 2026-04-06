@@ -9,6 +9,7 @@ interface MedicationRepository {
     suspend fun getMedication(id: String): Result<Medication?>
     suspend fun updateMedicationSupply(medId: String, changeAmount: Float): Result<Unit>
     suspend fun getAllMedications(profileId: String): Result<List<Medication>>
+    suspend fun saveMedication(profileId: String, medication: Medication): Result<String>
 }
 
 interface LogRepository {

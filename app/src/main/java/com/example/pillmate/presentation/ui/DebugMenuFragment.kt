@@ -7,22 +7,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.example.pillmate.databinding.FragmentDebugMenuBinding
-import com.example.pillmate.util.DataGenerator
+import com.example.pillmate.presentation.viewmodel.DebugViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-
-import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DebugMenuFragment : BottomSheetDialogFragment() {
 
     private var _binding: FragmentDebugMenuBinding? = null
     private val binding get() = _binding!!
     
-    private val generator: com.example.pillmate.util.DataGenerator by inject()
-    private val profileId: String by inject()
-    private val db: FirebaseFirestore by inject()
+    private val viewModel: DebugViewModel by viewModel()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDebugMenuBinding.inflate(inflater, container, false)
@@ -33,70 +27,44 @@ class DebugMenuFragment : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.btnGenerateData.setOnClickListener {
-            lifecycleScope.launch {
-                binding.btnGenerateData.isEnabled = false
-                try {
-                    generator.generateSampleData(profileId)
+            binding.btnGenerateData.isEnabled = false
+            viewModel.generateSampleData(
+                onSuccess = {
                     Toast.makeText(requireContext(), "Data Generated!", Toast.LENGTH_SHORT).show()
+                    binding.btnGenerateData.isEnabled = true
                     dismiss()
-                } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
-                } finally {
+                },
+                onError = { e ->
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
                     binding.btnGenerateData.isEnabled = true
                 }
-            }
+            )
         }
 
         binding.btnClearData.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    generator.clearUserData(profileId)
+            viewModel.clearUserData(
+                onSuccess = {
                     Toast.makeText(requireContext(), "Data Cleared!", Toast.LENGTH_SHORT).show()
                     dismiss()
-                } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
+                },
+                onError = { e ->
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
-            }
+            )
         }
 
         binding.btnTriggerAlarm.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val snapshot = db
-                        .collection("profiles").document(profileId)
-                        .collection("schedules").get().await()
-                    
-                    if (!snapshot.isEmpty) {
-                        val randomDoc = snapshot.documents.random()
-                        val scheduleId = randomDoc.id
-                        val medId = randomDoc.get("eventSnapshot.sourceId") as? String ?: "debug_pill_id"
-                        val medName = randomDoc.getString("eventSnapshot.title") ?: "Medication"
-                        val dose = randomDoc.get("eventSnapshot.dose")?.toString() ?: "1.0"
-                        val unit = randomDoc.getString("eventSnapshot.unit") ?: "dose"
-                        val doseText = "$dose $unit"
-                        
-                        // Schedule notification in 5 seconds via System AlarmManager
-                        val wasExact = com.example.pillmate.notification.MedicationNotificationManager(requireContext())
-                            .scheduleNotification(medId, scheduleId, medName, doseText, 5)
-                        
-                        if (wasExact) {
-                            Toast.makeText(requireContext(), "Exact Alarm scheduled (5s)!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(requireContext(), "Alarm scheduled but might be delayed (Missing Permission)", Toast.LENGTH_LONG).show()
-                        }
-                        dismiss()
-                    } else {
-                        Toast.makeText(requireContext(), "No schedules found! Generate data first.", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
+            viewModel.triggerRandomAlarm(
+                onSuccess = { message ->
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    dismiss()
+                },
+                onError = { e ->
                     Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
-            }
+            )
         }
     }
-    
 
     override fun onDestroyView() {
         super.onDestroyView()
