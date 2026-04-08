@@ -29,9 +29,12 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
+import org.koin.android.ext.android.inject
+
 class SignUpOptionsActivity : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth
+    private val auth: FirebaseAuth by inject()
+    private val db: FirebaseFirestore by inject()
     private lateinit var googleSignInClient: GoogleSignInClient
 
     // Bộ khởi chạy cho Google Sign In (Thay thế cho startActivityForResult cũ)
@@ -53,9 +56,6 @@ class SignUpOptionsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_sign_up_options)
-
-        // 1. Khởi tạo Firebase Auth
-        auth = FirebaseAuth.getInstance()
 
         // 2. Cấu hình Google Sign In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -104,7 +104,6 @@ class SignUpOptionsActivity : AppCompatActivity() {
                     val user = auth.currentUser
                     val uid = user?.uid ?: return@addOnCompleteListener
 
-                    val db = FirebaseFirestore.getInstance()
                     val docRef = db.collection("profiles").document(uid)
 
                     // Kiểm tra xem user này đã có Profile chưa

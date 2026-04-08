@@ -12,18 +12,16 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.pillmate.MainActivity
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
+import org.koin.android.ext.android.inject
 
 class SignInWithEmailActivity : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth
+    private val auth: FirebaseAuth by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_sign_in_with_email)
-
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
