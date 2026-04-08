@@ -16,19 +16,17 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
+import org.koin.android.ext.android.inject
+
 class SignUpWithEmailActivity : AppCompatActivity() {
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
+    private val auth: FirebaseAuth by inject()
+    private val db: FirebaseFirestore by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_sign_up_with_email)
-
-        // Khởi tạo Firebase Auth và Firestore
-        auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
