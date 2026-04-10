@@ -9,7 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.pillmate.MainActivity
+import com.example.pillmate.presentation.ui.MainActivity
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
 import com.example.pillmate.util.FcmTokenManager

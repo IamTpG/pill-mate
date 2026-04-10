@@ -18,7 +18,7 @@ import android.text.TextPaint
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.view.View
-import com.example.pillmate.MainActivity
+import com.example.pillmate.presentation.ui.MainActivity
 import com.example.pillmate.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -98,6 +98,16 @@ class SignUpOptionsActivity : AppCompatActivity() {
         }
 
         setupSignInHyperlink()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
     }
 
     // Hàm phụ xử lý liên kết token Google với Firebase
