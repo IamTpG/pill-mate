@@ -18,7 +18,7 @@
         <receiver android:name=".receiver.MedicationAlarmReceiver" android:exported="false" />
 
         <activity
-            android:name=".authentication.SignUpOptionsActivity"
+            android:name=".presentation.ui.LauncherActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,6 +26,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".authentication.SignUpOptionsActivity" />
         <activity android:name=".authentication.SignUpWithEmailActivity" />
         <activity android:name=".authentication.SignInWithEmailActivity" />
 
