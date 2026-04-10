@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+    package="com.example.pillmate">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -18,7 +18,7 @@
         <receiver android:name=".receiver.MedicationAlarmReceiver" android:exported="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.ui.LauncherActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,7 +29,9 @@
         <activity android:name=".authentication.SignUpOptionsActivity" />
         <activity android:name=".authentication.SignUpWithEmailActivity" />
         <activity android:name=".authentication.SignInWithEmailActivity" />
-        <activity android:name=".presentation.ui.HomeActivity" />
+
+        <activity android:name=".presentation.ui.MainActivity" />
+
         <activity android:name=".presentation.ui.TaskAlarmActivity" />
 
     </application>
