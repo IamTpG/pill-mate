@@ -7,13 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
-import com.example.pillmate.domain.usecase.UpdateScheduleUseCase
+import com.example.pillmate.domain.usecase.ManageReminderUseCase
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class ReminderViewModel(
     private val scheduleRepository: ScheduleRepository,
-    private val updateScheduleUseCase: UpdateScheduleUseCase,
+    private val manageReminderUseCase: ManageReminderUseCase,
     private val profileId: String
 ) : ViewModel() {
 
@@ -39,7 +39,7 @@ class ReminderViewModel(
         val updatedSchedule = schedule.copy(reminders = newReminders)
         
         viewModelScope.launch {
-            updateScheduleUseCase(profileId, updatedSchedule)
+            manageReminderUseCase(profileId, updatedSchedule)
         }
     }
 
@@ -49,8 +49,10 @@ class ReminderViewModel(
         val newReminders = schedule.reminders - reminder
         val updatedSchedule = schedule.copy(reminders = newReminders)
         
+        manageReminderUseCase.cancelReminder(scheduleId, reminder.minutesBefore)
+        
         viewModelScope.launch {
-            updateScheduleUseCase(profileId, updatedSchedule)
+            manageReminderUseCase(profileId, updatedSchedule)
         }
     }
 
@@ -60,8 +62,10 @@ class ReminderViewModel(
         val newReminders = schedule.reminders.map { if (it == oldReminder) newReminder else it }
         val updatedSchedule = schedule.copy(reminders = newReminders)
         
+        manageReminderUseCase.cancelReminder(scheduleId, oldReminder.minutesBefore)
+        
         viewModelScope.launch {
-            updateScheduleUseCase(profileId, updatedSchedule)
+            manageReminderUseCase(profileId, updatedSchedule)
         }
     }
 }

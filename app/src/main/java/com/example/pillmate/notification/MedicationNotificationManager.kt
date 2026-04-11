@@ -96,7 +96,7 @@ class MedicationNotificationManager(private val context: Context) {
         notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
 
-    fun scheduleNotification(medId: String, scheduleId: String, medName: String, dose: String, delaySeconds: Int): Boolean {
+    fun scheduleNotification(medId: String, scheduleId: String, medName: String, dose: String, delaySeconds: Int, requestCode: Int): Boolean {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(context, MedicationAlarmReceiver::class.java).apply {
             putExtra("MED_ID", medId)
@@ -107,7 +107,7 @@ class MedicationNotificationManager(private val context: Context) {
         
         val pendingIntent = PendingIntent.getBroadcast(
             context, 
-            medId.hashCode(), // Unique ID per medication for the pending intent
+            requestCode, // Unique ID per reminder
             intent, 
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -154,5 +154,17 @@ class MedicationNotificationManager(private val context: Context) {
     fun dismissNotification() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
+    }
+
+    fun cancelNotification(requestCode: Int) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(context, MedicationAlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 }

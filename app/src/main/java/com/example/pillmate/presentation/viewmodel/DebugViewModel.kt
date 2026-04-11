@@ -55,7 +55,7 @@ class DebugViewModel(
                     val unit = randomDoc.getString("eventSnapshot.unit") ?: "dose"
                     val doseText = "$dose $unit"
 
-                    val wasExact = notificationManager.scheduleNotification(medId, scheduleId, medName, doseText, 5)
+                    val wasExact = notificationManager.scheduleNotification(medId, scheduleId, medName, doseText, 5, medId.hashCode())
                     
                     if (wasExact) {
                         onSuccess("Exact Alarm scheduled (5s)!")

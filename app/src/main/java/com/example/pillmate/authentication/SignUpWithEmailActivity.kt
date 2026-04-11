@@ -17,6 +17,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
+import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,6 +29,7 @@ class SignUpWithEmailActivity : AppCompatActivity() {
     private val auth: FirebaseAuth by inject()
     private val db: FirebaseFirestore by inject()
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
+    private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +91,7 @@ class SignUpWithEmailActivity : AppCompatActivity() {
                                     // Register FCM token for push notifications
                                     CoroutineScope(Dispatchers.IO).launch {
                                         syncFcmTokenUseCase(uid)
+                                        syncAlarmsUseCase(uid)
                                     }
                                     Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
                                     val intent = Intent(this, MainActivity::class.java)

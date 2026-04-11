@@ -13,6 +13,7 @@ import com.example.pillmate.presentation.ui.MainActivity
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
+import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ class SignInWithEmailActivity : AppCompatActivity() {
 
     private val auth: FirebaseAuth by inject()
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
+    private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,7 @@ class SignInWithEmailActivity : AppCompatActivity() {
                         if (uid != null) {
                             CoroutineScope(Dispatchers.IO).launch {
                                 syncFcmTokenUseCase(uid)
+                                syncAlarmsUseCase(uid)
                             }
                         }
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()

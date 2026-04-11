@@ -36,7 +36,7 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 val medName = intent.getStringExtra("MED_NAME") ?: "Medication"
                 val dose = intent.getStringExtra("DOSE") ?: "1.0"
                 
-                MedicationNotificationManager(context).scheduleNotification(medId, scheduleId, medName, dose, 10) // Snooze for 10s for debug
+                MedicationNotificationManager(context).scheduleNotification(medId, scheduleId, medName, dose, 10, medId.hashCode()) // Snooze for 10s for debug
                 android.widget.Toast.makeText(context, "Snoozed for 10 seconds", android.widget.Toast.LENGTH_SHORT).show()
                 MedicationNotificationManager(context).dismissNotification()
                 return

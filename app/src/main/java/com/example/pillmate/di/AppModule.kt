@@ -32,6 +32,8 @@ val appModule = module {
     factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
     factory { com.example.pillmate.domain.usecase.UpdateScheduleUseCase(get()) }
+    factory { com.example.pillmate.domain.usecase.ManageReminderUseCase(get(), get()) }
+    factory { com.example.pillmate.domain.usecase.SyncAlarmsUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.SyncFcmTokenUseCase(get()) }
     
     single { com.example.pillmate.notification.MedicationNotificationManager(get()) }
