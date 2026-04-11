@@ -31,6 +31,7 @@ val appModule = module {
     factory { LogMedicationUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
+    factory { com.example.pillmate.domain.usecase.UpdateScheduleUseCase(get()) }
     
     single { com.example.pillmate.notification.MedicationNotificationManager(get()) }
 }
@@ -38,5 +39,6 @@ val appModule = module {
 val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MedicationLogViewModel(get(), get()) }
+    viewModel { com.example.pillmate.presentation.ui.ReminderViewModel(get(), get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get()) }
 }

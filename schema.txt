@@ -53,7 +53,6 @@
         │
         ├── fcmTokens (Subcollection)
         │   └── {tokenId} (Document - token string as ID)
-        │       ├── token: String
         │       ├── deviceName: String
         │       ├── platform: String (e.g. "ANDROID")
         │       ├── createdAt: Timestamp

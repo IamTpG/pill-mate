@@ -25,8 +25,12 @@ class FirestoreScheduleRepository(
 
     override suspend fun saveSchedule(profileId: String, schedule: Schedule): Result<Unit> {
         return try {
-            db.collection("profiles").document(profileId)
-                .collection("schedules").add(schedule).await()
+            val collection = db.collection("profiles").document(profileId).collection("schedules")
+            if (schedule.id.isNotBlank()) {
+                collection.document(schedule.id).set(schedule).await()
+            } else {
+                collection.add(schedule).await()
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
