@@ -96,7 +96,15 @@ class MedicationNotificationManager(private val context: Context) {
         notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
 
-    fun scheduleNotification(medId: String, scheduleId: String, medName: String, dose: String, delaySeconds: Int, requestCode: Int): Boolean {
+    fun scheduleNotification(
+        medId: String, 
+        scheduleId: String, 
+        medName: String, 
+        dose: String, 
+        delaySeconds: Int, 
+        requestCode: Int,
+        reminderType: String = "NOTIFICATION"
+    ): Boolean {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(context, MedicationAlarmReceiver::class.java).apply {
             putExtra("MED_ID", medId)
@@ -112,10 +120,16 @@ class MedicationNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        intent.putExtra("REMINDER_TYPE", reminderType)
+
         val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
 
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (reminderType == "ALARM") {
+                val alarmClockInfo = android.app.AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                true
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,

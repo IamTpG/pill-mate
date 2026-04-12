@@ -35,7 +35,8 @@ class ManageReminderUseCase(
                         medName = schedule.eventSnapshot.title,
                         dose = "${schedule.eventSnapshot.dose}",
                         delaySeconds = delaySeconds,
-                        requestCode = requestCode
+                        requestCode = requestCode,
+                        reminderType = reminder.type.name
                     )
                 }
             }
