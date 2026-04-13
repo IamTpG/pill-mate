@@ -54,7 +54,7 @@
         app:layout_constraintTop_toTopOf="@id/headerOverlay"
         app:tint="@color/white" />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
@@ -64,7 +64,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="20dp"
+            android:paddingBottom="80dp"
+            android:clipToPadding="false">
 
             <!-- Today's Progress Card -->
             <androidx.cardview.widget.CardView
@@ -164,7 +166,7 @@
                 tools:listitem="@layout/item_task_home" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom Nav Placeholder -->
     <View

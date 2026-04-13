@@ -12,7 +12,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.pillmate.MainActivity
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
-import com.example.pillmate.util.FcmTokenManager
+import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
+import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,7 +22,8 @@ import org.koin.android.ext.android.inject
 class SignInWithEmailActivity : AppCompatActivity() {
 
     private val auth: FirebaseAuth by inject()
-    private val fcmTokenManager: FcmTokenManager by inject()
+    private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
+    private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +57,8 @@ class SignInWithEmailActivity : AppCompatActivity() {
                         val uid = auth.currentUser?.uid
                         if (uid != null) {
                             CoroutineScope(Dispatchers.IO).launch {
-                                fcmTokenManager.registerCurrentToken(uid)
+                                syncFcmTokenUseCase(uid)
+                                syncAlarmsUseCase(uid)
                             }
                         }
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()

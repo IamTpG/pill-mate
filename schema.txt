@@ -53,7 +53,6 @@
         │
         ├── fcmTokens (Subcollection)
         │   └── {tokenId} (Document - token string as ID)
-        │       ├── token: String
         │       ├── deviceName: String
         │       ├── platform: String (e.g. "ANDROID")
         │       ├── createdAt: Timestamp
@@ -112,7 +111,7 @@
         │
         ├── schedules (Subcollection)
         │   └── {scheduleId}
-        │       ├── type: Enum (MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE)
+        │       ├── type: Enum (MEDICATION, MEAL, APPOINTMENT, EXERCISE, OTHER)
         │       ├── startTime: String (e.g. "2026-04-06 08:00:00")
         │       ├── recurrenceRule: String (RRULE)
         │       ├── enabled: Boolean

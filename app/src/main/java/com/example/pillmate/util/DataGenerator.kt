@@ -14,51 +14,71 @@ class DataGenerator(private val db: FirebaseFirestore) {
 
     suspend fun generateSampleData(profileId: String) {
         val profileRef = db.collection("profiles").document(profileId)
+        val cal = Calendar.getInstance()
+        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
 
-        // 1. Create Medications
-        val meds = listOf(
-            mapOf("name" to "Lisinopril", "unit" to "pill", "description" to "Blood pressure"),
-            mapOf("name" to "Multivitamin", "unit" to "capsule", "description" to "Daily health"),
-            mapOf("name" to "Metformin", "unit" to "pill", "description" to "Diabetes")
+        val categories = listOf(
+            Triple("medications", TaskType.MEDICATION, listOf("Lisinopril", "Multivitamin", "Metformin")),
+            Triple("meals", TaskType.MEAL, listOf("Breakfast", "Lunch", "Dinner")),
+            Triple("appointments", TaskType.APPOINTMENT, listOf("Dentist", "General Checkup", "Therapy")),
+            Triple("exercises", TaskType.EXERCISE, listOf("Pushups", "Run", "Yoga")),
+            Triple("tasks", TaskType.OTHER, listOf("Drink Water", "Walk Dog", "Read Book"))
         )
 
-        for (medData in meds) {
-            val medRef = profileRef.collection("medications").add(medData).await()
-            
-            // 2. Create Supply & Initial Log (REFILL +30)
-            val supplyRef = medRef.collection("supply").add(mapOf("updatedAt" to Timestamp.now())).await()
-            supplyRef.collection("logs").add(mapOf(
-                "changeAmount" to 30.0,
-                "reason" to "REFILL",
-                "timestamp" to Timestamp.now()
-            )).await()
+        for ((collectionPath, type, names) in categories) {
+            for ((index, name) in names.withIndex()) {
+                val itemData = mapOf("name" to name, "description" to "Sample $name")
+                val itemRef = profileRef.collection(collectionPath).add(itemData).await()
 
-            // 3. Create Schedules
-            val schedule = Schedule(
-                type = TaskType.MEDICATION,
-                startTime = when(medData["name"]) {
-                    "Lisinopril" -> "08:00"
-                    "Multivitamin" -> "09:00"
-                    else -> "13:00"
-                },
-                eventSnapshot = ScheduleEvent(
-                    sourceId = medRef.id,
-                    title = medData["name"] as String,
-                    dose = 1.0f,
-                    unit = medData["unit"] as? String
+                if (collectionPath == "medications") {
+                    val supplyRef = itemRef.collection("supply").add(mapOf("updatedAt" to Timestamp.now())).await()
+                    supplyRef.collection("logs").add(mapOf(
+                        "changeAmount" to 30.0,
+                        "reason" to "INITIAL",
+                        "timestamp" to Timestamp.now()
+                    )).await()
+                }
+
+                // Distribute times: 8am, 12pm, 4pm, 8pm across items
+                val hour = 8 + (index * 4) + (type.ordinal % 3)
+                cal.set(Calendar.HOUR_OF_DAY, hour % 24)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                val isoStartTime = isoFormat.format(cal.time)
+
+                val schedule = Schedule(
+                    type = type,
+                    startTime = isoStartTime,
+                    recurrenceRule = "FREQ=DAILY",
+                    reminders = listOf(
+                        com.example.pillmate.domain.model.Reminder(0, com.example.pillmate.domain.model.ReminderType.ALARM),
+                        com.example.pillmate.domain.model.Reminder(10, com.example.pillmate.domain.model.ReminderType.NOTIFICATION)
+                    ),
+                    eventSnapshot = ScheduleEvent(
+                        sourceId = itemRef.id,
+                        title = name,
+                        dose = 1.0f,
+                        unit = if (collectionPath == "medications") "pill" else null
+                    )
                 )
-            )
-            profileRef.collection("schedules").add(schedule).await()
+                profileRef.collection("schedules").add(schedule).await()
+            }
         }
     }
 
     suspend fun clearUserData(profileId: String) {
         val profileRef = db.collection("profiles").document(profileId)
         
-        // Delete Medications (and subcollections)
+        // Delete Categories
         deleteCollection(profileRef.collection("medications"))
+        deleteCollection(profileRef.collection("meals"))
+        deleteCollection(profileRef.collection("appointments"))
+        deleteCollection(profileRef.collection("exercises"))
+        deleteCollection(profileRef.collection("tasks"))
+        
         // Delete Schedules
         deleteCollection(profileRef.collection("schedules"))
+        
         // Delete Logs
         deleteCollection(profileRef.collection("logs"))
     }

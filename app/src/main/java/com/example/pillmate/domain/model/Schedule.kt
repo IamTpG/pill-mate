@@ -8,9 +8,19 @@ data class Schedule(
     val startTime: String = "08:00", // "HH:mm"
     val recurrenceRule: String? = null,
     val enabled: Boolean = true,
+    val reminders: List<Reminder> = emptyList(),
     val eventSnapshot: ScheduleEvent = ScheduleEvent(),
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
+)
+
+enum class ReminderType {
+    NOTIFICATION, ALARM
+}
+
+data class Reminder(
+    val minutesBefore: Int = 0,
+    val type: ReminderType = ReminderType.NOTIFICATION
 )
 
 data class ScheduleEvent(

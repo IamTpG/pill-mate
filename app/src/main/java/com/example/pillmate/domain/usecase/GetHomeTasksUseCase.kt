@@ -1,6 +1,7 @@
 package com.example.pillmate.domain.usecase
 
 import com.example.pillmate.domain.model.LogStatus
+import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.presentation.model.HomeTask
@@ -27,35 +28,59 @@ class GetHomeTasksUseCase(
                     val matchingLog = logs.find { it.scheduleId == schedule.id }
                     
                     var status = matchingLog?.status
-                    if (status == null) {
-                        val timeParts = schedule.startTime.split(":")
-                        if (timeParts.size == 2) {
-                            val hour = timeParts[0].toInt()
-                            val min = timeParts[1].toInt()
-                            val scheduledCal = Calendar.getInstance()
-                            scheduledCal.time = date
-                            scheduledCal.set(Calendar.HOUR_OF_DAY, hour)
-                            scheduledCal.set(Calendar.MINUTE, min)
-                            scheduledCal.set(Calendar.SECOND, 0)
-                            
-                            if (scheduledCal.time.before(now)) {
-                                status = LogStatus.MISSED
-                            }
+                    val displayTime: String
+                    
+                    // SimpleDateFormat for ISO parsing
+                    val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                    val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                    
+                    val scheduledTimeDate: Date? = try {
+                        if (schedule.startTime.contains("T")) {
+                            isoFormat.parse(schedule.startTime)
+                        } else {
+                            val timeParts = schedule.startTime.split(":")
+                            if (timeParts.size == 2) {
+                                val cal = Calendar.getInstance().apply {
+                                    time = date
+                                    set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+                                    set(Calendar.MINUTE, timeParts[1].toInt())
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                cal.time
+                            } else null
                         }
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    if (status == null && scheduledTimeDate != null) {
+                        if (scheduledTimeDate.before(now)) {
+                            status = LogStatus.MISSED
+                        }
+                    }
+                    
+                    displayTime = scheduledTimeDate?.let { displayFormat.format(it) } ?: schedule.startTime
+
+                    val details = if (schedule.type == TaskType.MEDICATION) {
+                        "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}"
+                    } else {
+                        schedule.eventSnapshot.instructions ?: ""
                     }
 
                     HomeTask(
                         scheduleId = schedule.id,
-                        medId = schedule.eventSnapshot.sourceId,
+                        sourceId = schedule.eventSnapshot.sourceId,
                         title = schedule.eventSnapshot.title,
-                        time = schedule.startTime,
-                        doseDescription = "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}",
+                        time = displayTime,
+                        doseDescription = details,
+                        taskType = schedule.type,
                         status = status
                     )
                 }.sortedBy { it.time }
 
-                val completed = logs.count { it.status == LogStatus.COMPLETED }
-                val total = schedules.size
+                val completed = homeTasks.count { it.status == LogStatus.COMPLETED }
+                val total = homeTasks.size
                 
                 HomeData(homeTasks, completed, total)
             }

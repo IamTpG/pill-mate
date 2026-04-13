@@ -20,7 +20,6 @@ class FcmTokenManager(private val db: FirebaseFirestore) {
 
     private suspend fun saveToken(profileId: String, token: String) {
         val tokenData = hashMapOf(
-            "token" to token,
             "deviceName" to "${Build.MANUFACTURER} ${Build.MODEL}",
             "platform" to "ANDROID",
             "createdAt" to FieldValue.serverTimestamp(),
