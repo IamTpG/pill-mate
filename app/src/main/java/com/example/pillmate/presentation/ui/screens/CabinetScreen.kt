@@ -16,12 +16,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -32,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 import com.example.pillmate.presentation.ui.components.CabinetHeader
-import com.example.pillmate.presentation.ui.components.CabinetSubNav
+
 import com.example.pillmate.presentation.ui.components.MedicationCard
 import com.example.pillmate.presentation.ui.components.SearchBar
 import com.example.pillmate.presentation.ui.components.AddMedicationDialog
@@ -104,7 +100,7 @@ fun CabinetScreen(
                 start = 16.dp, 
                 end = 16.dp, 
                 top = 48.dp, 
-                bottom = 100.dp // Extra padding at the bottom so the SubNav doesn't cover the last pill!
+                bottom = 100.dp 
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
@@ -155,10 +151,7 @@ fun CabinetScreen(
             }
         }
 
-        // 4. Sub Navigation
-        CabinetSubNav(
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+
 
         FloatingActionButton(
             onClick = { showAddDialog = true },
@@ -178,8 +171,6 @@ fun CabinetScreen(
         } // End of else block for main screen content
 
         if (showAddDialog || medicationToEdit != null) {
-            val context = LocalContext.current
-            val coroutineScope = rememberCoroutineScope()
             
             AddMedicationDialog(
                 medicationToEdit = medicationToEdit,
@@ -188,28 +179,10 @@ fun CabinetScreen(
                     medicationToEdit = null
                 },
                 onConfirm = { name, unit, count, description, expirationDate, imageUri ->
-                    coroutineScope.launch(Dispatchers.IO) {
-                        var photoUrl: String? = null
-                        if (imageUri != null) {
-                            try {
-                                val fileName = "med_${System.currentTimeMillis()}.jpg"
-                                val file = java.io.File(context.filesDir, fileName)
-                                context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
-                                    java.io.FileOutputStream(file).use { outputStream ->
-                                        inputStream.copyTo(outputStream)
-                                    }
-                                }
-                                photoUrl = file.absolutePath
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                        
-                        if (medicationToEdit != null) {
-                            viewModel.updateMedication(medicationToEdit!!, name, unit, count, description, expirationDate, photoUrl)
-                        } else {
-                            viewModel.addMedication(name, unit, count, description, expirationDate, photoUrl)
-                        }
+                    if (medicationToEdit != null) {
+                        viewModel.updateMedication(medicationToEdit!!, name, unit, count, description, expirationDate, imageUri?.toString())
+                    } else {
+                        viewModel.addMedication(name, unit, count, description, expirationDate, imageUri?.toString())
                     }
                     showAddDialog = false
                     medicationToEdit = null

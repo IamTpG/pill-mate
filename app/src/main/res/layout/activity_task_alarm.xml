@@ -207,23 +207,61 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Main Action Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogDose"
+    <!-- Action Buttons -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="30dp"
         android:layout_marginBottom="40dp"
-        android:text="Log Dose Now"
-        android:textColor="@color/accent_teal"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:backgroundTint="@color/white"
-        app:cornerRadius="20dp"
-        app:icon="@drawable/pill"
-        app:iconGravity="textStart"
-        app:iconPadding="12dp"
-        app:iconTint="@color/accent_teal"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Main Take Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogDose"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="Mark as Done"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="20dp"
+            app:strokeColor="@color/semi_transparent_white" />
+
+        <!-- Secondary Actions Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSkip"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="Skip"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:cornerRadius="16dp"
+                app:strokeColor="@color/semi_transparent_white" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSnooze"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Snooze"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:cornerRadius="16dp"
+                app:strokeColor="@color/semi_transparent_white" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

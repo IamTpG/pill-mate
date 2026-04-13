@@ -1,37 +1,46 @@
 package com.example.pillmate.presentation.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import android.view.View
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.pillmate.R
 
-import android.widget.Toast
-import androidx.activity.viewModels
-import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
-import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
-import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
-import com.example.pillmate.databinding.ActivityHomeBinding
+import androidx.fragment.app.Fragment
+import com.example.pillmate.databinding.FragmentHomeBinding
 import com.example.pillmate.presentation.ui.adapter.CalendarAdapter
 import com.example.pillmate.presentation.ui.adapter.TaskAdapter
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class HomeActivity : AppCompatActivity() {
+class HomeFragment : Fragment(R.layout.fragment_home) {
 
-    private lateinit var binding: ActivityHomeBinding
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
     private lateinit var taskAdapter: TaskAdapter
     private lateinit var calendarAdapter: CalendarAdapter
     
     private val viewModel: HomeViewModel by viewModel()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityHomeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    private val notificationPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (!granted) {
+                Toast.makeText(requireContext(), "Notification permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentHomeBinding.bind(view)
         
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -44,18 +53,22 @@ class HomeActivity : AppCompatActivity() {
         viewModel.loadData()
 
         binding.btnDebug.setOnClickListener {
-            DebugMenuFragment().show(supportFragmentManager, "DebugMenu")
+            DebugMenuFragment().show(parentFragmentManager, "DebugMenu")
         }
 
         checkNotificationPermission()
     }
 
     private fun checkNotificationPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            val permission = android.Manifest.permission.POST_NOTIFICATIONS
-            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != 
-                android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(permission), 101)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    permission
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(permission)
             }
         }
     }
@@ -66,7 +79,7 @@ class HomeActivity : AppCompatActivity() {
         }
         binding.rvCalendar.apply {
             layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
-                this@HomeActivity,
+                requireContext(),
                 androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL,
                 false
             )
@@ -74,7 +87,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         taskAdapter = TaskAdapter { task ->
-            val intent = Intent(this, TaskAlarmActivity::class.java).apply {
+            val intent = Intent(requireContext(), TaskAlarmActivity::class.java).apply {
                 putExtra("MED_ID", task.medId)
                 putExtra("SCHEDULE_ID", task.scheduleId)
                 putExtra("MED_NAME", task.title)
@@ -83,13 +96,13 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
         binding.rvTasks.apply {
-            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this@HomeActivity)
+            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
             adapter = taskAdapter
         }
     }
 
     private fun setupObservers() {
-        viewModel.todayProgress.observe(this) { (completed, total) ->
+        viewModel.todayProgress.observe(viewLifecycleOwner) { (completed, total) ->
             binding.tvProgressCount.text = "$completed/$total"
             if (total > 0) {
                 binding.pbWeekly.progress = (completed.toFloat() / total * 100).toInt()
@@ -98,11 +111,11 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.todayTasks.observe(this) { tasks ->
+        viewModel.todayTasks.observe(viewLifecycleOwner) { tasks ->
             taskAdapter.submitList(tasks)
         }
 
-        viewModel.calendarDays.observe(this) { days ->
+        viewModel.calendarDays.observe(viewLifecycleOwner) { days ->
             calendarAdapter.submitList(days) {
                 if (isFirstCalendarLoad) {
                     val selectedIndex = days.indexOfFirst { it.isSelected }
@@ -127,5 +140,10 @@ class HomeActivity : AppCompatActivity() {
         
         val offset = (screenWidth / 2) - (totalWidthPx / 2)
         layoutManager?.scrollToPositionWithOffset(position, offset)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

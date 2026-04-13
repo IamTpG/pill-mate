@@ -14,7 +14,7 @@ This project follows **Clean Architecture** principles combined with the **MVVM 
 
 ```text
 ├───java
-│   └───com.example.medipal
+│   └───com.example.pillmate
 │       ├───data                # DATA LAYER: Source of all data (Local & Remote)
 │       │   ├───local           # Room Persistence: SQLite for offline capability
 │       │   │   ├───dao         # Database queries (Data Access Objects)

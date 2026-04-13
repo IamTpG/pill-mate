@@ -192,7 +192,7 @@ fun MedicationDetailScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 100.dp)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF1E6C54),

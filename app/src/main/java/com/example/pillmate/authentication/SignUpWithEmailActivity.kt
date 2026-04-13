@@ -16,12 +16,18 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
+import com.example.pillmate.util.FcmTokenManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 import org.koin.android.ext.android.inject
 
 class SignUpWithEmailActivity : AppCompatActivity() {
 
     private val auth: FirebaseAuth by inject()
     private val db: FirebaseFirestore by inject()
+    private val fcmTokenManager: FcmTokenManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,8 +86,11 @@ class SignUpWithEmailActivity : AppCompatActivity() {
 
                             db.collection("profiles").document(uid).set(userProfile)
                                 .addOnSuccessListener {
+                                    // Register FCM token for push notifications
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        fcmTokenManager.registerCurrentToken(uid)
+                                    }
                                     Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
-                                    // Chuyển sang màn hình chính
                                     val intent = Intent(this, MainActivity::class.java)
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                     startActivity(intent)

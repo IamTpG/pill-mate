@@ -13,6 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun CabinetHeader(
@@ -45,12 +48,19 @@ fun CabinetHeader(
                         color = Color(0xFF4A6B5D)
                     )
                 }
-                Icon(
-                    painter = painterResource(id = R.drawable.pill), // Ensure this icon exists
-                    contentDescription = "Pill Icon",
-                    tint = Color(0xFF7CB899),
-                    modifier = Modifier.size(32.dp)
-                )
+                IconButton(
+                    onClick = { /* TODO: Launch Med Info Search */ },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.White, shape = CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search Medication Info",
+                        tint = Color(0xFF4A6B5D),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

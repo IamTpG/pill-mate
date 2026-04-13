@@ -75,4 +75,14 @@ class FirestoreMedicationRepository(
         // Implementation for listing
         return Result.success(emptyList()) // Placeholder
     }
+
+    override suspend fun saveMedication(profileId: String, medication: Medication): Result<String> {
+        return try {
+            val docRef = db.collection("profiles").document(profileId)
+                .collection("medications").add(medication).await()
+            Result.success(docRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

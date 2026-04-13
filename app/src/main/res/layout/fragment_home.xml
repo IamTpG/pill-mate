@@ -119,7 +119,7 @@
                         android:layout_height="8dp"
                         android:layout_marginTop="16dp"
                         android:progress="66"
-                        android:progressDrawable="@drawable/bg_rounded_green"
+                        android:progressDrawable="@drawable/progress_bar_green"
                         app:layout_constraintTop_toBottomOf="@id/tvProgressCount" />
 
                     <ImageView

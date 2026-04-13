@@ -1,6 +1,7 @@
 package com.example.pillmate.presentation.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.repository.CabinetRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +25,9 @@ data class CabinetUiState(
 )
 
 class CabinetViewModel(
-    private val cabinetRepository: CabinetRepository
-) : ViewModel() {
+    private val cabinetRepository: CabinetRepository,
+    application: Application
+) : AndroidViewModel(application) {
 
     // The single source of truth for the UI
     private val _uiState = MutableStateFlow(CabinetUiState())
@@ -83,8 +85,29 @@ class CabinetViewModel(
         _searchQuery.value = newQuery
     }
 
-    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, photoUrl: String?) {
+    private fun saveImageToInternalStorage(imageUriStr: String?): String? {
+        if (imageUriStr == null) return null
+        val context = getApplication<Application>()
+        val imageUri = android.net.Uri.parse(imageUriStr)
+        var photoUrl: String? = null
+        try {
+            val fileName = "med_${System.currentTimeMillis()}.jpg"
+            val file = java.io.File(context.filesDir, fileName)
+            context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                java.io.FileOutputStream(file).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            photoUrl = file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return photoUrl
+    }
+
+    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
+            val photoUrl = saveImageToInternalStorage(imageUriStr)
             val newId = UUID.randomUUID().toString()
             
             // 1. Create base Medication
@@ -134,14 +157,15 @@ class CabinetViewModel(
         newCount: Int,
         newDescription: String,
         newExpirationDate: Long,
-        newPhotoUrl: String?
+        imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
+            val photoUrl = saveImageToInternalStorage(imageUriStr) ?: existingMedication.photoUrl
             val updatedMedication = existingMedication.copy(
                 name = newName,
                 unit = newUnit,
                 description = newDescription,
-                photoUrl = newPhotoUrl ?: existingMedication.photoUrl,
+                photoUrl = photoUrl,
                 supply = existingMedication.supply?.copy(
                     expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null
                 ) ?: com.example.pillmate.domain.model.MedicationSupply(

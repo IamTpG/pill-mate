@@ -31,18 +31,23 @@ val appModule = module {
     single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
     
     single { com.example.pillmate.util.DataGenerator(get()) }
+    single { com.example.pillmate.util.FcmTokenManager(get()) }
 
     factory { LogMedicationUseCase(get(), get()) }
+    factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
+    factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
+    
+    single { com.example.pillmate.notification.MedicationNotificationManager(get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
-
     single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MedicationLogViewModel(get(), get()) }
-    viewModel { CabinetViewModel(get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get()) }
+    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
 }

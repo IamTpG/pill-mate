@@ -74,8 +74,9 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation(libs.koin.android)
+    implementation(libs.androidx.navigation.fragment) 
+    implementation(libs.androidx.navigation.ui)
 
-    // Compose UI 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
