@@ -39,14 +39,38 @@ import com.example.pillmate.domain.model.Medication
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
+import com.example.pillmate.presentation.ui.screens.DrugLibrarySearchScreen
+import com.example.pillmate.presentation.ui.screens.DrugInfoScreen
 
 @Composable
 fun CabinetScreen(
     viewModel: CabinetViewModel,
+    libraryViewModel: DrugLibraryViewModel,
     modifier: Modifier = Modifier
 ) {
     // 1. Observe ViewModel
     val uiState by viewModel.uiState.collectAsState()
+
+    val libraryState by libraryViewModel.uiState.collectAsState()
+
+    var showLibrarySearch by remember { mutableStateOf(false) }
+
+    if (libraryState.selectedDrug != null) {
+        DrugInfoScreen(
+            drug = libraryState.selectedDrug!!,
+            onBack = { libraryViewModel.clearSelectedDrug() }
+        )
+        return
+    }
+
+    if (showLibrarySearch) {
+        DrugLibrarySearchScreen(
+            viewModel = libraryViewModel,
+            onBack = { showLibrarySearch = false }
+        )
+        return
+    }
 
     // State to track if the popup is visible
     var showAddDialog by remember { mutableStateOf(false) }
@@ -111,7 +135,8 @@ fun CabinetScreen(
                 CabinetHeader(
                     healthScore = uiState.healthScore,
                     activeCount = uiState.activeMedsCount,
-                    lowStockCount = uiState.lowStockCount
+                    lowStockCount = uiState.lowStockCount,
+                    onSearchClick = { showLibrarySearch = true }
                 )
             }
 

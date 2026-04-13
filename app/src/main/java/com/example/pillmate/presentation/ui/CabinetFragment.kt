@@ -8,11 +8,13 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.example.pillmate.presentation.ui.screens.CabinetScreen
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
+import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CabinetFragment : Fragment() {
 
     private val cabinetViewModel: CabinetViewModel by viewModel()
+    private val drugLibraryViewModel: DrugLibraryViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -21,7 +23,7 @@ class CabinetFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                CabinetScreen(viewModel = cabinetViewModel)
+                CabinetScreen(viewModel = cabinetViewModel, libraryViewModel = drugLibraryViewModel)
             }
         }
     }

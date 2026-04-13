@@ -18,6 +18,12 @@ import com.example.pillmate.data.repository.CabinetRepositoryImpl
 import com.example.pillmate.domain.repository.CabinetRepository
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 import org.koin.android.ext.koin.androidContext
+import com.example.pillmate.data.remote.api.OpenFdaApi
+import com.example.pillmate.data.repository.DrugLibraryRepositoryImpl
+import com.example.pillmate.domain.repository.DrugLibraryRepository
+import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -43,6 +49,16 @@ val appModule = module {
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
     single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
+    
+    single {
+        Retrofit.Builder()
+            .baseUrl("https://api.fda.gov/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(OpenFdaApi::class.java)
+    }
+    
+    single<DrugLibraryRepository> { DrugLibraryRepositoryImpl(get()) }
 }
 
 val viewModelModule = module {
@@ -50,4 +66,5 @@ val viewModelModule = module {
     viewModel { MedicationLogViewModel(get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
 }
