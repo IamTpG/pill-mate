@@ -18,6 +18,8 @@ class MedicationNotificationManager(private val context: Context) {
         const val CHANNEL_ID = "medication_reminders"
         const val CHANNEL_NAME = "Medication Reminders"
         const val NOTIFICATION_ID = 1001
+        const val ALARM_CHANNEL_ID = "medication_alarms"
+        const val ALARM_CHANNEL_NAME = "Critical Medication Alarms"
     }
 
     init {
@@ -34,14 +36,28 @@ class MedicationNotificationManager(private val context: Context) {
             }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+
+            // Dedicated channel for Alarms
+            val alarmChannel = NotificationChannel(ALARM_CHANNEL_ID, ALARM_CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Critical alarms that bypass DND"
+                enableLights(true)
+                enableVibration(true)
+                setSound(android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI, android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build())
+            }
+            notificationManager.createNotificationChannel(alarmChannel)
         }
     }
 
-    fun showReminderNotification(medId: String, scheduleId: String, medName: String, dose: String) {
+    fun showReminderNotification(medId: String, scheduleId: String, medName: String, dose: String, reminderType: String = "NOTIFICATION") {
         createNotificationChannel() // Ensure channel exists
         val fullScreenIntent = Intent(context, TaskAlarmActivity::class.java).apply {
             putExtra("MED_ID", medId)
             putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("MED_NAME", medName)
+            putExtra("DOSE_TEXT", dose)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -78,7 +94,8 @@ class MedicationNotificationManager(private val context: Context) {
             context, 3, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+        val channelId = if (reminderType == "ALARM") ALARM_CHANNEL_ID else CHANNEL_ID
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info) 
             .setContentTitle("Time for $medName")
             .setContentText("Check your dosage details")
@@ -111,6 +128,7 @@ class MedicationNotificationManager(private val context: Context) {
             putExtra("SCHEDULE_ID", scheduleId)
             putExtra("MED_NAME", medName)
             putExtra("DOSE", dose)
+            putExtra("REMINDER_TYPE", reminderType)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -119,8 +137,6 @@ class MedicationNotificationManager(private val context: Context) {
             intent, 
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        intent.putExtra("REMINDER_TYPE", reminderType)
 
         val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
 

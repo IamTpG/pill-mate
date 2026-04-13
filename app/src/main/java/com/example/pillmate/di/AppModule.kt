@@ -43,5 +43,5 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MedicationLogViewModel(get(), get()) }
     viewModel { com.example.pillmate.presentation.ui.ReminderViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
 }

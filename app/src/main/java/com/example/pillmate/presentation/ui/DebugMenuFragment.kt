@@ -64,6 +64,27 @@ class DebugMenuFragment : BottomSheetDialogFragment() {
                 }
             )
         }
+
+        binding.btnCreateTestSchedule.setOnClickListener {
+            binding.btnCreateTestSchedule.isEnabled = false
+            viewModel.createTestScheduleIn1Min(
+                onSuccess = {
+                    val alarmManager = requireContext().getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
+                    val next = alarmManager.nextAlarmClock?.triggerTime
+                    val timeMsg = if (next != null) {
+                        java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(next))
+                    } else "None"
+                    
+                    Toast.makeText(requireContext(), "Next alarm: $timeMsg", Toast.LENGTH_LONG).show()
+                    binding.btnCreateTestSchedule.isEnabled = true
+                    dismiss()
+                },
+                onError = { e ->
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    binding.btnCreateTestSchedule.isEnabled = true
+                }
+            )
+        }
     }
 
     override fun onDestroyView() {

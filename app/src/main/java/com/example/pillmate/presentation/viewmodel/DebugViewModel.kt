@@ -3,15 +3,24 @@ package com.example.pillmate.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.usecase.CreateScheduleUseCase
+import com.example.pillmate.domain.usecase.ManageReminderUseCase
+import com.example.pillmate.domain.model.Schedule
+import com.example.pillmate.domain.model.ScheduleEvent
+import com.example.pillmate.domain.model.Reminder
+import com.example.pillmate.domain.model.ReminderType
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.notification.MedicationNotificationManager
 import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class DebugViewModel(
     private val generator: DataGenerator,
     private val createScheduleUseCase: CreateScheduleUseCase,
+    private val manageReminderUseCase: ManageReminderUseCase,
     private val profileId: String,
     private val db: FirebaseFirestore,
     private val notificationManager: MedicationNotificationManager
@@ -64,6 +73,46 @@ class DebugViewModel(
                     }
                 } else {
                     onError(Exception("No schedules found! Generate data first."))
+                }
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
+
+    fun createTestScheduleIn1Min(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                val futureTime = Date(System.currentTimeMillis() + 60000) // 1 min in future
+                val startTime = dateFormat.format(futureTime)
+
+                // Try to find a real medication to link to
+                val medsSnapshot = db.collection("profiles").document(profileId)
+                    .collection("medications").limit(1).get().await()
+                val realMedId = if (!medsSnapshot.isEmpty) medsSnapshot.documents[0].id else "debug_med_id"
+
+                val newSchedule = Schedule(
+                    id = "debug_test_1m_alarm",
+                    startTime = startTime,
+                    recurrenceRule = "FREQ=DAILY;COUNT=10",
+                    reminders = listOf(
+                        Reminder(minutesBefore = 0, type = ReminderType.ALARM)
+                    ),
+                    eventSnapshot = ScheduleEvent(
+                        sourceId = realMedId,
+                        title = "Test Medicine",
+                        dose = 2.0f,
+                        unit = "pills"
+                    )
+                )
+
+                // ManageReminderUseCase handles both saving to repo and setting exactly the AlarmManager alarms
+                val result = manageReminderUseCase(profileId, newSchedule)
+                if (result.isSuccess) {
+                    onSuccess()
+                } else {
+                    onError((result.exceptionOrNull() ?: Exception("Unknown error")) as Exception)
                 }
             } catch (e: Exception) {
                 onError(e)

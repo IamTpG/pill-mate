@@ -10,6 +10,7 @@ import com.example.pillmate.domain.usecase.LogMedicationUseCase
 import com.example.pillmate.notification.MedicationNotificationManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +23,7 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
     private val useCase: LogMedicationUseCase by inject()
     private val profileId: String by inject()
     private val db: FirebaseFirestore by inject()
+    private val manageReminderUseCase: com.example.pillmate.domain.usecase.ManageReminderUseCase by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
@@ -53,9 +55,29 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 scheduledTime = Date(), // In a real app, pass the scheduled time
                 dose = 1.0f
             )
-            
             // Dismiss notification after action
             MedicationNotificationManager(context).dismissNotification()
+            
+            // Advance RRULE next occurrence
+            try {
+                val scheduleDoc = db.collection("profiles").document(profileId)
+                    .collection("schedules").document(scheduleId).get().await()
+                val rrule = scheduleDoc.getString("recurrenceRule")
+                if (rrule != null && rrule.contains("FREQ=DAILY")) {
+                    val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
+                    if (scheduleObj != null) {
+                        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                        val currentStart = format.parse(scheduleObj.startTime)
+                        if (currentStart != null) {
+                            val nextStart = Date(currentStart.time + 24 * 60 * 60 * 1000)
+                            val nextSchedule = scheduleObj.copy(startTime = format.format(nextStart))
+                            manageReminderUseCase(profileId, nextSchedule)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
