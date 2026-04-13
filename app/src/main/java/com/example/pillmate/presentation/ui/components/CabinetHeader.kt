@@ -22,6 +22,7 @@ fun CabinetHeader(
     healthScore: Int,
     activeCount: Int,
     lowStockCount: Int,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -49,7 +50,7 @@ fun CabinetHeader(
                     )
                 }
                 IconButton(
-                    onClick = { /* TODO: Launch Med Info Search */ },
+                    onClick = onSearchClick,
                     modifier = Modifier
                         .size(48.dp)
                         .background(Color.White, shape = CircleShape)
