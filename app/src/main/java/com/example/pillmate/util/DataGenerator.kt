@@ -22,6 +22,9 @@ class DataGenerator(private val db: FirebaseFirestore) {
             mapOf("name" to "Metformin", "unit" to "pill", "description" to "Diabetes")
         )
 
+        val cal = Calendar.getInstance()
+        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+
         for (medData in meds) {
             val medRef = profileRef.collection("medications").add(medData).await()
             
@@ -34,13 +37,21 @@ class DataGenerator(private val db: FirebaseFirestore) {
             )).await()
 
             // 3. Create Schedules
+            val scheduleHour = when(medData["name"]) {
+                "Lisinopril" -> 8
+                "Multivitamin" -> 9
+                else -> 13
+            }
+            
+            cal.set(Calendar.HOUR_OF_DAY, scheduleHour)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            val isoStartTime = isoFormat.format(cal.time)
+
             val schedule = Schedule(
                 type = TaskType.MEDICATION,
-                startTime = when(medData["name"]) {
-                    "Lisinopril" -> "08:00"
-                    "Multivitamin" -> "09:00"
-                    else -> "13:00"
-                },
+                startTime = isoStartTime,
+                recurrenceRule = "FREQ=DAILY",
                 eventSnapshot = ScheduleEvent(
                     sourceId = medRef.id,
                     title = medData["name"] as String,

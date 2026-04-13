@@ -99,6 +99,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.rvTasks.apply {
             layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
             adapter = taskAdapter
+            isNestedScrollingEnabled = false
+            setHasFixedSize(false)
         }
     }
 
