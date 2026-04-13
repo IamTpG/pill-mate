@@ -54,8 +54,8 @@ class GetHomeTasksUseCase(
                     )
                 }.sortedBy { it.time }
 
-                val completed = logs.count { it.status == LogStatus.COMPLETED }
-                val total = schedules.size
+                val completed = homeTasks.count { it.status == LogStatus.COMPLETED }
+                val total = homeTasks.size
                 
                 HomeData(homeTasks, completed, total)
             }
