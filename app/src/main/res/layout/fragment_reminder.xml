@@ -34,15 +34,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/headerOverlay"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavPlaceholder"
+        app:layout_constraintBottom_toBottomOf="parent"
         tools:listitem="@layout/item_schedule_reminder" />
-
-    <!-- Bottom Nav Placeholder -->
-    <View
-        android:id="@+id/bottomNavPlaceholder"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

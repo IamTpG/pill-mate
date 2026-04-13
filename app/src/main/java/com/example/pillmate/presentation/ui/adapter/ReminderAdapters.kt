@@ -38,12 +38,37 @@ class ScheduleReminderAdapter(
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvTitle: TextView = itemView.findViewById(R.id.tvScheduleTitle)
         private val tvTime: TextView = itemView.findViewById(R.id.tvScheduleTime)
+        private val tvRRULE: TextView = itemView.findViewById(R.id.tvScheduleRRULE)
         private val btnAdd: ImageButton = itemView.findViewById(R.id.btnAddReminder)
         private val rvReminders: RecyclerView = itemView.findViewById(R.id.rvReminders)
 
         fun bind(schedule: Schedule) {
             tvTitle.text = schedule.eventSnapshot.title
-            tvTime.text = schedule.startTime
+            
+            // Format time nicely
+            val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+            val hhmmFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+            val hFormat = java.text.SimpleDateFormat("H:m", java.util.Locale.getDefault())
+            val displayFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+
+            val startTimeStr = schedule.startTime
+            val parsedTime: java.util.Date? = try {
+                when {
+                    startTimeStr.contains("T") -> isoFormat.parse(startTimeStr)
+                    else -> try { hhmmFormat.parse(startTimeStr) } catch(e: Exception) { hFormat.parse(startTimeStr) }
+                }
+            } catch (e: Exception) { null }
+
+            tvTime.text = if (parsedTime != null) displayFormat.format(parsedTime) else startTimeStr
+            
+            // Format RRULE nicely
+            val readableRRULE = when {
+                schedule.recurrenceRule?.contains("FREQ=DAILY") == true -> "Daily"
+                schedule.recurrenceRule?.contains("FREQ=WEEKLY") == true -> "Weekly"
+                !schedule.recurrenceRule.isNullOrBlank() -> schedule.recurrenceRule
+                else -> ""
+            }
+            tvRRULE.text = if (readableRRULE.isNotBlank()) "| $readableRRULE" else ""
 
             val reminderAdapter = ReminderAdapter(
                 onEditClick = { reminder -> onEditReminderClick(schedule, reminder) },

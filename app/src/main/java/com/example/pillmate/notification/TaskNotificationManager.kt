@@ -57,7 +57,10 @@ class TaskNotificationManager(private val context: Context) {
         title: String,
         details: String,
         taskType: String = "OTHER",
-        reminderType: String = "NOTIFICATION"
+        reminderType: String = "NOTIFICATION",
+        rrule: String? = null,
+        startTime: String? = null,
+        instructions: String? = null
     ) {
         createNotificationChannel()
         val fullScreenIntent = Intent(context, TaskAlarmActivity::class.java).apply {
@@ -66,6 +69,9 @@ class TaskNotificationManager(private val context: Context) {
             putExtra("TITLE", title)
             putExtra("DETAILS", details)
             putExtra("TASK_TYPE", taskType)
+            putExtra("EXTRA_RRULE", rrule)
+            putExtra("EXTRA_START_TIME", startTime)
+            putExtra("EXTRA_INSTRUCTIONS", instructions)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -137,14 +143,17 @@ class TaskNotificationManager(private val context: Context) {
     }
 
     fun scheduleTaskNotification(
-        sourceId: String, 
-        scheduleId: String, 
-        title: String, 
-        details: String, 
-        delaySeconds: Int, 
+        sourceId: String,
+        scheduleId: String,
+        title: String,
+        details: String,
+        delaySeconds: Int,
         requestCode: Int,
         taskType: String = "OTHER",
-        reminderType: String = "NOTIFICATION"
+        reminderType: String = "NOTIFICATION",
+        rrule: String? = null,
+        startTime: String? = null,
+        instructions: String? = null
     ): Boolean {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
@@ -154,6 +163,9 @@ class TaskNotificationManager(private val context: Context) {
             putExtra("DETAILS", details)
             putExtra("TASK_TYPE", taskType)
             putExtra("REMINDER_TYPE", reminderType)
+            putExtra("EXTRA_RRULE", rrule)
+            putExtra("EXTRA_START_TIME", startTime)
+            putExtra("EXTRA_INSTRUCTIONS", instructions)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

@@ -128,4 +128,51 @@ class DebugViewModel(
             }
         }
     }
+
+    fun getSchedulesList(onSuccess: (List<Schedule>) -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val snapshot = db.collection("profiles").document(profileId)
+                    .collection("schedules").get().await()
+                val schedules = snapshot.documents.mapNotNull { it.toObject(Schedule::class.java)?.copy(id = it.id) }
+                onSuccess(schedules)
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
+
+    fun triggerSpecificReminder(schedule: Schedule, reminder: Reminder, onSuccess: (String) -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val medId = schedule.eventSnapshot.sourceId
+                val medName = schedule.eventSnapshot.title
+                val dose = schedule.eventSnapshot.dose.toString()
+                val unit = schedule.eventSnapshot.unit ?: "dose"
+                val taskType = schedule.type.name
+                
+                val wasExact = notificationManager.scheduleTaskNotification(
+                    sourceId = medId,
+                    scheduleId = schedule.id,
+                    title = "$medName (Manual)",
+                    details = "Triggered ${reminder.type} at offset ${reminder.minutesBefore}m. Dose: $dose $unit",
+                    delaySeconds = 5,
+                    requestCode = (schedule.id + reminder.type.name).hashCode(),
+                    taskType = taskType,
+                    reminderType = reminder.type.name,
+                    rrule = schedule.recurrenceRule,
+                    startTime = schedule.startTime,
+                    instructions = schedule.eventSnapshot.instructions
+                )
+                
+                if (wasExact) {
+                    onSuccess("Scheduled in 5s: $medName (${reminder.type})")
+                } else {
+                    onSuccess("Scheduled but might be delayed: $medName")
+                }
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
 }

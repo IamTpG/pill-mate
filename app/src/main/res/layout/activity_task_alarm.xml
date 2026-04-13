@@ -49,7 +49,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="It's time for your"
+        android:text="It's time for"
         android:textColor="@color/white"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -58,9 +58,12 @@
 
     <TextView
         android:id="@+id/tvMedName"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:gravity="center"
         android:text="LISINOPRIL"
+        android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="48sp"
         android:textStyle="bold"
@@ -157,9 +160,9 @@
             android:text="Next: 8:00 PM"
             android:textColor="@color/white"
             android:textSize="14sp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
             app:layout_constraintBottom_toBottomOf="@id/ivTimeIcon"
-            app:layout_constraintEnd_toStartOf="@id/ivArrowNext"
+            app:layout_constraintStart_toEndOf="@id/tvScheduledTime"
             app:layout_constraintTop_toTopOf="@id/ivTimeIcon" />
 
         <ImageView
@@ -167,45 +170,46 @@
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:src="@android:drawable/ic_media_next"
+            android:layout_marginStart="4dp"
             app:layout_constraintBottom_toBottomOf="@id/tvNextTime"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/tvNextTime"
             app:layout_constraintTop_toTopOf="@id/tvNextTime"
             app:tint="@color/semi_transparent_white" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Chips/Tags -->
-    <LinearLayout
-        android:id="@+id/llChips"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/clInfoCard">
+<!--    &lt;!&ndash; Chips/Tags &ndash;&gt;-->
+<!--    <LinearLayout-->
+<!--        android:id="@+id/llChips"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="20dp"-->
+<!--        android:orientation="horizontal"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/clInfoCard">-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_card_alarm"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="💊 Take with Water"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            android:layout_marginEnd="8dp" />
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/bg_card_alarm"-->
+<!--            android:paddingHorizontal="12dp"-->
+<!--            android:paddingVertical="6dp"-->
+<!--            android:text="💊 Take with Water"-->
+<!--            android:textColor="@color/white"-->
+<!--            android:textSize="12sp"-->
+<!--            android:layout_marginEnd="8dp" />-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_card_alarm"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="⏰ Daily dose"
-            android:textColor="@color/white"
-            android:textSize="12sp" />
-    </LinearLayout>
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/bg_card_alarm"-->
+<!--            android:paddingHorizontal="12dp"-->
+<!--            android:paddingVertical="6dp"-->
+<!--            android:text="⏰ Daily dose"-->
+<!--            android:textColor="@color/white"-->
+<!--            android:textSize="12sp" />-->
+<!--    </LinearLayout>-->
 
     <!-- Action Buttons -->
     <LinearLayout

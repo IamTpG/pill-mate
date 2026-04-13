@@ -43,4 +43,11 @@
         android:text="Create Schedule (1 min future)"
         android:layout_marginBottom="12dp"/>
 
+    <Button
+        android:id="@+id/btnTriggerSpecific"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose &amp; Trigger Specific Alarm"
+        android:layout_marginBottom="12dp"/>
+
 </LinearLayout>

@@ -8,6 +8,7 @@ import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
+import com.example.pillmate.presentation.viewmodel.ReminderViewModel
 import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -42,6 +43,6 @@ val appModule = module {
 val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get()) }
-    viewModel { com.example.pillmate.presentation.ui.ReminderViewModel(get(), get(), get()) }
+    viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
 }

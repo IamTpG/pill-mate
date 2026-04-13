@@ -61,7 +61,46 @@ class TaskAlarmActivity : AppCompatActivity() {
         val taskType = try { TaskType.valueOf(taskTypeString) } catch (e: Exception) { TaskType.OTHER }
 
         binding.tvMedName.text = title
+        val instructions = intent.getStringExtra("EXTRA_INSTRUCTIONS") ?: ""
+        val startTimeStr = intent.getStringExtra("EXTRA_START_TIME")
+        val rrule = intent.getStringExtra("EXTRA_RRULE")
+
+        binding.tvMedCategory.text = instructions.ifBlank { "no description" }
         binding.tvMedDosage.text = details
+
+        // Time calculations
+        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val fallbackFormat = java.text.SimpleDateFormat("H:m", java.util.Locale.getDefault())
+
+        val parsedStart: java.util.Date? = try {
+            when {
+                startTimeStr?.contains("T") == true -> isoFormat.parse(startTimeStr)
+                !startTimeStr.isNullOrBlank() -> {
+                    try { displayFormat.parse(startTimeStr) } 
+                    catch (e: Exception) { fallbackFormat.parse(startTimeStr) }
+                }
+                else -> null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TaskAlarmActivity", "Parse error for $startTimeStr", e)
+            null
+        }
+
+        binding.tvScheduledTime.text = if (parsedStart != null) "Scheduled: ${displayFormat.format(parsedStart)}" else "Scheduled: ${startTimeStr ?: "--:--"}"
+
+        if (!rrule.isNullOrBlank() && parsedStart != null) {
+            val cal = java.util.Calendar.getInstance()
+            cal.time = parsedStart
+            cal.add(java.util.Calendar.DAY_OF_YEAR, 1) // Default to +24h for simple daily display
+            binding.tvNextTime.text = "Next: ${displayFormat.format(cal.time)}"
+            binding.ivArrowNext.visibility = android.view.View.VISIBLE
+        } else {
+            binding.tvNextTime.text = ""
+            binding.ivArrowNext.visibility = android.view.View.GONE
+        }
+        
+        android.util.Log.d("TaskAlarmActivity", "Data: $title, $startTimeStr, $rrule")
 
         // Change button text based on task type
         binding.btnLogDose.text = when (taskType) {

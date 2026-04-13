@@ -14,8 +14,21 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         val details = intent.getStringExtra("DETAILS") ?: ""
         val taskType = intent.getStringExtra("TASK_TYPE") ?: "OTHER"
         val reminderType = intent.getStringExtra("REMINDER_TYPE") ?: "NOTIFICATION"
-
+        val rrule = intent.getStringExtra("EXTRA_RRULE")
+        val startTime = intent.getStringExtra("EXTRA_START_TIME")
+        val instructions = intent.getStringExtra("EXTRA_INSTRUCTIONS")
         val notificationManager = TaskNotificationManager(context)
-        notificationManager.showTaskNotification(sourceId, scheduleId, title, details, taskType, reminderType)
+
+        notificationManager.showTaskNotification(
+            sourceId = sourceId,
+            scheduleId = scheduleId,
+            title = title,
+            details = details,
+            taskType = taskType,
+            reminderType = reminderType,
+            rrule = rrule,
+            startTime = startTime,
+            instructions = instructions
+        )
     }
 }

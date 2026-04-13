@@ -16,6 +16,7 @@ import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.ReminderType
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.presentation.ui.adapter.ScheduleReminderAdapter
+import com.example.pillmate.presentation.viewmodel.ReminderViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ReminderFragment : Fragment() {
@@ -36,6 +37,20 @@ class ReminderFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            // Top padding for header
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+            
+            // Bottom padding for RecyclerView to account for both System Nav and App Bottom Nav
+            // App Bottom Nav is 60dp in other layouts, let's use that as a safe margin
+            val density = resources.displayMetrics.density
+            val bottomNavHeight = (60 * density).toInt()
+            binding.rvSchedules.setPadding(0, 0, 0, systemBars.bottom + bottomNavHeight)
+            
+            insets
+        }
 
         adapter = ScheduleReminderAdapter(
             onAddReminderClick = { schedule ->
