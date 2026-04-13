@@ -1,9 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
+    kotlin("android")
+    alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.google.services)
     alias(libs.plugins.ksp)
-    kotlin("plugin.serialization") version "1.9.0"
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -29,13 +31,21 @@ android {
             )
         }
     }
+
     buildFeatures {
-        viewBinding = true
+        viewBinding = true 
+        compose = true
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
     }
 }
 
@@ -45,6 +55,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    
     // Room
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
@@ -63,7 +74,18 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation(libs.koin.android)
+    implementation(libs.androidx.navigation.fragment) 
+    implementation(libs.androidx.navigation.ui)
 
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.coil.compose)
+    
+    // Retrofit & Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 }

@@ -1,4 +1,4 @@
-package com.example.pillmate.presentation.ui
+package com.example.pillmate
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.pillmate.authentication.SignUpOptionsActivity
 import com.example.pillmate.R
+import com.example.pillmate.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.android.ext.android.inject
 

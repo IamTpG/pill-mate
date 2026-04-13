@@ -31,7 +31,7 @@
         <activity android:name=".authentication.SignUpWithEmailActivity" />
         <activity android:name=".authentication.SignInWithEmailActivity" />
 
-        <activity android:name=".presentation.ui.MainActivity" />
+        <activity android:name=".MainActivity" />
 
         <activity 
             android:name=".presentation.ui.TaskAlarmActivity"
