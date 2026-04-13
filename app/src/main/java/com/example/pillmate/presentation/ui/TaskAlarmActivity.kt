@@ -12,9 +12,10 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
-import com.example.pillmate.domain.usecase.LogMedicationUseCase
-import com.example.pillmate.presentation.viewmodel.MedicationLogViewModel
+import com.example.pillmate.domain.model.TaskType
+import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.example.pillmate.databinding.ActivityTaskAlarmBinding
+import com.example.pillmate.notification.TaskNotificationManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -24,7 +25,7 @@ class TaskAlarmActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTaskAlarmBinding
     
-    private val viewModel: MedicationLogViewModel by viewModel()
+    private val viewModel: TaskLogViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,15 +55,28 @@ class TaskAlarmActivity : AppCompatActivity() {
         }
 
         // Set UI from Intent
-        binding.tvMedName.text = intent.getStringExtra("MED_NAME") ?: "Medication"
-        binding.tvMedDosage.text = intent.getStringExtra("DOSE_TEXT") ?: "1.0 Dose"
+        val title = intent.getStringExtra("TITLE") ?: "Task"
+        val details = intent.getStringExtra("DETAILS") ?: ""
+        val taskTypeString = intent.getStringExtra("TASK_TYPE") ?: "OTHER"
+        val taskType = try { TaskType.valueOf(taskTypeString) } catch (e: Exception) { TaskType.OTHER }
+
+        binding.tvMedName.text = title
+        binding.tvMedDosage.text = details
+
+        // Change button text based on task type
+        binding.btnLogDose.text = when (taskType) {
+            TaskType.MEDICATION -> "TAKE NOW"
+            TaskType.APPOINTMENT -> "ATTEND"
+            TaskType.EXERCISE -> "START"
+            else -> "COMPLETE"
+        }
 
         // Setup observers
         viewModel.logResult.observe(this) { result ->
             if (result != null) {
                 if (result.isSuccess) {
-                    Toast.makeText(this, "Dose logged successfully!", Toast.LENGTH_SHORT).show()
-                    com.example.pillmate.notification.MedicationNotificationManager(this).dismissNotification()
+                    Toast.makeText(this, "Task completed!", Toast.LENGTH_SHORT).show()
+                    TaskNotificationManager(this).dismissNotification()
                     finish()
                 } else {
                     Toast.makeText(this, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
@@ -70,32 +84,32 @@ class TaskAlarmActivity : AppCompatActivity() {
             }
         }
 
-        // Handle Click - Take
+        // Handle Click - Action
         binding.btnLogDose.setOnClickListener {
-            val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
-            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
+            val sourceId = intent.getStringExtra("SOURCE_ID") ?: "mock_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: sourceId
             val scheduledTime = Date()
             val dose = 1.0f
             
-            viewModel.onTakeClicked(medId, scheduleId, scheduledTime, dose)
+            viewModel.onTakeClicked(sourceId, scheduleId, taskType, scheduledTime, dose)
         }
 
         // Handle Click - Skip
         binding.btnSkip.setOnClickListener {
-            val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
-            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
+            val sourceId = intent.getStringExtra("SOURCE_ID") ?: "mock_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: sourceId
             val scheduledTime = Date()
             
-            viewModel.onSkipClicked(medId, scheduleId, scheduledTime)
+            viewModel.onSkipClicked(sourceId, scheduleId, taskType, scheduledTime)
         }
 
         // Handle Click - Snooze
         binding.btnSnooze.setOnClickListener {
-            val medId = intent.getStringExtra("MED_ID") ?: "mock_med_id"
-            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: medId
+            val sourceId = intent.getStringExtra("SOURCE_ID") ?: "mock_id"
+            val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: sourceId
             val scheduledTime = Date()
             
-            viewModel.onSnoozeClicked(medId, scheduleId, scheduledTime)
+            viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, scheduledTime)
         }
     }
 }

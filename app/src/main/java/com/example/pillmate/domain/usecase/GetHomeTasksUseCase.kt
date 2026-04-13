@@ -1,6 +1,7 @@
 package com.example.pillmate.domain.usecase
 
 import com.example.pillmate.domain.model.LogStatus
+import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.presentation.model.HomeTask
@@ -44,12 +45,19 @@ class GetHomeTasksUseCase(
                         }
                     }
 
+                    val details = if (schedule.type == TaskType.MEDICATION) {
+                        "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}"
+                    } else {
+                        schedule.eventSnapshot.instructions ?: ""
+                    }
+
                     HomeTask(
                         scheduleId = schedule.id,
-                        medId = schedule.eventSnapshot.sourceId,
+                        sourceId = schedule.eventSnapshot.sourceId,
                         title = schedule.eventSnapshot.title,
                         time = schedule.startTime,
-                        doseDescription = "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}",
+                        doseDescription = details,
+                        taskType = schedule.type,
                         status = status
                     )
                 }.sortedBy { it.time }

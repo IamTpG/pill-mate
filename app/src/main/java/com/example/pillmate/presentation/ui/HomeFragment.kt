@@ -88,10 +88,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         taskAdapter = TaskAdapter { task ->
             val intent = Intent(requireContext(), TaskAlarmActivity::class.java).apply {
-                putExtra("MED_ID", task.medId)
+                putExtra("SOURCE_ID", task.sourceId)
                 putExtra("SCHEDULE_ID", task.scheduleId)
-                putExtra("MED_NAME", task.title)
-                putExtra("DOSE_TEXT", task.doseDescription)
+                putExtra("TITLE", task.title)
+                putExtra("DETAILS", task.doseDescription)
+                putExtra("TASK_TYPE", task.taskType.name)
             }
             startActivity(intent)
         }

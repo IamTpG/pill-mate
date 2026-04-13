@@ -16,7 +16,7 @@
         android:theme="@style/Theme.Pillmate">
 
         <receiver android:name=".receiver.NotificationActionReceiver" android:exported="false" />
-        <receiver android:name=".receiver.MedicationAlarmReceiver" android:exported="false" />
+        <receiver android:name=".receiver.TaskAlarmReceiver" android:exported="false" />
 
         <activity
             android:name=".presentation.ui.LauncherActivity"

@@ -9,7 +9,7 @@ import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.ReminderType
 import com.example.pillmate.util.DataGenerator
-import com.example.pillmate.notification.MedicationNotificationManager
+import com.example.pillmate.notification.TaskNotificationManager
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,7 +23,7 @@ class DebugViewModel(
     private val manageReminderUseCase: ManageReminderUseCase,
     private val profileId: String,
     private val db: FirebaseFirestore,
-    private val notificationManager: MedicationNotificationManager
+    private val notificationManager: TaskNotificationManager
 ) : ViewModel() {
 
     fun generateSampleData(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
@@ -64,7 +64,15 @@ class DebugViewModel(
                     val unit = randomDoc.getString("eventSnapshot.unit") ?: "dose"
                     val doseText = "$dose $unit"
 
-                    val wasExact = notificationManager.scheduleNotification(medId, scheduleId, medName, doseText, 5, medId.hashCode())
+                    val wasExact = notificationManager.scheduleTaskNotification(
+                        sourceId = medId,
+                        scheduleId = scheduleId,
+                        title = medName,
+                        details = doseText,
+                        delaySeconds = 5,
+                        requestCode = medId.hashCode(),
+                        taskType = "MEDICATION"
+                    )
                     
                     if (wasExact) {
                         onSuccess("Exact Alarm scheduled (5s)!")
@@ -102,6 +110,7 @@ class DebugViewModel(
                     eventSnapshot = ScheduleEvent(
                         sourceId = realMedId,
                         title = "Test Medicine",
+                        instructions = "Take 2.0 pills now",
                         dose = 2.0f,
                         unit = "pills"
                     )

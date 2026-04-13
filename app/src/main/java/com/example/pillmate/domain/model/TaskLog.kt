@@ -7,7 +7,7 @@ enum class LogStatus {
 }
 
 enum class TaskType {
-    MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE
+    MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE, OTHER
 }
 
 data class TaskLog(

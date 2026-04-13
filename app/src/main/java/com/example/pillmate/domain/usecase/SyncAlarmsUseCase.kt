@@ -1,12 +1,12 @@
 package com.example.pillmate.domain.usecase
 
 import com.example.pillmate.domain.repository.ScheduleRepository
-import com.example.pillmate.notification.MedicationNotificationManager
+import com.example.pillmate.notification.TaskNotificationManager
 import java.util.Calendar
 
 class SyncAlarmsUseCase(
     private val scheduleRepository: ScheduleRepository,
-    private val notificationManager: MedicationNotificationManager
+    private val notificationManager: TaskNotificationManager
 ) {
     suspend operator fun invoke(profileId: String) {
         val result = scheduleRepository.getSchedules(profileId)
@@ -29,13 +29,14 @@ class SyncAlarmsUseCase(
                     }
                     val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).toInt()
                     
-                    notificationManager.scheduleNotification(
-                        medId = schedule.eventSnapshot.sourceId,
+                    notificationManager.scheduleTaskNotification(
+                        sourceId = schedule.eventSnapshot.sourceId,
                         scheduleId = schedule.id,
-                        medName = schedule.eventSnapshot.title,
-                        dose = "${schedule.eventSnapshot.dose}",
+                        title = schedule.eventSnapshot.title,
+                        details = schedule.eventSnapshot.instructions ?: "",
                         delaySeconds = delaySeconds,
                         requestCode = requestCode,
+                        taskType = schedule.type.name,
                         reminderType = reminder.type.name
                     )
                 }

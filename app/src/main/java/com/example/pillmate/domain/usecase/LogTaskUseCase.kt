@@ -7,14 +7,15 @@ import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import java.util.Date
 
-class LogMedicationUseCase(
+class LogTaskUseCase(
     private val medicationRepository: MedicationRepository,
     private val logRepository: LogRepository
 ) {
     suspend fun execute(
         profileId: String,
-        medId: String,
+        sourceId: String,
         scheduleId: String,
+        taskType: TaskType,
         status: LogStatus,
         scheduledTime: Date,
         dose: Float = 1.0f,
@@ -22,7 +23,7 @@ class LogMedicationUseCase(
     ): Result<Unit> {
         val log = TaskLog(
             scheduleId = scheduleId,
-            type = TaskType.MEDICATION,
+            type = taskType,
             status = status,
             scheduledTime = scheduledTime,
             actualTime = if (status == LogStatus.COMPLETED) Date() else null,
@@ -33,12 +34,10 @@ class LogMedicationUseCase(
         val logResult = logRepository.saveLog(profileId, log)
         if (logResult.isFailure) return logResult
 
-        // 2. If completed (Taken), deduct from inventory
-        if (status == LogStatus.COMPLETED) {
-            val updateResult = medicationRepository.updateMedicationSupply(medId, -dose)
+        // 2. If completed medication, deduct from inventory
+        if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
+            val updateResult = medicationRepository.updateMedicationSupply(sourceId, -dose)
             if (updateResult.isFailure) {
-                // Should we rollback the log? Or just log the error?
-                // For now, return the error.
                 return updateResult
             }
         }

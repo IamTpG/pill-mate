@@ -9,17 +9,17 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.pillmate.R
 import com.example.pillmate.presentation.ui.TaskAlarmActivity
-import com.example.pillmate.receiver.MedicationAlarmReceiver
+import com.example.pillmate.receiver.TaskAlarmReceiver
 import com.example.pillmate.receiver.NotificationActionReceiver
 
-class MedicationNotificationManager(private val context: Context) {
+class TaskNotificationManager(private val context: Context) {
 
     companion object {
-        const val CHANNEL_ID = "medication_reminders"
-        const val CHANNEL_NAME = "Medication Reminders"
+        const val CHANNEL_ID = "task_reminders"
+        const val CHANNEL_NAME = "Task Reminders"
         const val NOTIFICATION_ID = 1001
-        const val ALARM_CHANNEL_ID = "medication_alarms"
-        const val ALARM_CHANNEL_NAME = "Critical Medication Alarms"
+        const val ALARM_CHANNEL_ID = "task_alarms"
+        const val ALARM_CHANNEL_NAME = "Critical Task Alarms"
     }
 
     init {
@@ -30,7 +30,7 @@ class MedicationNotificationManager(private val context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = "Urgent reminders to take your medication"
+                description = "Reminders for scheduled tasks"
                 enableLights(true)
                 enableVibration(true)
             }
@@ -51,13 +51,21 @@ class MedicationNotificationManager(private val context: Context) {
         }
     }
 
-    fun showReminderNotification(medId: String, scheduleId: String, medName: String, dose: String, reminderType: String = "NOTIFICATION") {
-        createNotificationChannel() // Ensure channel exists
+    fun showTaskNotification(
+        sourceId: String,
+        scheduleId: String,
+        title: String,
+        details: String,
+        taskType: String = "OTHER",
+        reminderType: String = "NOTIFICATION"
+    ) {
+        createNotificationChannel()
         val fullScreenIntent = Intent(context, TaskAlarmActivity::class.java).apply {
-            putExtra("MED_ID", medId)
+            putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
-            putExtra("MED_NAME", medName)
-            putExtra("DOSE_TEXT", dose)
+            putExtra("TITLE", title)
+            putExtra("DETAILS", details)
+            putExtra("TASK_TYPE", taskType)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -65,18 +73,26 @@ class MedicationNotificationManager(private val context: Context) {
         )
 
         // Action Intents
-        val takeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = "ACTION_TAKE"
-            putExtra("MED_ID", medId)
-            putExtra("SCHEDULE_ID", scheduleId)
+        val actionText = when (taskType) {
+            "MEDICATION" -> "TAKE NOW"
+            "APPOINTMENT" -> "ATTEND"
+            "EXERCISE" -> "START"
+            else -> "COMPLETE"
         }
-        val takePendingIntent = PendingIntent.getBroadcast(
-            context, 1, takeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        val primaryIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = "ACTION_COMPLETE"
+            putExtra("SOURCE_ID", sourceId)
+            putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("TASK_TYPE", taskType)
+        }
+        val primaryPendingIntent = PendingIntent.getBroadcast(
+            context, 1, primaryIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val skipIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = "ACTION_SKIP"
-            putExtra("MED_ID", medId)
+            putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
         }
         val skipPendingIntent = PendingIntent.getBroadcast(
@@ -85,26 +101,33 @@ class MedicationNotificationManager(private val context: Context) {
 
         val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
             action = "ACTION_SNOOZE"
-            putExtra("MED_ID", medId)
+            putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
-            putExtra("MED_NAME", medName)
-            putExtra("DOSE", dose)
+            putExtra("TITLE", title)
+            putExtra("DETAILS", details)
+            putExtra("TASK_TYPE", taskType)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
             context, 3, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val icon = when (taskType) {
+            "MEDICATION" -> android.R.drawable.ic_dialog_info
+            "APPOINTMENT" -> android.R.drawable.ic_menu_myplaces
+            "EXERCISE" -> android.R.drawable.ic_menu_directions
+            else -> android.R.drawable.ic_menu_agenda
+        }
+
         val channelId = if (reminderType == "ALARM") ALARM_CHANNEL_ID else CHANNEL_ID
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) 
-            .setContentTitle("Time for $medName")
-            .setContentText("Check your dosage details")
-            .setSubText(dose)
+            .setSmallIcon(icon) 
+            .setContentTitle(title)
+            .setContentText(details)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setFullScreenIntent(fullScreenPendingIntent, true)
-            .addAction(0, "TAKE NOW", takePendingIntent)
+            .addAction(0, actionText, primaryPendingIntent)
             .addAction(0, "SNOOZE", snoozePendingIntent)
             .addAction(0, "SKIP", skipPendingIntent)
             .setOngoing(true)
@@ -113,21 +136,23 @@ class MedicationNotificationManager(private val context: Context) {
         notificationManager.notify(NOTIFICATION_ID, builder.build())
     }
 
-    fun scheduleNotification(
-        medId: String, 
+    fun scheduleTaskNotification(
+        sourceId: String, 
         scheduleId: String, 
-        medName: String, 
-        dose: String, 
+        title: String, 
+        details: String, 
         delaySeconds: Int, 
         requestCode: Int,
+        taskType: String = "OTHER",
         reminderType: String = "NOTIFICATION"
     ): Boolean {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        val intent = Intent(context, MedicationAlarmReceiver::class.java).apply {
-            putExtra("MED_ID", medId)
+        val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
+            putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
-            putExtra("MED_NAME", medName)
-            putExtra("DOSE", dose)
+            putExtra("TITLE", title)
+            putExtra("DETAILS", details)
+            putExtra("TASK_TYPE", taskType)
             putExtra("REMINDER_TYPE", reminderType)
         }
         
@@ -188,7 +213,7 @@ class MedicationNotificationManager(private val context: Context) {
 
     fun cancelNotification(requestCode: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        val intent = Intent(context, MedicationAlarmReceiver::class.java)
+        val intent = Intent(context, TaskAlarmReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             requestCode,
