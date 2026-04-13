@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,7 +114,7 @@ fun DrugLibrarySearchScreen(
                 // Empty State EKG icon
                 Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(modifier = Modifier.size(80.dp).background(Color(0xFFE8F5E9).copy(alpha = 0.8f), CircleShape), contentAlignment = Alignment.Center) {
-                        Text("EKG", color = Color(0xFF4CAF50)) // simple placeholder text if icon not loaded
+                        Icon(Icons.Default.FavoriteBorder, contentDescription = "Health", tint = Color(0xFF4CAF50), modifier = Modifier.size(40.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Search the Library", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
