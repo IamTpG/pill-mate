@@ -8,10 +8,10 @@
         android:name="com.example.pillmate.presentation.ui.HomeFragment"
         android:label="Home" />
 
-<!--    <fragment-->
-<!--        android:id="@+id/medicationsFragment"-->
-<!--        android:name="com.example.pillmate.presentation.ui.MedicationsFragment"-->
-<!--        android:label="Medications" />-->
+    <fragment
+        android:id="@+id/cabinet_fragment"
+        android:name="com.example.pillmate.presentation.ui.CabinetFragment"
+        android:label="Cabinet" />
 
     <fragment
         android:id="@+id/settings_fragment"

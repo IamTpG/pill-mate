@@ -18,7 +18,7 @@ import android.text.TextPaint
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.view.View
-import com.example.pillmate.presentation.ui.MainActivity
+import com.example.pillmate.MainActivity
 import com.example.pillmate.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient

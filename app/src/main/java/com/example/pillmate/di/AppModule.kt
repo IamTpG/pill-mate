@@ -13,6 +13,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import com.example.pillmate.data.local.database.AppDatabase
+import com.example.pillmate.data.repository.CabinetRepositoryImpl
+import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.presentation.viewmodel.CabinetViewModel
+import org.koin.android.ext.koin.androidContext
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -33,10 +38,16 @@ val appModule = module {
     factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
     
     single { com.example.pillmate.notification.MedicationNotificationManager(get()) }
+
+    single { AppDatabase.getDatabase(androidContext()) }
+    single { get<AppDatabase>().medicationDao() }
+    single { get<AppDatabase>().supplyLogDao() }
+    single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
 }
 
 val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MedicationLogViewModel(get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get()) }
+    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
 }
