@@ -12,6 +12,11 @@
 <!--        android:title="Medications" />-->
 
     <item
+        android:id="@+id/appointment_fragment"
+        android:icon="@drawable/ic_calendar"
+        android:title="Appointment" />
+
+    <item
         android:id="@+id/settings_fragment"
         android:icon="@drawable/ic_settings"
         android:title="Settings" />

@@ -14,6 +14,11 @@
 <!--        android:label="Medications" />-->
 
     <fragment
+        android:id="@+id/appointment_fragment"
+        android:name="com.example.pillmate.presentation.ui.AppointmentFragment"
+        android:label="Appointment"/>
+
+    <fragment
         android:id="@+id/settings_fragment"
         android:name="com.example.pillmate.presentation.ui.SettingsFragment"
         android:label="Settings" />
