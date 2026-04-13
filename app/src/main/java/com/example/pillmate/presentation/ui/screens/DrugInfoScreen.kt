@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
@@ -76,7 +77,7 @@ fun DrugInfoScreen(
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Box(modifier = Modifier.size(48.dp).background(Color.White, CircleShape).border(1.dp, Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
-                                    Text("EKG", color = Color(0xFF4CAF50), fontSize = 10.sp)
+                                    Icon(Icons.Default.FavoriteBorder, contentDescription = "Health", tint = Color(0xFF4CAF50), modifier = Modifier.size(24.dp))
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
