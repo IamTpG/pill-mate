@@ -1,14 +1,20 @@
 package com.example.pillmate.presentation.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.domain.usecase.ManageReminderUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+data class ReminderUiState(
+    val schedules: List<Schedule> = emptyList(),
+    val isLoading: Boolean = false
+)
 
 class ReminderViewModel(
     private val scheduleRepository: ScheduleRepository,
@@ -16,23 +22,24 @@ class ReminderViewModel(
     private val profileId: String
 ) : ViewModel() {
 
-    private val _schedules = MutableLiveData<List<Schedule>>()
-    val schedules: LiveData<List<Schedule>> = _schedules
+    private val _uiState = MutableStateFlow(ReminderUiState())
+    val uiState: StateFlow<ReminderUiState> = _uiState.asStateFlow()
 
     init {
         loadSchedules()
     }
 
     private fun loadSchedules() {
+        _uiState.value = _uiState.value.copy(isLoading = true)
         viewModelScope.launch {
             scheduleRepository.getSchedulesFlow(profileId).collect {
-                _schedules.postValue(it)
+                _uiState.value = _uiState.value.copy(schedules = it, isLoading = false)
             }
         }
     }
 
     fun addReminder(scheduleId: String, reminder: Reminder) {
-        val currentSchedules = _schedules.value ?: return
+        val currentSchedules = _uiState.value.schedules
         val schedule = currentSchedules.find { it.id == scheduleId } ?: return
         val newReminders = schedule.reminders + reminder
         val updatedSchedule = schedule.copy(reminders = newReminders)
@@ -43,7 +50,7 @@ class ReminderViewModel(
     }
 
     fun removeReminder(scheduleId: String, reminder: Reminder) {
-        val currentSchedules = _schedules.value ?: return
+        val currentSchedules = _uiState.value.schedules
         val schedule = currentSchedules.find { it.id == scheduleId } ?: return
         val newReminders = schedule.reminders - reminder
         val updatedSchedule = schedule.copy(reminders = newReminders)
@@ -56,7 +63,7 @@ class ReminderViewModel(
     }
 
     fun updateReminder(scheduleId: String, oldReminder: Reminder, newReminder: Reminder) {
-        val currentSchedules = _schedules.value ?: return
+        val currentSchedules = _uiState.value.schedules
         val schedule = currentSchedules.find { it.id == scheduleId } ?: return
         val newReminders = schedule.reminders.map { if (it == oldReminder) newReminder else it }
         val updatedSchedule = schedule.copy(reminders = newReminders)
@@ -67,4 +74,4 @@ class ReminderViewModel(
             manageReminderUseCase(profileId, updatedSchedule)
         }
     }
-}
+}
