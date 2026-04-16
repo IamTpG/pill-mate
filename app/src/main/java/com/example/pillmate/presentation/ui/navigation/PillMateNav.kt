@@ -8,6 +8,11 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object Cabinet : Screen("cabinet", "Cabinet", R.drawable.pill)
     object Reminders : Screen("reminders", "Reminders", R.drawable.ic_reminder)
     object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
+    
+    // Auth screens
+    object AuthOptions : Screen("auth_options", "Auth", 0)
+    object SignIn : Screen("sign_in", "Sign In", 0)
+    object SignUp : Screen("sign_up", "Sign Up", 0)
 }
 
 val bottomNavItems = listOf(

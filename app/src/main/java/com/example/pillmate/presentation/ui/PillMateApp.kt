@@ -25,7 +25,101 @@ fun PillMateApp(
     onSignOutComplete: () -> Unit
 ) {
     val navController = rememberNavController()
+    val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+    val startDestination = if (auth.currentUser != null) "main_graph" else "auth_graph"
 
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        // Auth Graph
+        androidx.navigation.compose.navigation(
+            route = "auth_graph",
+            startDestination = Screen.AuthOptions.route
+        ) {
+            composable(Screen.AuthOptions.route) {
+                val viewModel: AuthViewModel = koinViewModel()
+                SignUpOptionsScreen(
+                    viewModel = viewModel,
+                    onNavigateToSignIn = { navController.navigate(Screen.SignIn.route) },
+                    onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
+                    onAuthSuccess = {
+                        navController.navigate("main_graph") {
+                            popUpTo("auth_graph") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable(Screen.SignIn.route) {
+                val viewModel: AuthViewModel = koinViewModel()
+                SignInScreen(
+                    viewModel = viewModel,
+                    onAuthSuccess = {
+                        navController.navigate("main_graph") {
+                            popUpTo("auth_graph") { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.SignUp.route) {
+                val viewModel: AuthViewModel = koinViewModel()
+                SignUpScreen(
+                    viewModel = viewModel,
+                    onAuthSuccess = {
+                        navController.navigate("main_graph") {
+                            popUpTo("auth_graph") { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        // Main App Graph
+        androidx.navigation.compose.navigation(
+            route = "main_graph",
+            startDestination = Screen.Home.route
+        ) {
+            composable(Screen.Home.route) {
+                MainScaffold(navController, onSignOutComplete) {
+                    val viewModel: HomeViewModel = koinViewModel()
+                    HomeScreen(viewModel = viewModel)
+                }
+            }
+            composable(Screen.Cabinet.route) {
+                MainScaffold(navController, onSignOutComplete) {
+                    val cabinetViewModel: CabinetViewModel = koinViewModel()
+                    val drugLibraryViewModel: DrugLibraryViewModel = koinViewModel()
+                    CabinetScreen(viewModel = cabinetViewModel, libraryViewModel = drugLibraryViewModel)
+                }
+            }
+            composable(Screen.Reminders.route) {
+                MainScaffold(navController, onSignOutComplete) {
+                    val viewModel: ReminderViewModel = koinViewModel()
+                    ReminderScreen(viewModel = viewModel)
+                }
+            }
+            composable(Screen.Settings.route) {
+                MainScaffold(navController, onSignOutComplete) {
+                    SettingsScreen(onSignOutComplete = {
+                        onSignOutComplete()
+                        navController.navigate("auth_graph") {
+                            popUpTo("main_graph") { inclusive = true }
+                        }
+                    })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainScaffold(
+    navController: androidx.navigation.NavHostController,
+    onSignOutComplete: () -> Unit,
+    content: @Composable (PaddingValues) -> Unit
+) {
     Scaffold(
         bottomBar = {
             NavigationBar(
@@ -67,27 +161,6 @@ fun PillMateApp(
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(Screen.Home.route) {
-                val viewModel: HomeViewModel = koinViewModel()
-                HomeScreen(viewModel = viewModel)
-            }
-            composable(Screen.Cabinet.route) {
-                val cabinetViewModel: CabinetViewModel = koinViewModel()
-                val drugLibraryViewModel: DrugLibraryViewModel = koinViewModel()
-                CabinetScreen(viewModel = cabinetViewModel, libraryViewModel = drugLibraryViewModel)
-            }
-            composable(Screen.Reminders.route) {
-                val viewModel: ReminderViewModel = koinViewModel()
-                ReminderScreen(viewModel = viewModel)
-            }
-            composable(Screen.Settings.route) {
-                SettingsScreen(onSignOutComplete = onSignOutComplete)
-            }
-        }
+        content(innerPadding)
     }
 }
