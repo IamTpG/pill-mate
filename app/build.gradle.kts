@@ -58,6 +58,8 @@ dependencies {
     
     // Room
     implementation(libs.room.runtime)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.foundation.layout)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
@@ -74,6 +76,7 @@ dependencies {
     implementation(libs.firebase.messaging)
 
     implementation(libs.koin.android)
+    implementation(libs.koin.compose)
     implementation(libs.androidx.navigation.fragment) 
     implementation(libs.androidx.navigation.ui)
 

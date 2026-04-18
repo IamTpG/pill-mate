@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -269,5 +270,3 @@ fun StatusBadge(status: LogStatus?) {
     }
 }
 
-// Added this to fix the missing imports/properties
-import androidx.compose.ui.graphics.graphicsLayer

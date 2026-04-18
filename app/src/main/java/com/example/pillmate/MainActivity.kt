@@ -11,11 +11,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         setContent {
-            PillMateApp(
-                onSignOutComplete = {
-                    finish()
-                }
-            )
+            org.koin.compose.KoinContext {
+                PillMateApp(
+                    onSignOutComplete = {
+                        finish()
+                    }
+                )
+            }
         }
     }
 }

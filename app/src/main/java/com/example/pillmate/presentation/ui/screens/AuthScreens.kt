@@ -3,9 +3,11 @@ package com.example.pillmate.presentation.ui.screens
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +19,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordKeyboardType
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,7 +30,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
-import org.koin.compose.koinInject
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+
+val PrimaryGreen = Color(0xFF1c5f55)
 
 @Composable
 fun SignUpOptionsScreen(
@@ -41,7 +49,7 @@ fun SignUpOptionsScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(R.string.default_web_client_id))
+        .requestIdToken(stringResource(R.string.default_web_client_id))
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
@@ -66,51 +74,85 @@ fun SignUpOptionsScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.background),
-            contentDescription = null,
+            contentDescription = "background",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Pillmate",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+            Spacer(modifier = Modifier.weight(0.15f))
+            
+            Image(
+                painter = painterResource(id = R.drawable.pill),
+                contentDescription = "pill icon",
+                modifier = Modifier.size(100.dp)
             )
-            Spacer(modifier = Modifier.height(48.dp))
+
+            Text(
+                text = "Create an Account",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { launcher.launch(googleSignInClient.signInIntent) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                onClick = onNavigateToSignIn,
+                modifier = Modifier
+                    .width(350.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Continue with Google")
+                Text(
+                    text = "Sign In with Email",
+                    fontSize = 18.sp,
+                    color = Color.White
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onNavigateToSignUp,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6C54))
+            OutlinedButton(
+                onClick = { launcher.launch(googleSignInClient.signInIntent) },
+                modifier = Modifier
+                    .width(350.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                border = BorderStroke(1.5.dp, Color.White),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
             ) {
-                Text("Continue with Email")
+                Text(
+                    text = "Continue with Google",
+                    fontSize = 18.sp
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(0.1f))
+
+            Text(
+                text = "By continuing, you agree to our Privacy Policy and Terms of Service.",
+                color = Color.White,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .width(206.dp)
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
 
             val annotatedString = buildAnnotatedString {
-                append("Have an account? ")
-                pushStringAnnotation(tag = "signin", annotation = "signin")
-                withStyle(style = SpanStyle(color = Color(0xFF878CEDFF), textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) {
-                    append("Sign in")
+                withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp)) {
+                    append("Don't have an account? ")
+                }
+                pushStringAnnotation(tag = "signup", annotation = "signup")
+                withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) {
+                    append("Sign up")
                 }
                 pop()
             }
@@ -118,20 +160,21 @@ fun SignUpOptionsScreen(
             ClickableText(
                 text = annotatedString,
                 onClick = { offset ->
-                    annotatedString.getStringAnnotations(tag = "signin", start = offset, end = offset).firstOrNull()?.let {
-                        onNavigateToSignIn()
+                    annotatedString.getStringAnnotations(tag = "signup", start = offset, end = offset).firstOrNull()?.let {
+                        onNavigateToSignUp()
                     }
                 },
-                style = LocalTextStyle.current.copy(color = Color.White)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
         }
 
         if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = PrimaryGreen)
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInScreen(
     viewModel: AuthViewModel,
@@ -157,52 +200,118 @@ fun SignInScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background),
+            contentDescription = "background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Sign In", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+            Image(
+                painter = painterResource(id = R.drawable.pill),
+                contentDescription = "pill icon",
+                modifier = Modifier
+                    .padding(top = 60.dp)
+                    .size(100.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password)
+            Text(
+                text = "Sign In with Email",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 24.dp)
             )
-            Spacer(modifier = Modifier.height(24.dp))
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Column(modifier = Modifier.width(350.dp)) {
+                Text(
+                    text = "Email",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("email@example.com") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = PrimaryGreen
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Password",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("************") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = PrimaryGreen
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
 
             Button(
                 onClick = { viewModel.signInWithEmail(email, password) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Sign In")
+                Text("Sign In", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
-            
-            TextButton(onClick = onBack) {
-                Text("Back")
+
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text("Cancel", color = Color.White)
             }
         }
-        
+
         if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = PrimaryGreen)
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
     viewModel: AuthViewModel,
@@ -229,66 +338,148 @@ fun SignUpScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.background),
+            contentDescription = "background",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Sign Up", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = fullname,
-                onValueChange = { fullname = it },
-                label = { Text("Full Name") },
-                modifier = Modifier.fillMaxWidth()
+            Image(
+                painter = painterResource(id = R.drawable.pill),
+                contentDescription = "pill icon",
+                modifier = Modifier
+                    .padding(top = 40.dp)
+                    .size(80.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = "Sign Up with Email",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 16.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Column(modifier = Modifier.width(350.dp)) {
+                Text(
+                    text = "Full Name",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = fullname,
+                    onValueChange = { fullname = it },
+                    placeholder = { Text("John Doe") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = PrimaryGreen
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Email",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("email@example.com") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = PrimaryGreen
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Password",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("************") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = PrimaryGreen
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
 
             Button(
                 onClick = { viewModel.signUpWithEmail(fullname, email, password) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Sign Up")
+                Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
 
-            TextButton(onClick = onBack) {
-                Text("Back")
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text("Cancel", color = Color.White)
             }
         }
 
         if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = PrimaryGreen)
         }
     }
 }
 
 @Composable
 fun ClickableText(
-    text: androidx.compose.ui.text.AnnotatedString,
+    text: AnnotatedString,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    style: androidx.compose.ui.compose.ui.text.TextStyle = LocalTextStyle.current
+    style: TextStyle = LocalTextStyle.current
 ) {
     androidx.compose.foundation.text.ClickableText(
         text = text,

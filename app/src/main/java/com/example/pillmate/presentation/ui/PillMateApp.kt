@@ -1,5 +1,6 @@
 package com.example.pillmate.presentation.ui
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
@@ -10,22 +11,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import com.example.pillmate.presentation.ui.navigation.Screen
 import com.example.pillmate.presentation.ui.navigation.bottomNavItems
 import com.example.pillmate.presentation.ui.screens.*
 import com.example.pillmate.presentation.viewmodel.*
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import org.koin.compose.koinInject
 
 @Composable
 fun PillMateApp(
     onSignOutComplete: () -> Unit
 ) {
     val navController = rememberNavController()
-    val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+    val auth: FirebaseAuth = koinInject()
     val startDestination = if (auth.currentUser != null) "main_graph" else "auth_graph"
 
     NavHost(
@@ -33,7 +35,7 @@ fun PillMateApp(
         startDestination = startDestination
     ) {
         // Auth Graph
-        androidx.navigation.compose.navigation(
+        navigation(
             route = "auth_graph",
             startDestination = Screen.AuthOptions.route
         ) {
@@ -77,14 +79,19 @@ fun PillMateApp(
         }
 
         // Main App Graph
-        androidx.navigation.compose.navigation(
+        navigation(
             route = "main_graph",
             startDestination = Screen.Home.route
         ) {
             composable(Screen.Home.route) {
                 MainScaffold(navController, onSignOutComplete) {
                     val viewModel: HomeViewModel = koinViewModel()
-                    HomeScreen(viewModel = viewModel)
+                    HomeScreen(
+                        viewModel = viewModel,
+                        onTaskClick = { /* TODO */ },
+                        onAddClick = { /* TODO */ },
+                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) }
+                    )
                 }
             }
             composable(Screen.Cabinet.route) {
@@ -110,13 +117,20 @@ fun PillMateApp(
                     })
                 }
             }
+            composable(Screen.DebugMenu.route) {
+                val viewModel: DebugViewModel = koinViewModel()
+                DebugMenuScreen(
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
         }
     }
 }
 
 @Composable
 fun MainScaffold(
-    navController: androidx.navigation.NavHostController,
+    navController: NavHostController,
     onSignOutComplete: () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {

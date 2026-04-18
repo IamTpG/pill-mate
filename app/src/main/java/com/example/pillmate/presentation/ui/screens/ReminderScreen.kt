@@ -60,11 +60,11 @@ fun ReminderScreen(viewModel: ReminderViewModel) {
         }
 
         if (showDialog) {
-            ReminderEditDialogFix(
+            ReminderEditDialog(
                 reminder = selectedReminder,
                 onDismiss = { showDialog = false },
                 onSave = { minutes, type ->
-                    val scheduleId = selectedScheduleId ?: return@ReminderEditDialogFix
+                    val scheduleId = selectedScheduleId ?: return@ReminderEditDialog
                     val oldReminder = selectedReminder
                     val newReminder = Reminder(minutesBefore = minutes, type = type)
                     

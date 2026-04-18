@@ -1,7 +1,6 @@
 package com.example.pillmate.presentation.ui.screens
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -10,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.pillmate.R
-import com.example.pillmate.authentication.SignUpOptionsActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -51,9 +49,6 @@ private fun performSignOut(context: Context, auth: FirebaseAuth, onComplete: () 
     val googleClient = GoogleSignIn.getClient(context, gso)
 
     googleClient.signOut().addOnCompleteListener {
-        val intent = Intent(context, SignUpOptionsActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        context.startActivity(intent)
         onComplete()
     }
 }
