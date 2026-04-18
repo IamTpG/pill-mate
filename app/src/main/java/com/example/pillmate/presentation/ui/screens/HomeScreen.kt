@@ -23,6 +23,7 @@ import com.example.pillmate.presentation.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    paddingValues: PaddingValues,
     onTaskClick: (HomeTask) -> Unit,
     onAddClick: () -> Unit,
     onDebugClick: () -> Unit
@@ -37,14 +38,14 @@ fun HomeScreen(
             contentScale = ContentScale.FillBounds
         )
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             HomeHeader(onAddClick = onAddClick, onDebugClick = onDebugClick)
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 20.dp),
-                contentPadding = PaddingValues(top = 20.dp, bottom = 80.dp)
+                contentPadding = PaddingValues(top = 20.dp, bottom = 20.dp)
             ) {
                 item {
                     ProgressCard(

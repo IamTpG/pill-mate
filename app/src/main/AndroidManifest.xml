@@ -27,12 +27,6 @@
             </intent-filter>
         </activity>
 
-        <activity 
-            android:name=".presentation.ui.TaskAlarmActivity"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:launchMode="singleInstance"
-            android:excludeFromRecents="true" />
 
     </application>
 </manifest>

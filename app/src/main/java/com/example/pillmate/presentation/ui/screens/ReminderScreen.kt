@@ -16,7 +16,10 @@ import com.example.pillmate.presentation.ui.components.*
 import com.example.pillmate.presentation.viewmodel.ReminderViewModel
 
 @Composable
-fun ReminderScreen(viewModel: ReminderViewModel) {
+fun ReminderScreen(
+    viewModel: ReminderViewModel,
+    paddingValues: PaddingValues
+) {
     val uiState by viewModel.uiState.collectAsState()
     
     var showDialog by remember { mutableStateOf(false) }
@@ -31,12 +34,12 @@ fun ReminderScreen(viewModel: ReminderViewModel) {
             contentScale = ContentScale.FillBounds
         )
 
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             ReminderHeader()
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp)
+                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
             ) {
                 items(uiState.schedules) { schedule ->
                     ScheduleReminderItem(

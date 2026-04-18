@@ -16,6 +16,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun SettingsScreen(
+    paddingValues: PaddingValues,
     onSignOutComplete: () -> Unit
 ) {
     val auth: FirebaseAuth = koinInject()
@@ -24,8 +25,8 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(paddingValues)
             .padding(24.dp)
-            .statusBarsPadding()
     ) {
         Button(
             onClick = {
