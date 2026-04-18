@@ -47,6 +47,7 @@ import com.example.pillmate.presentation.ui.screens.DrugInfoScreen
 fun CabinetScreen(
     viewModel: CabinetViewModel,
     libraryViewModel: DrugLibraryViewModel,
+    paddingValues: PaddingValues,
     modifier: Modifier = Modifier
 ) {
     // 1. Observe ViewModel
@@ -123,8 +124,8 @@ fun CabinetScreen(
             contentPadding = PaddingValues(
                 start = 16.dp, 
                 end = 16.dp, 
-                top = 48.dp, 
-                bottom = 100.dp 
+                top = paddingValues.calculateTopPadding() + 48.dp, 
+                bottom = paddingValues.calculateBottomPadding() + 20.dp 
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
@@ -185,7 +186,10 @@ fun CabinetScreen(
             shape = CircleShape,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 24.dp, bottom = 100.dp)
+                .padding(
+                    end = 24.dp, 
+                    bottom = paddingValues.calculateBottomPadding() + 24.dp
+                )
         ) {
             Icon(
                 imageVector = Icons.Default.Add,

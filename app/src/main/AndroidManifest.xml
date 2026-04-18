@@ -19,7 +19,7 @@
         <receiver android:name=".receiver.TaskAlarmReceiver" android:exported="false" />
 
         <activity
-            android:name=".presentation.ui.LauncherActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,18 +27,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".authentication.SignUpOptionsActivity" />
-        <activity android:name=".authentication.SignUpWithEmailActivity" />
-        <activity android:name=".authentication.SignInWithEmailActivity" />
-
-        <activity android:name=".MainActivity" />
-
-        <activity 
-            android:name=".presentation.ui.TaskAlarmActivity"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:launchMode="singleInstance"
-            android:excludeFromRecents="true" />
 
     </application>
 </manifest>
