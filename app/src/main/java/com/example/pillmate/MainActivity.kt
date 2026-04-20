@@ -1,27 +1,23 @@
 package com.example.pillmate
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
-import com.example.pillmate.R
-import com.example.pillmate.databinding.ActivityMainBinding
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import com.example.pillmate.presentation.ui.PillMateApp
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
-
-        val navController = navHostFragment.navController
-
-        binding.bottomNav.setupWithNavController(navController)
+        
+        setContent {
+            org.koin.compose.KoinContext {
+                PillMateApp(
+                    onSignOutComplete = {
+                        finish()
+                    }
+                )
+            }
+        }
     }
 }

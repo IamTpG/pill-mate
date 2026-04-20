@@ -7,8 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.example.pillmate.R
-import com.example.pillmate.presentation.ui.TaskAlarmActivity
 import com.example.pillmate.receiver.TaskAlarmReceiver
 import com.example.pillmate.receiver.NotificationActionReceiver
 
@@ -63,15 +61,18 @@ class TaskNotificationManager(private val context: Context) {
         instructions: String? = null
     ) {
         createNotificationChannel()
-        val fullScreenIntent = Intent(context, TaskAlarmActivity::class.java).apply {
-            putExtra("SOURCE_ID", sourceId)
-            putExtra("SCHEDULE_ID", scheduleId)
-            putExtra("TITLE", title)
-            putExtra("DETAILS", details)
-            putExtra("TASK_TYPE", taskType)
-            putExtra("EXTRA_RRULE", rrule)
-            putExtra("EXTRA_START_TIME", startTime)
-            putExtra("EXTRA_INSTRUCTIONS", instructions)
+        val encTitle = android.net.Uri.encode(title.ifBlank { " " })
+        val encDetails = android.net.Uri.encode(details.ifBlank { " " })
+        val encType = android.net.Uri.encode(taskType.ifBlank { "OTHER" })
+        val encInstr = android.net.Uri.encode((instructions ?: "").ifBlank { " " })
+        val encTime = android.net.Uri.encode((startTime ?: "").ifBlank { " " })
+        val encRrule = android.net.Uri.encode((rrule ?: "").ifBlank { " " })
+
+        val deepLinkUri = android.net.Uri.parse("pillmate://alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule")
+
+        val fullScreenIntent = Intent(context, com.example.pillmate.MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            data = deepLinkUri
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(

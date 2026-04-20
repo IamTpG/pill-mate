@@ -16,6 +16,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.pillmate.R
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.presentation.ui.components.MedicationCard
@@ -25,7 +27,8 @@ import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 @Composable
 fun MedicationPickerScreen(
     viewModel: CabinetViewModel,
-    onMedicationSelected: (Medication) -> Unit
+    onMedicationSelected: (Medication) -> Unit,
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -36,6 +39,11 @@ fun MedicationPickerScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             CenterAlignedTopAppBar(
                 title = { Text("Select Medication", color = Color.White, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
             HorizontalDivider(color = Color.White.copy(alpha = 0.2f))

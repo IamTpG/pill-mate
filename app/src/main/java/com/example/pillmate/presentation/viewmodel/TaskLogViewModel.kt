@@ -1,12 +1,13 @@
 package com.example.pillmate.presentation.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.usecase.LogTaskUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -15,11 +16,11 @@ class TaskLogViewModel(
     private val profileId: String
 ) : ViewModel() {
 
-    private val _isLogging = MutableLiveData<Boolean>(false)
-    val isLogging: LiveData<Boolean> = _isLogging
+    private val _isLogging = MutableStateFlow<Boolean>(false)
+    val isLogging: StateFlow<Boolean> = _isLogging.asStateFlow()
 
-    private val _logResult = MutableLiveData<Result<Unit>?>()
-    val logResult: LiveData<Result<Unit>?> = _logResult
+    private val _logResult = MutableStateFlow<Result<Unit>?>(null)
+    val logResult: StateFlow<Result<Unit>?> = _logResult.asStateFlow()
 
     fun logTask(sourceId: String, scheduleId: String, taskType: TaskType, status: LogStatus, scheduledTime: Date, dose: Float = 1.0f) {
         viewModelScope.launch {

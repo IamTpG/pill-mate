@@ -1,16 +1,25 @@
 package com.example.pillmate.presentation.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.GetHomeTasksUseCase
+import com.example.pillmate.presentation.model.CalendarDay
 import com.example.pillmate.presentation.model.HomeTask
-import com.example.pillmate.domain.model.LogStatus
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Date
+
+data class HomeUiState(
+    val todayProgress: Pair<Int, Int> = 0 to 0,
+    val todayTasks: List<HomeTask> = emptyList(),
+    val selectedDate: Date = Date(),
+    val calendarDays: List<CalendarDay> = emptyList(),
+    val isLoading: Boolean = false
+)
 
 class HomeViewModel(
     private val medicationRepository: MedicationRepository,
@@ -18,17 +27,8 @@ class HomeViewModel(
     private val profileId: String
 ) : ViewModel() {
 
-    private val _todayProgress = MutableLiveData<Pair<Int, Int>>(0 to 0)
-    val todayProgress: LiveData<Pair<Int, Int>> = _todayProgress
-
-    private val _todayTasks = MutableLiveData<List<HomeTask>>()
-    val todayTasks: LiveData<List<HomeTask>> = _todayTasks
-
-    private val _selectedDate = MutableLiveData<Date>(Date())
-    val selectedDate: LiveData<Date> = _selectedDate
-
-    private val _calendarDays = MutableLiveData<List<com.example.pillmate.presentation.model.CalendarDay>>()
-    val calendarDays: LiveData<List<com.example.pillmate.presentation.model.CalendarDay>> = _calendarDays
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private var loadDataJob: kotlinx.coroutines.Job? = null
 
@@ -40,14 +40,15 @@ class HomeViewModel(
 
     init {
         generateCalendarDays()
+        loadData()
     }
 
     private fun generateCalendarDays() {
-        val days = mutableListOf<com.example.pillmate.presentation.model.CalendarDay>()
+        val days = mutableListOf<CalendarDay>()
         val cal = java.util.Calendar.getInstance()
         cal.time = calendarStartDate
         
-        val selected = _selectedDate.value ?: Date()
+        val selected = _uiState.value.selectedDate
         
         // Show 31 days (15 past, today, 15 future)
         for (i in 0 until 31) {
@@ -57,10 +58,10 @@ class HomeViewModel(
             
             val isSelected = isSameDay(date, selected)
             
-            days.add(com.example.pillmate.presentation.model.CalendarDay(date, dayOfWeek, dayOfMonth, isSelected))
+            days.add(CalendarDay(date, dayOfWeek, dayOfMonth, isSelected))
             cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
         }
-        _calendarDays.value = days
+        _uiState.value = _uiState.value.copy(calendarDays = days)
     }
 
     private fun isSameDay(d1: Date, d2: Date): Boolean {
@@ -71,18 +72,22 @@ class HomeViewModel(
     }
 
     fun selectDate(date: Date) {
-        _selectedDate.value = date
+        _uiState.value = _uiState.value.copy(selectedDate = date)
         generateCalendarDays()
         loadData(date)
     }
 
-    fun loadData(date: Date = _selectedDate.value ?: Date()) {
+    fun loadData(date: Date = _uiState.value.selectedDate) {
         loadDataJob?.cancel()
+        _uiState.value = _uiState.value.copy(isLoading = true)
         loadDataJob = viewModelScope.launch {
             getHomeTasksUseCase.execute(profileId, date)
                 .collect { data ->
-                    _todayTasks.postValue(data.tasks)
-                    _todayProgress.postValue(data.completedCount to data.totalCount)
+                    _uiState.value = _uiState.value.copy(
+                        todayTasks = data.tasks,
+                        todayProgress = data.completedCount to data.totalCount,
+                        isLoading = false
+                    )
                 }
         }
     }
