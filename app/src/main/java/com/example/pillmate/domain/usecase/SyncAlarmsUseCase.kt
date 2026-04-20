@@ -36,6 +36,7 @@ class SyncAlarmsUseCase(
                         details = schedule.eventSnapshot.instructions ?: "",
                         delaySeconds = delaySeconds,
                         requestCode = requestCode,
+                        profileId = profileId,
                         taskType = schedule.type.name,
                         reminderType = reminder.type.name
                     )

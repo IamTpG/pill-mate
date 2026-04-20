@@ -71,6 +71,7 @@ class DebugViewModel(
                         details = doseText,
                         delaySeconds = 5,
                         requestCode = medId.hashCode(),
+                        profileId = profileId, // Added profileId
                         taskType = "MEDICATION"
                     )
                     
@@ -146,6 +147,7 @@ class DebugViewModel(
         viewModelScope.launch {
             try {
                 val medId = schedule.eventSnapshot.sourceId
+                val scheduleId = schedule.id
                 val medName = schedule.eventSnapshot.title
                 val dose = schedule.eventSnapshot.dose.toString()
                 val unit = schedule.eventSnapshot.unit ?: "dose"
@@ -153,11 +155,12 @@ class DebugViewModel(
                 
                 val wasExact = notificationManager.scheduleTaskNotification(
                     sourceId = medId,
-                    scheduleId = schedule.id,
+                    scheduleId = scheduleId,
                     title = "$medName (Manual)",
                     details = "Triggered ${reminder.type} at offset ${reminder.minutesBefore}m. Dose: $dose $unit",
                     delaySeconds = 5,
                     requestCode = (schedule.id + reminder.type.name).hashCode(),
+                    profileId = profileId, // Added profileId
                     taskType = taskType,
                     reminderType = reminder.type.name,
                     rrule = schedule.recurrenceRule,

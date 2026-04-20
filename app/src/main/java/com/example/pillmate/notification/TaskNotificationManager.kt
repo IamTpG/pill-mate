@@ -150,6 +150,7 @@ class TaskNotificationManager(private val context: Context) {
         details: String,
         delaySeconds: Int,
         requestCode: Int,
+        profileId: String, // Added profileId
         taskType: String = "OTHER",
         reminderType: String = "NOTIFICATION",
         rrule: String? = null,
@@ -160,6 +161,7 @@ class TaskNotificationManager(private val context: Context) {
         val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
             putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("PROFILE_ID", profileId) // Added PROFILE_ID
             putExtra("TITLE", title)
             putExtra("DETAILS", details)
             putExtra("TASK_TYPE", taskType)

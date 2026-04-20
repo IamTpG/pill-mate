@@ -57,6 +57,7 @@ class ManageReminderUseCase(
                         details = schedule.eventSnapshot.instructions ?: "",
                         delaySeconds = delaySeconds,
                         requestCode = requestCode,
+                        profileId = profileId, // Added profileId
                         taskType = schedule.type.name,
                         reminderType = reminder.type.name
                     )
