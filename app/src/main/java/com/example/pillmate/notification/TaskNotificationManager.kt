@@ -246,6 +246,13 @@ class TaskNotificationManager(private val context: Context) {
         alarmManager.cancel(pendingIntent)
     }
 
+    fun cancelAllReminders(scheduleId: String, reminders: List<com.example.pillmate.domain.model.Reminder>) {
+        reminders.forEach { reminder ->
+            val requestCode = (scheduleId + reminder.minutesBefore).hashCode()
+            cancelNotification(requestCode)
+        }
+    }
+
     fun showLowStockNotification(medName: String, remaining: Float) {
         val builder = NotificationCompat.Builder(context, LOW_STOCK_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_warning)

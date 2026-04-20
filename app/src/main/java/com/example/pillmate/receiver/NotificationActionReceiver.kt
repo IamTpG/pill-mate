@@ -60,17 +60,18 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 scheduledTime = Date(),
                 dose = 1.0f
             )
-            // Dismiss notification after action
-            TaskNotificationManager(context).dismissNotification()
-            
             // Advance RRULE next occurrence
             try {
                 val scheduleDoc = db.collection("profiles").document(profileId)
                     .collection("schedules").document(scheduleId).get().await()
-                val rrule = scheduleDoc.getString("recurrenceRule")
-                if (rrule != null && rrule.contains("FREQ=DAILY")) {
-                    val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
-                    if (scheduleObj != null) {
+                
+                val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
+                if (scheduleObj != null) {
+                    // CANCELLATION: Cancel other pending reminders for this occurrence
+                    TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders)
+
+                    val rrule = scheduleDoc.getString("recurrenceRule")
+                    if (rrule != null && rrule.contains("FREQ=DAILY")) {
                         val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
                         val currentStart = format.parse(scheduleObj.startTime)
                         if (currentStart != null) {
