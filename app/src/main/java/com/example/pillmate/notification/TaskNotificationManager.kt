@@ -18,6 +18,8 @@ class TaskNotificationManager(private val context: Context) {
         const val NOTIFICATION_ID = 1001
         const val ALARM_CHANNEL_ID = "task_alarms"
         const val ALARM_CHANNEL_NAME = "Critical Task Alarms"
+        const val LOW_STOCK_CHANNEL_ID = "low_stock_alerts"
+        const val LOW_STOCK_CHANNEL_NAME = "Low Stock Alerts"
     }
 
     init {
@@ -46,6 +48,12 @@ class TaskNotificationManager(private val context: Context) {
                     .build())
             }
             notificationManager.createNotificationChannel(alarmChannel)
+
+            // Low Stock Channel
+            val lowStockChannel = NotificationChannel(LOW_STOCK_CHANNEL_ID, LOW_STOCK_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Alerts when medication stock is low"
+            }
+            notificationManager.createNotificationChannel(lowStockChannel)
         }
     }
 
@@ -236,5 +244,17 @@ class TaskNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+    }
+
+    fun showLowStockNotification(medName: String, remaining: Float) {
+        val builder = NotificationCompat.Builder(context, LOW_STOCK_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle("Low Stock Alert")
+            .setContentText("You only have $remaining remaining of $medName.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(medName.hashCode(), builder.build())
     }
 }

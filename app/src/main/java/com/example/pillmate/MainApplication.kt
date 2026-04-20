@@ -15,5 +15,24 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             modules(appModule, viewModelModule)
         }
+        
+        scheduleWorkers()
+    }
+
+    private fun scheduleWorkers() {
+        val workManager = androidx.work.WorkManager.getInstance(this)
+        val lowStockRequest = androidx.work.PeriodicWorkRequestBuilder<com.example.pillmate.workers.LowStockWorker>(
+            1, java.util.concurrent.TimeUnit.DAYS
+        ).setConstraints(
+            androidx.work.Constraints.Builder()
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .build()
+        ).build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "LowStockCheck",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            lowStockRequest
+        )
     }
 }
