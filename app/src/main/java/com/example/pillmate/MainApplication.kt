@@ -34,5 +34,19 @@ class MainApplication : Application() {
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
             lowStockRequest
         )
+
+        val alarmSyncRequest = androidx.work.PeriodicWorkRequestBuilder<com.example.pillmate.workers.AlarmSyncWorker>(
+            6, java.util.concurrent.TimeUnit.HOURS
+        ).setConstraints(
+            androidx.work.Constraints.Builder()
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .build()
+        ).build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "AlarmSync",
+            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+            alarmSyncRequest
+        )
     }
 }
