@@ -67,8 +67,8 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 
                 val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
                 if (scheduleObj != null) {
-                    // CANCELLATION: Cancel other pending reminders for this occurrence
-                    TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders)
+                    // CANCELLATION: Cancel other pending reminders AND snoozes
+                    TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders, sourceId)
 
                     val rrule = scheduleDoc.getString("recurrenceRule")
                     if (rrule != null && rrule.contains("FREQ=DAILY")) {

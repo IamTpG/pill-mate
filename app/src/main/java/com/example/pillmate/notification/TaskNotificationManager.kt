@@ -246,10 +246,14 @@ class TaskNotificationManager(private val context: Context) {
         alarmManager.cancel(pendingIntent)
     }
 
-    fun cancelAllReminders(scheduleId: String, reminders: List<com.example.pillmate.domain.model.Reminder>) {
+    fun cancelAllReminders(scheduleId: String, reminders: List<com.example.pillmate.domain.model.Reminder>, sourceId: String? = null) {
         reminders.forEach { reminder ->
             val requestCode = (scheduleId + reminder.minutesBefore).hashCode()
             cancelNotification(requestCode)
+        }
+        // Also cancel standard snooze if sourceId provided
+        sourceId?.let {
+            cancelNotification(it.hashCode())
         }
     }
 
