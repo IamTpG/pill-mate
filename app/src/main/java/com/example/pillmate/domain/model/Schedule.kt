@@ -7,9 +7,11 @@ data class Schedule(
     val type: TaskType = TaskType.MEDICATION,
     val startTime: String = "08:00", // "HH:mm"
     val recurrenceRule: String? = null,
+    val frequency: String? = null,
     val enabled: Boolean = true,
     val reminders: List<Reminder> = emptyList(),
     val eventSnapshot: ScheduleEvent = ScheduleEvent(),
+    val endDate: Date? = null,
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )

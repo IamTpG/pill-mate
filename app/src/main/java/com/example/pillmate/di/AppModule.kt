@@ -17,6 +17,7 @@ import org.koin.dsl.module
 import com.example.pillmate.data.local.database.AppDatabase
 import com.example.pillmate.data.repository.CabinetRepositoryImpl
 import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.presentation.viewmodel.ScheduleBuilderViewModel
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 import org.koin.android.ext.koin.androidContext
 import com.example.pillmate.data.remote.api.OpenFdaApi
@@ -73,4 +74,5 @@ val viewModelModule = module {
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { ScheduleBuilderViewModel(get()) }
 }

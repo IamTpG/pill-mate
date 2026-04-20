@@ -19,8 +19,8 @@
         android:label="Settings" />
 
     <fragment
-        android:id="@+id/reminder_fragment"
-        android:name="com.example.pillmate.presentation.ui.ReminderFragment"
-        android:label="Reminders" />
+        android:id="@+id/schedule_builder_fragment"
+        android:name="com.example.pillmate.presentation.ui.ScheduleBuilderFragment"
+        android:label="Schedule" />
 
 </navigation>
