@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
@@ -36,12 +36,13 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
+import androidx.compose.foundation.layout.PaddingValues
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleBuilderScreen(
+    paddingValues: PaddingValues,
     viewModel: ScheduleBuilderViewModel,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -78,20 +79,25 @@ fun ScheduleBuilderScreen(
         dpd.show()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(painter = painterResource(id = R.drawable.background), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            CenterAlignedTopAppBar(
-                title = { Text("Schedule Builder", color = Color.White, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
-            )
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Text("Schedule Builder", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
+                Spacer(modifier = Modifier.width(48.dp))
+            }
             HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
 
             LazyColumn(modifier = Modifier.fillMaxSize().weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {

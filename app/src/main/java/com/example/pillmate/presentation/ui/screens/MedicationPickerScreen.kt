@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
@@ -23,9 +24,11 @@ import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.presentation.ui.components.MedicationCard
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 
+import androidx.compose.foundation.layout.PaddingValues
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicationPickerScreen(
+    paddingValues: PaddingValues,
     viewModel: CabinetViewModel,
     onMedicationSelected: (Medication) -> Unit,
     onBack: () -> Unit
@@ -36,16 +39,21 @@ fun MedicationPickerScreen(
         Image(painter = painterResource(id = R.drawable.background), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            CenterAlignedTopAppBar(
-                title = { Text("Select Medication", color = Color.White, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
-            )
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Text("Select Medication", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
+                Spacer(modifier = Modifier.width(48.dp))
+            }
             HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
             
             if (uiState.activeMedications.isEmpty()) {

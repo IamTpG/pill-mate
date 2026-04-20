@@ -124,8 +124,7 @@ fun PillMateApp(
                     val viewModel: ReminderViewModel = koinViewModel()
                     ReminderScreen(
                         viewModel = viewModel, 
-                        paddingValues = innerPadding,
-                        onAddScheduleClick = { navController.navigate(Screen.ScheduleBuilder.route) }
+                        paddingValues = innerPadding
                     )
                 }
             }
@@ -147,14 +146,19 @@ fun PillMateApp(
                 )
             }
             composable(Screen.ScheduleBuilder.route) {
-                ScheduleBuilderFlowScreen(
-                    onCompleteMapping = {
-                        navController.popBackStack()
-                    },
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    ScheduleBuilderFlowScreen(
+                        paddingValues = innerPadding,
+                        onCompleteMapping = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        },
+                        onBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             }
             composable(
                 route = Screen.TaskAlarm.route,

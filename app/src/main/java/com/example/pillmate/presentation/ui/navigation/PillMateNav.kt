@@ -18,7 +18,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object DebugMenu : Screen("debug_menu", "Debug Menu", 0)
 
     // Schedule Builder screen
-    object ScheduleBuilder : Screen("schedule_builder", "Add Schedule", 0)
+    object ScheduleBuilder : Screen("schedule_builder", "Schedule", android.R.drawable.ic_menu_today)
 
     // Task Alarm Screen
     object TaskAlarm : Screen(
@@ -44,6 +44,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
 val bottomNavItems = listOf(
     Screen.Home,
     Screen.Cabinet,
+    Screen.ScheduleBuilder,
     Screen.Reminders,
     Screen.Settings
 )

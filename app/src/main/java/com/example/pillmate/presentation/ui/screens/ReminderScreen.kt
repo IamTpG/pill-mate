@@ -23,8 +23,7 @@ import androidx.compose.ui.Alignment
 @Composable
 fun ReminderScreen(
     viewModel: ReminderViewModel,
-    paddingValues: PaddingValues,
-    onAddScheduleClick: () -> Unit
+    paddingValues: PaddingValues
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
@@ -85,18 +84,6 @@ fun ReminderScreen(
                     showDialog = false
                 }
             )
-        }
-
-        FloatingActionButton(
-            onClick = onAddScheduleClick,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(paddingValues)
-                .padding(16.dp),
-            containerColor = Color(0xFF2E7D32),
-            contentColor = Color.White
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add Schedule")
         }
     }
 }
