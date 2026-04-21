@@ -110,6 +110,22 @@ fun DebugMenuScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) { Text("Trigger Specific Reminder") }
+
+            Button(
+                onClick = {
+                    val ids = viewModel.getScheduledIds()
+                    if (ids.isEmpty()) Toast.makeText(context, "No alarms tracked in local storage", Toast.LENGTH_SHORT).show()
+                    else {
+                        android.app.AlertDialog.Builder(context)
+                            .setTitle("Active RequestCodes")
+                            .setMessage(ids.joinToString("\n"))
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) { Text("View Alarm Tracker Prefs") }
         }
 
         if (showScheduleDialog) {

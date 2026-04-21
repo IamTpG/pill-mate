@@ -18,6 +18,14 @@
         <receiver android:name=".receiver.NotificationActionReceiver" android:exported="false" />
         <receiver android:name=".receiver.TaskAlarmReceiver" android:exported="false" />
 
+        <service
+            android:name=".service.PillMateFcmService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

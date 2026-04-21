@@ -6,16 +6,22 @@ import java.util.Calendar
 
 class SyncAlarmsUseCase(
     private val scheduleRepository: ScheduleRepository,
-    private val notificationManager: TaskNotificationManager
+    private val notificationManager: TaskNotificationManager,
+    private val alarmTracker: com.example.pillmate.util.AlarmTracker
 ) {
     suspend operator fun invoke(profileId: String) {
         val result = scheduleRepository.getSchedules(profileId)
         val schedules = result.getOrNull() ?: return
         
+        val previouslyScheduledIds = alarmTracker.getScheduledIds()
+        val desiredScheduledIds = mutableSetOf<Int>()
+        
         schedules.forEach { schedule ->
             schedule.reminders.forEach { reminder ->
                 val requestCode = (schedule.id + reminder.minutesBefore).hashCode()
+                desiredScheduledIds.add(requestCode)
                 
+                // Parse time and schedule
                 val timeParts = schedule.startTime.split(":")
                 if (timeParts.size == 2) {
                     val target = Calendar.getInstance().apply {
@@ -38,10 +44,21 @@ class SyncAlarmsUseCase(
                         requestCode = requestCode,
                         profileId = profileId,
                         taskType = schedule.type.name,
-                        reminderType = reminder.type.name
+                        reminderType = reminder.type.name,
+                        rrule = schedule.recurrenceRule,
+                        startTime = schedule.startTime
                     )
                 }
             }
         }
+        
+        // ORPHAN CANCELLATION: IDs that are on the device but no longer in the DB
+        val orphans = previouslyScheduledIds - desiredScheduledIds
+        orphans.forEach { orphanId ->
+            notificationManager.cancelNotification(orphanId)
+        }
+        
+        // Update local state
+        alarmTracker.updateScheduledIds(desiredScheduledIds)
     }
 }

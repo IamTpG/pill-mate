@@ -23,8 +23,11 @@ class DebugViewModel(
     private val manageReminderUseCase: ManageReminderUseCase,
     private val profileId: String,
     private val db: FirebaseFirestore,
-    private val notificationManager: TaskNotificationManager
+    private val notificationManager: TaskNotificationManager,
+    private val alarmTracker: com.example.pillmate.util.AlarmTracker
 ) : ViewModel() {
+
+    fun getScheduledIds(): Set<Int> = alarmTracker.getScheduledIds()
 
     fun generateSampleData(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         viewModelScope.launch {
