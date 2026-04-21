@@ -81,17 +81,24 @@ class DataGenerator(private val db: FirebaseFirestore) {
     suspend fun clearUserData(profileId: String) {
         val profileRef = db.collection("profiles").document(profileId)
         
-        // Delete Categories
-        deleteCollection(profileRef.collection("medications"))
+        // Delete Medications and their nested subcollections (supply -> logs)
+        val medications = profileRef.collection("medications").get().await()
+        for (medDoc in medications.documents) {
+            val supplies = medDoc.reference.collection("supply").get().await()
+            for (supplyDoc in supplies.documents) {
+                // Delete logs under each supply
+                deleteCollection(supplyDoc.reference.collection("logs"))
+                supplyDoc.reference.delete().await()
+            }
+            medDoc.reference.delete().await()
+        }
+
+        // Delete other top-level subcollections
         deleteCollection(profileRef.collection("meals"))
         deleteCollection(profileRef.collection("appointments"))
         deleteCollection(profileRef.collection("exercises"))
         deleteCollection(profileRef.collection("tasks"))
-        
-        // Delete Schedules
         deleteCollection(profileRef.collection("schedules"))
-        
-        // Delete Logs
         deleteCollection(profileRef.collection("logs"))
     }
 
