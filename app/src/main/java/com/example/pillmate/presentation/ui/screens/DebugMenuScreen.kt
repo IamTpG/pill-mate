@@ -113,6 +113,17 @@ fun DebugMenuScreen(
 
             Button(
                 onClick = {
+                    viewModel.forceSync(
+                        onSuccess = { Toast.makeText(context, "Sync Completed!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) { Text("Force Alarm Sync") }
+
+            Button(
+                onClick = {
                     val ids = viewModel.getScheduledIds()
                     if (ids.isEmpty()) Toast.makeText(context, "No alarms tracked in local storage", Toast.LENGTH_SHORT).show()
                     else {
@@ -126,6 +137,15 @@ fun DebugMenuScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
             ) { Text("View Alarm Tracker Prefs") }
+
+            Button(
+                onClick = {
+                    viewModel.clearAlarmTracker()
+                    Toast.makeText(context, "Alarm Tracker Cleared!", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) { Text("Clear Alarm Tracker Prefs") }
         }
 
         if (showScheduleDialog) {

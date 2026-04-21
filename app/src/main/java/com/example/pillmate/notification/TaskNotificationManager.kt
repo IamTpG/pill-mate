@@ -200,15 +200,14 @@ class TaskNotificationManager(private val context: Context) {
                         triggerTime,
                         pendingIntent
                     )
-                    true
                 } else {
                     alarmManager.setAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
-                    false // Scheduled but not exact
                 }
+                true // Scheduled (may be shifted by OS if not exact)
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     android.app.AlarmManager.RTC_WAKEUP,
@@ -248,7 +247,7 @@ class TaskNotificationManager(private val context: Context) {
 
     fun cancelAllReminders(scheduleId: String, reminders: List<com.example.pillmate.domain.model.Reminder>, sourceId: String? = null) {
         reminders.forEach { reminder ->
-            val requestCode = (scheduleId + reminder.minutesBefore).hashCode()
+            val requestCode = "${scheduleId}_${reminder.minutesBefore}_${reminder.type.name}".hashCode()
             cancelNotification(requestCode)
         }
         // Also cancel standard snooze if sourceId provided

@@ -40,9 +40,12 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 val title = intent.getStringExtra("TITLE") ?: "Task"
                 val details = intent.getStringExtra("DETAILS") ?: ""
                 
+                val snoozeRequestCode = ("SNOOZE_" + scheduleId).hashCode()
                 TaskNotificationManager(context).scheduleTaskNotification(
-                    sourceId, scheduleId, title, details, 10, sourceId.hashCode(), taskTypeString
+                    sourceId, scheduleId, title, details, 10, snoozeRequestCode, taskTypeString
                 )
+                // Register snooze in tracker so sync doesn't kill it
+                org.koin.core.context.GlobalContext.get().get<com.example.pillmate.util.AlarmTracker>().addId(snoozeRequestCode)
                 android.widget.Toast.makeText(context, "Snoozed for 10 seconds", android.widget.Toast.LENGTH_SHORT).show()
                 TaskNotificationManager(context).dismissNotification()
                 return
