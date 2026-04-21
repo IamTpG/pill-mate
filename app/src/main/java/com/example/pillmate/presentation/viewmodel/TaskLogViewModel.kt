@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.model.MedicationSupply
 import com.example.pillmate.domain.model.TaskType
-import com.example.pillmate.domain.usecase.GetSupplyStockUseCase
+import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +15,7 @@ import java.util.Date
 
 class TaskLogViewModel(
     private val logTaskUseCase: LogTaskUseCase,
-    private val getSupplyStockUseCase: GetSupplyStockUseCase,
+    private val medicationRepository: MedicationRepository,
     private val profileId: String
 ) : ViewModel() {
 
@@ -30,7 +30,7 @@ class TaskLogViewModel(
 
     fun fetchSupplies(medId: String) {
         viewModelScope.launch {
-            getSupplyStockUseCase.execute(medId).onSuccess {
+            medicationRepository.getMedicationSupplies(medId).onSuccess {
                 _availableSupplies.value = it
             }
         }

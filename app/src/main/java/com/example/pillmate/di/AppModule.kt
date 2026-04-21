@@ -47,14 +47,14 @@ val appModule = module {
     
     single { AlarmTracker(get()) }
     
-    factory { LogTaskUseCase(get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
     factory { ManageReminderUseCase(get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get()) }
-    factory { SyncFcmTokenUseCase(get()) }
-    factory { GetSupplyStockUseCase(get()) }
+    
+    viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
     
     single { TaskNotificationManager(get()) }
 
