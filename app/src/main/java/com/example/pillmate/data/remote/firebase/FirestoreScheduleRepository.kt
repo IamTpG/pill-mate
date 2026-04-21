@@ -37,6 +37,17 @@ class FirestoreScheduleRepository(
         }
     }
 
+    override suspend fun deleteSchedule(profileId: String, scheduleId: String): Result<Unit> {
+        return try {
+            db.collection("profiles").document(profileId)
+                .collection("schedules").document(scheduleId)
+                .delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override fun getSchedulesFlow(profileId: String): Flow<List<Schedule>> = callbackFlow {
         val registration = db.collection("profiles").document(profileId)
             .collection("schedules")

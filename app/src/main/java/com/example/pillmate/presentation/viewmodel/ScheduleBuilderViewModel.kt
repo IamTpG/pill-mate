@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 import java.util.Date
 
 data class ReminderTime(val id: Int, val timeTitle: String, val doseContext: String)
 
 data class ScheduleBuilderUiState(
+    val existingSchedules: List<Schedule> = emptyList(),
     val selectedMedication: Medication? = null,
     
     val repeatFrequency: String = "Daily",
@@ -41,7 +43,37 @@ class ScheduleBuilderViewModel(
     private var reminderIdCounter = 0
 
     fun setSelectedMedication(medication: Medication) {
-        _uiState.update { it.copy(selectedMedication = medication) }
+        _uiState.update { state -> 
+            state.copy(
+                selectedMedication = medication,
+                existingSchedules = emptyList(),
+                reminderTimes = emptyList(),
+                startDate = null,
+                endDate = null,
+                repeatFrequency = "Daily",
+                saveSuccess = false,
+                error = null
+            )
+        }
+        viewModelScope.launch {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            val result = scheduleRepository.getSchedules(userId)
+            val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == medication.id } ?: emptyList()
+            if (existing.isNotEmpty()) {
+                val first = existing.first()
+                _uiState.update { state ->
+                    state.copy(
+                        existingSchedules = existing,
+                        repeatFrequency = first.frequency ?: "Daily",
+                        endDate = first.endDate,
+                        startDate = first.createdAt,
+                        reminderTimes = existing.mapIndexed { idx, sched ->
+                            ReminderTime(id = reminderIdCounter++, timeTitle = sched.startTime, doseContext = sched.eventSnapshot.instructions ?: "")
+                        }
+                    )
+                }
+            }
+        }
     }
 
     fun setStartDate(date: Date) {
@@ -59,13 +91,13 @@ class ScheduleBuilderViewModel(
     fun addReminderTime(timeTitle: String, doseContext: String) {
         _uiState.update { state ->
             val updated = state.reminderTimes + ReminderTime(reminderIdCounter++, timeTitle, doseContext)
-            state.copy(reminderTimes = updated)
+            state.copy(reminderTimes = updated, saveSuccess = false)
         }
     }
 
     fun removeReminderTime(id: Int) {
         _uiState.update { state ->
-            state.copy(reminderTimes = state.reminderTimes.filter { it.id != id })
+            state.copy(reminderTimes = state.reminderTimes.filter { it.id != id }, saveSuccess = false)
         }
     }
 
@@ -90,25 +122,45 @@ class ScheduleBuilderViewModel(
         _uiState.update { it.copy(isSaving = true, error = null) }
         
         viewModelScope.launch {
-            val schedule = Schedule(
-                type = com.example.pillmate.domain.model.TaskType.MEDICATION,
-                startTime = state.reminderTimes.firstOrNull()?.timeTitle ?: "08:00 AM",
-                frequency = state.repeatFrequency,
-                endDate = state.endDate,
-                eventSnapshot = ScheduleEvent(
-                    sourceId = state.selectedMedication!!.id,
-                    title = state.selectedMedication.name,
-                    instructions = "${state.selectedMedication.supply?.quantity ?: 0} ${state.selectedMedication.unit}",
-                    dose = 1.0f
-                )
-            )
-            
-            // Hardcoded user auth wrapper to demonstrate storage logic locally.
-            val result = scheduleRepository.saveSchedule("demo_profile_id", schedule)
-            
-            result.onSuccess {
-                _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
-            }.onFailure { ex ->
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            if (userId == null) {
+                _uiState.update { it.copy(isSaving = false, error = "User not logged in") }
+                return@launch
+            }
+
+            try {
+                // Update or Create
+                for (i in state.reminderTimes.indices) {
+                    val reminder = state.reminderTimes[i]
+                    val existingId = if (i < state.existingSchedules.size) state.existingSchedules[i].id else ""
+                    
+                    val schedule = Schedule(
+                        id = existingId,
+                        type = com.example.pillmate.domain.model.TaskType.MEDICATION,
+                        startTime = reminder.timeTitle,
+                        frequency = state.repeatFrequency,
+                        endDate = state.endDate,
+                        createdAt = state.startDate ?: Date(),
+                        eventSnapshot = ScheduleEvent(
+                            sourceId = state.selectedMedication!!.id,
+                            title = state.selectedMedication.name,
+                            instructions = reminder.doseContext.ifBlank { "${state.selectedMedication.supply?.quantity ?: 0} ${state.selectedMedication.unit}" },
+                            dose = 1.0f
+                        )
+                    )
+                    scheduleRepository.saveSchedule(userId, schedule)
+                }
+                
+                // Delete orphaned records
+                for (i in state.reminderTimes.size until state.existingSchedules.size) {
+                    val orphanId = state.existingSchedules[i].id
+                    scheduleRepository.deleteSchedule(userId, orphanId)
+                }
+                
+                // Refresh existing schedules to align with updated DB state
+                val refreshed = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
+                _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshed) }
+            } catch (ex: Exception) {
                 _uiState.update { it.copy(isSaving = false, error = ex.message) }
             }
         }

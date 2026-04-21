@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
@@ -69,9 +70,9 @@ fun ScheduleBuilderScreen(
         if (isStartDate) {
             dpd.datePicker.minDate = System.currentTimeMillis() - 1000
         } else {
-            if (uiState.startDate != null) {
+            uiState.startDate?.let { stDate ->
                 val minEndCal = Calendar.getInstance()
-                minEndCal.time = uiState.startDate!!
+                minEndCal.time = stDate
                 minEndCal.add(Calendar.DAY_OF_YEAR, 1)
                 dpd.datePicker.minDate = minEndCal.timeInMillis
             }
@@ -202,7 +203,7 @@ fun ScheduleBuilderScreen(
                                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (uiState.startDate != null) dateFormatter.format(uiState.startDate!!) else "Select Date", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(uiState.startDate?.let { dateFormatter.format(it) } ?: "Select Date", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                 }
                             }
                         }
@@ -212,7 +213,17 @@ fun ScheduleBuilderScreen(
                                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (uiState.endDate != null) dateFormatter.format(uiState.endDate!!) else "Ongoing", color = Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    Text(uiState.endDate?.let { dateFormatter.format(it) } ?: "Ongoing", color = Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                                    if (uiState.endDate != null) {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Clear End Date",
+                                            tint = Color.Gray,
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clickable { viewModel.setEndDate(null) }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -268,7 +279,15 @@ fun ScheduleBuilderScreen(
                         }
                         OutlinedTextField(
                             value = doseText,
-                            onValueChange = { if (it.isEmpty() || it.all { char -> char.isDigit() }) doseText = it },
+                            onValueChange = { newValue -> 
+                                if (newValue.isEmpty()) {
+                                    doseText = ""
+                                } else {
+                                    // only allow digits, and if starts with 0 and is more than 1 char, parse it out implicitly by converting to Int
+                                    val formatted = newValue.filter { it.isDigit() }
+                                    doseText = formatted
+                                }
+                            },
                             label = { Text("Amount ($unit)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
@@ -277,8 +296,15 @@ fun ScheduleBuilderScreen(
                 },
                 confirmButton = {
                     Button(onClick = {
-                        val finalDose = if (doseText.isEmpty()) "1" else doseText
-                        viewModel.addReminderTime(selectedTimeText, "$finalDose $unit")
+                        val parsedDose = doseText.toIntOrNull()
+                        val finalDose = if (parsedDose == null || parsedDose <= 0) "1" else parsedDose.toString()
+                        val amount = finalDose.toInt()
+                        val finalUnit = if (amount == 1 && (unit.equals("capsules", ignoreCase = true) || unit.equals("tablets", ignoreCase = true) || unit.equals("pills", ignoreCase = true))) {
+                            unit.dropLast(1)
+                        } else {
+                            unit
+                        }
+                        viewModel.addReminderTime(selectedTimeText, "$finalDose $finalUnit")
                         showReminderDialog = false
                     }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))) {
                         Text("Add")

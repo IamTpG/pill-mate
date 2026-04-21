@@ -24,12 +24,6 @@ fun ScheduleBuilderFlowScreen(
 ) {
     var currentScreen by remember { mutableStateOf("PICKER") }
     val uiState by scheduleViewModel.uiState.collectAsState()
-
-    LaunchedEffect(uiState.saveSuccess) {
-        if (uiState.saveSuccess) {
-            onCompleteMapping()
-        }
-    }
     
     if (currentScreen == "PICKER") {
         MedicationPickerScreen(
