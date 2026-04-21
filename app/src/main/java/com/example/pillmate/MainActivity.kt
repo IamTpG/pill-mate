@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
             org.koin.compose.KoinContext {
                 PillMateApp(
                     onSignOutComplete = {
-                        finish()
+                        // Navigation handled internally in PillMateApp
                     }
                 )
             }
