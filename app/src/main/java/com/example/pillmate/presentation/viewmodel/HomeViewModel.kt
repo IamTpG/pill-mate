@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 data class HomeUiState(
-    val todayProgress: Pair<Int, Int> = 0 to 0,
-    val todayTasks: List<HomeTask> = emptyList(),
+    val dateProgress: Pair<Int, Int> = 0 to 0,
+    val dateTasks: List<HomeTask> = emptyList(),
     val selectedDate: Date = Date(),
     val calendarDays: List<CalendarDay> = emptyList(),
     val isLoading: Boolean = false
@@ -90,8 +90,8 @@ class HomeViewModel(
             getHomeTasksUseCase.execute(profileId, date)
                 .collect { data ->
                     _uiState.value = _uiState.value.copy(
-                        todayTasks = data.tasks,
-                        todayProgress = data.completedCount to data.totalCount,
+                        dateTasks = data.tasks,
+                        dateProgress = data.completedCount to data.totalCount,
                         isLoading = false
                     )
                 }

@@ -25,6 +25,7 @@ import com.example.pillmate.domain.repository.DrugLibraryRepository
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.example.pillmate.domain.usecase.*
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -41,12 +42,13 @@ val appModule = module {
     single { com.example.pillmate.util.FcmTokenManager(get()) }
 
     factory { LogTaskUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
-    factory { com.example.pillmate.domain.usecase.UpdateScheduleUseCase(get()) }
-    factory { com.example.pillmate.domain.usecase.ManageReminderUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.SyncAlarmsUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.SyncFcmTokenUseCase(get()) }
+    factory { GetHomeTasksUseCase(get(), get()) }
+    factory { CreateScheduleUseCase(get()) }
+    factory { UpdateScheduleUseCase(get()) }
+    factory { ManageReminderUseCase(get(), get()) }
+    factory { SyncAlarmsUseCase(get(), get()) }
+    factory { SyncFcmTokenUseCase(get()) }
+    factory { GetSupplyStockUseCase(get()) }
     
     single { com.example.pillmate.notification.TaskNotificationManager(get()) }
 
