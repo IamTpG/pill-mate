@@ -1,5 +1,6 @@
 package com.example.pillmate.di
 
+import android.app.Application
 import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
@@ -26,7 +27,11 @@ import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.pillmate.domain.usecase.*
+import com.example.pillmate.notification.TaskNotificationManager
+import com.example.pillmate.presentation.viewmodel.AuthViewModel
+import com.example.pillmate.presentation.viewmodel.DebugViewModel
 import com.example.pillmate.util.AlarmTracker
+import com.example.pillmate.util.DataGenerator
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -34,6 +39,7 @@ val appModule = module {
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
+    factory { DataGenerator(get()) }
 
     single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
     single<LogRepository> { FirestoreLogRepository(get()) }
@@ -50,7 +56,7 @@ val appModule = module {
     factory { SyncFcmTokenUseCase(get()) }
     factory { GetSupplyStockUseCase(get()) }
     
-    single { com.example.pillmate.notification.TaskNotificationManager(get()) }
+    single { TaskNotificationManager(get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
@@ -72,8 +78,8 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
-    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
-    viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
+    viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { CabinetViewModel(get(), androidContext() as Application) }
+    viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
+    viewModel { AuthViewModel(get(), get(), get(), get()) }
 }

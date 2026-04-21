@@ -7,7 +7,7 @@ import java.util.Calendar
 class SyncAlarmsUseCase(
     private val scheduleRepository: ScheduleRepository,
     private val notificationManager: TaskNotificationManager,
-    private val alarmTracker: com.example.pillmate.util.AlarmTracker
+    private val alarmTracker: AlarmTracker
 ) {
     suspend operator fun invoke(profileId: String) {
         val result = scheduleRepository.getSchedules(profileId)

@@ -10,6 +10,7 @@ import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.ReminderType
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.notification.TaskNotificationManager
+import com.example.pillmate.util.AlarmTracker
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -24,7 +25,7 @@ class DebugViewModel(
     private val profileId: String,
     private val db: FirebaseFirestore,
     private val notificationManager: TaskNotificationManager,
-    private val alarmTracker: com.example.pillmate.util.AlarmTracker
+    private val alarmTracker: AlarmTracker
 ) : ViewModel() {
 
     fun getScheduledIds(): Set<Int> = alarmTracker.getScheduledIds()

@@ -3,7 +3,9 @@ package com.example.pillmate.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.model.LogStatus
+import com.example.pillmate.domain.model.MedicationSupply
 import com.example.pillmate.domain.model.TaskType
+import com.example.pillmate.domain.usecase.GetSupplyStockUseCase
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,7 @@ import java.util.Date
 
 class TaskLogViewModel(
     private val logTaskUseCase: LogTaskUseCase,
-    private val getSupplyStockUseCase: com.example.pillmate.domain.usecase.GetSupplyStockUseCase,
+    private val getSupplyStockUseCase: GetSupplyStockUseCase,
     private val profileId: String
 ) : ViewModel() {
 
@@ -23,8 +25,8 @@ class TaskLogViewModel(
     private val _logResult = MutableStateFlow<Result<Unit>?>(null)
     val logResult: StateFlow<Result<Unit>?> = _logResult.asStateFlow()
 
-    private val _availableSupplies = MutableStateFlow<List<com.example.pillmate.domain.model.MedicationSupply>>(emptyList())
-    val availableSupplies: StateFlow<List<com.example.pillmate.domain.model.MedicationSupply>> = _availableSupplies.asStateFlow()
+    private val _availableSupplies = MutableStateFlow<List<MedicationSupply>>(emptyList())
+    val availableSupplies: StateFlow<List<MedicationSupply>> = _availableSupplies.asStateFlow()
 
     fun fetchSupplies(medId: String) {
         viewModelScope.launch {
