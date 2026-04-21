@@ -7,8 +7,9 @@ import java.util.Date
 
 interface MedicationRepository {
     suspend fun getMedication(id: String): Result<Medication?>
-    suspend fun updateMedicationSupply(medId: String, changeAmount: Float): Result<Unit>
+    suspend fun updateMedicationSupply(medId: String, changeAmount: Float, supplyId: String? = null): Result<Unit>
     suspend fun getAllMedications(profileId: String): Result<List<Medication>>
+    suspend fun getMedicationSupplies(medId: String): Result<List<com.example.pillmate.domain.model.MedicationSupply>>
     suspend fun saveMedication(profileId: String, medication: Medication): Result<String>
 }
 

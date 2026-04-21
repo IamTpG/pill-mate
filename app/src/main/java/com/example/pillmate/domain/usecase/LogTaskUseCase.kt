@@ -19,7 +19,8 @@ class LogTaskUseCase(
         status: LogStatus,
         scheduledTime: Date,
         dose: Float = 1.0f,
-        notes: String? = null
+        notes: String? = null,
+        supplyId: String? = null
     ): Result<Unit> {
         val log = TaskLog(
             scheduleId = scheduleId,
@@ -36,7 +37,7 @@ class LogTaskUseCase(
 
         // 2. If completed medication, deduct from inventory
         if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
-            val updateResult = medicationRepository.updateMedicationSupply(sourceId, -dose)
+            val updateResult = medicationRepository.updateMedicationSupply(sourceId, -dose, supplyId)
             if (updateResult.isFailure) {
                 return updateResult
             }

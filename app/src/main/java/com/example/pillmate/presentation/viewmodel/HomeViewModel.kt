@@ -33,6 +33,12 @@ class HomeViewModel(
 
     private var loadDataJob: kotlinx.coroutines.Job? = null
 
+    private val calendarStartDate: java.util.Date by lazy {
+        val cal = java.util.Calendar.getInstance()
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -15)
+        cal.time
+    }
+
     init {
         generateCalendarDays()
         loadData()

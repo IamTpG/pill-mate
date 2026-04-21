@@ -7,6 +7,8 @@ import com.example.pillmate.notification.TaskNotificationManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
     private val auth: FirebaseAuth by inject()
