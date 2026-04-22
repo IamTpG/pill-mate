@@ -18,18 +18,23 @@ class PillMateFcmService : FirebaseMessagingService() {
         super.onMessageReceived(message)
 
         val action = message.data["action"]
-        val scheduleId = message.data["scheduleId"]
+        val type = message.data["type"]
         val requestCode = message.data["requestCode"]?.toIntOrNull()
 
-        when (action) {
-            "SYNC" -> {
+        // Handle both legacy "action" and new Cloud Function "type"
+        when {
+            type == "alarm_event" || type?.startsWith("SCHEDULE_") == true || action == "SYNC" -> {
                 if (profileId.isNotBlank()) {
                     MainScope().launch {
-                        syncAlarmsUseCase(profileId)
+                        try {
+                            syncAlarmsUseCase(profileId)
+                        } catch (e: Exception) {
+                            android.util.Log.e("PillMateFcmService", "Remote sync failed", e)
+                        }
                     }
                 }
             }
-            "SILENCE" -> {
+            action == "SILENCE" -> {
                 requestCode?.let {
                     notificationManager.cancelNotification(it)
                 }
