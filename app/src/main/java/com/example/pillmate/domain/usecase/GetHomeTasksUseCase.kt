@@ -35,18 +35,23 @@ class GetHomeTasksUseCase(
                     val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                     
                     val scheduledTimeDate: Date? = try {
+                        val cal = Calendar.getInstance().apply { 
+                            time = date
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+                        
                         if (schedule.startTime.contains("T")) {
-                            isoFormat.parse(schedule.startTime)
+                            val parsed = isoFormat.parse(schedule.startTime)!!
+                            val tempCal = Calendar.getInstance().apply { time = parsed }
+                            cal.set(Calendar.HOUR_OF_DAY, tempCal.get(Calendar.HOUR_OF_DAY))
+                            cal.set(Calendar.MINUTE, tempCal.get(Calendar.MINUTE))
+                            cal.time
                         } else {
                             val timeParts = schedule.startTime.split(":")
-                            if (timeParts.size == 2) {
-                                val cal = Calendar.getInstance().apply {
-                                    time = date
-                                    set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
-                                    set(Calendar.MINUTE, timeParts[1].toInt())
-                                    set(Calendar.SECOND, 0)
-                                    set(Calendar.MILLISECOND, 0)
-                                }
+                            if (timeParts.size >= 2) {
+                                cal.set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+                                cal.set(Calendar.MINUTE, timeParts[1].toInt())
                                 cal.time
                             } else null
                         }
