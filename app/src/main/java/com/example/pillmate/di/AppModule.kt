@@ -74,4 +74,5 @@ val viewModelModule = module {
     viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
     viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.ProfileViewModel(get(), get()) }
 }
