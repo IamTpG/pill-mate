@@ -1,5 +1,7 @@
 package com.example.pillmate.presentation.ui.screens
 
+import android.app.AlarmManager
+import android.app.AlertDialog
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -15,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale.getDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,10 +86,14 @@ fun DebugMenuScreen(
                 onClick = {
                     viewModel.createTestScheduleIn1Min(
                         onSuccess = {
-                            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                             val next = alarmManager.nextAlarmClock?.triggerTime
                             val timeMsg = if (next != null) {
-                                java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(next))
+                                SimpleDateFormat("HH:mm:ss", getDefault()).format(
+                                    Date(
+                                        next
+                                    )
+                                )
                             } else "None"
                             Toast.makeText(context, "Next alarm: $timeMsg", Toast.LENGTH_LONG).show()
                         },
@@ -127,7 +136,7 @@ fun DebugMenuScreen(
                     val ids = viewModel.getScheduledIds()
                     if (ids.isEmpty()) Toast.makeText(context, "No alarms tracked in local storage", Toast.LENGTH_SHORT).show()
                     else {
-                        android.app.AlertDialog.Builder(context)
+                        AlertDialog.Builder(context)
                             .setTitle("Active RequestCodes")
                             .setMessage(ids.joinToString("\n"))
                             .setPositiveButton("OK", null)

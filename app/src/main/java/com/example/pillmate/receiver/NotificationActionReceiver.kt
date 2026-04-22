@@ -53,7 +53,7 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 // Register snooze in tracker so sync doesn't kill it
                 GlobalContext.get().get<AlarmTracker>().addId(snoozeRequestCode)
                 Toast.makeText(context, "Snoozed for 10 seconds", android.widget.Toast.LENGTH_SHORT).show()
-                TaskNotificationManager(context).dismissNotification()
+                TaskNotificationManager(context).dismissNotification(scheduleId)
                 return
             }
             else -> return

@@ -65,7 +65,7 @@ fun TaskAlarmScreen(
         logResult?.let { result ->
             if (result.isSuccess) {
                 Toast.makeText(context, "Task completed!", Toast.LENGTH_SHORT).show()
-                TaskNotificationManager(context).dismissNotification()
+                TaskNotificationManager(context).dismissNotification(scheduleId)
                 onDismiss()
             } else {
                 Toast.makeText(context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()

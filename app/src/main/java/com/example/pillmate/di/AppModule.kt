@@ -53,7 +53,7 @@ val appModule = module {
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
-    factory { ManageReminderUseCase(get(), get()) }
+    factory { ManageReminderUseCase(get(), get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
     

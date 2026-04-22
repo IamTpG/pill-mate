@@ -148,7 +148,7 @@ class TaskNotificationManager(private val context: Context) {
             .setOngoing(true)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, builder.build())
+        notificationManager.notify(scheduleId.hashCode(), builder.build())
     }
 
     fun scheduleTaskNotification(
@@ -228,9 +228,9 @@ class TaskNotificationManager(private val context: Context) {
         }
     }
 
-    fun dismissNotification() {
+    fun dismissNotification(scheduleId: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID)
+        notificationManager.cancel(scheduleId.hashCode())
     }
 
     fun cancelNotification(requestCode: Int) {
