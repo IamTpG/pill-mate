@@ -32,6 +32,7 @@ import com.example.pillmate.presentation.viewmodel.AuthViewModel
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
 import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
+import com.example.pillmate.util.FcmTokenManager
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -39,13 +40,14 @@ val appModule = module {
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
-    factory { DataGenerator(get()) }
+    single<DataGenerator> { DataGenerator(get()) }
 
     single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
     single<LogRepository> { FirestoreLogRepository(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
     
     single { AlarmTracker(get()) }
+    single { FcmTokenManager(get()) }
     
     factory { LogTaskUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
@@ -53,6 +55,7 @@ val appModule = module {
     factory { UpdateScheduleUseCase(get()) }
     factory { ManageReminderUseCase(get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get()) }
+    factory { SyncFcmTokenUseCase(get()) }
     
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
     
