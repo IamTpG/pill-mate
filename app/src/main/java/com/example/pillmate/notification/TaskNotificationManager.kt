@@ -187,36 +187,37 @@ class TaskNotificationManager(private val context: Context) {
         )
 
         val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
+        android.util.Log.d("TaskNotificationManager", "Scheduling $title for $triggerTime (delay: $delaySeconds, requestCode: $requestCode)")
 
         return try {
-            if (reminderType == "ALARM") {
+            val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                alarmManager.canScheduleExactAlarms()
+            } else true
+
+            if (reminderType == "ALARM" && canScheduleExact) {
                 val alarmClockInfo = android.app.AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                android.util.Log.d("TaskNotificationManager", "setAlarmClock SUCCESS for $requestCode")
                 true
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
+                android.util.Log.d("TaskNotificationManager", "Exact alarm permission: $canScheduleExact")
+                if (canScheduleExact) {
                     alarmManager.setExactAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
                 } else {
+                    android.util.Log.d("TaskNotificationManager", "FALLBACK: Inexact alarm used")
                     alarmManager.setAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
                 }
-                true // Scheduled (may be shifted by OS if not exact)
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    android.app.AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
                 true
             } else {
-                alarmManager.setExact(
+                alarmManager.setExactAndAllowWhileIdle(
                     android.app.AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
@@ -224,6 +225,7 @@ class TaskNotificationManager(private val context: Context) {
                 true
             }
         } catch (e: Exception) {
+            android.util.Log.e("TaskNotificationManager", "Scheduling FAILED", e)
             false
         }
     }

@@ -149,12 +149,40 @@ fun DebugMenuScreen(
 
             Button(
                 onClick = {
+                    viewModel.syncFcmToken(
+                        onSuccess = { Toast.makeText(context, "FCM Topic Subscribed!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.outline)
+            ) { Text("Sync FCM & Topic") }
+
+            Button(
+                onClick = {
                     viewModel.clearAlarmTracker()
                     Toast.makeText(context, "Alarm Tracker Cleared!", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) { Text("Clear Alarm Tracker Prefs") }
+
+            Button(
+                onClick = {
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) { Text("Open Battery Optimization Settings") }
+
+            Button(
+                onClick = {
+                    viewModel.copyFcmTokenToClipboard(context)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) { Text("Copy FCM Token for Direct Test") }
         }
 
         if (showScheduleDialog) {

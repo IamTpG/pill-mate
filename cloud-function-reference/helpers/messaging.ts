@@ -1,5 +1,5 @@
-import {messaging} from "../config/firebase";
-import {getProfileTokens} from "./tokens";
+import { messaging } from "../config/firebase";
+import { getProfileTokens } from "./tokens";
 
 export type MessageData = Record<string, string | number | boolean>;
 
@@ -17,8 +17,12 @@ export async function sendToProfile(
     payload[k] = String(v);
   }
 
-  await messaging.sendEachForMulticast({
-    tokens,
-    data: payload,
+  await messaging.send({
+    topic: `profile_${profileId}`,
+    data: {
+      ...payload,
+      profileId: profileId 
+    },
+    android: { priority: "high" }
   });
 }

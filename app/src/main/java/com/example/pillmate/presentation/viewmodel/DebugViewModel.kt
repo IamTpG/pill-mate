@@ -1,5 +1,7 @@
 package com.example.pillmate.presentation.viewmodel
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.domain.usecase.CreateScheduleUseCase
@@ -15,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -26,8 +29,34 @@ class DebugViewModel(
     private val db: FirebaseFirestore,
     private val syncAlarmsUseCase: com.example.pillmate.domain.usecase.SyncAlarmsUseCase,
     private val notificationManager: TaskNotificationManager,
-    private val alarmTracker: AlarmTracker
+    private val alarmTracker: AlarmTracker,
+    private val syncFcmTokenUseCase: com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
 ) : ViewModel() {
+
+    fun copyFcmTokenToClipboard(context: Context) {
+        viewModelScope.launch {
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("FCM Token", token)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(context, "Token copied!", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to get token", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun syncFcmToken(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                syncFcmTokenUseCase(profileId)
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
 
     fun forceSync(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         viewModelScope.launch {
@@ -113,7 +142,7 @@ class DebugViewModel(
         viewModelScope.launch {
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                val futureTime = Date(System.currentTimeMillis() + 10000) // 10s in future
+                val futureTime = Date(System.currentTimeMillis() + 60000) // 10s in future
                 val startTime = dateFormat.format(futureTime)
 
                 // Try to find a real medication to link to

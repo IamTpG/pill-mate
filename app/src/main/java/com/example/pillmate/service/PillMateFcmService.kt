@@ -10,8 +10,6 @@ import org.koin.android.ext.android.inject
 
 class PillMateFcmService : FirebaseMessagingService() {
 
-    private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
-    private val profileId: String by inject()
     private val notificationManager: TaskNotificationManager by inject()
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -21,18 +19,18 @@ class PillMateFcmService : FirebaseMessagingService() {
         val type = message.data["type"]
         val requestCode = message.data["requestCode"]?.toIntOrNull()
 
+        val profileIdFromFcm = message.data["profileId"]
+
         // Handle both legacy "action" and new Cloud Function "type"
         when {
             type == "alarm_event" || type?.startsWith("SCHEDULE_") == true || action == "SYNC" -> {
-                if (profileId.isNotBlank()) {
-                    MainScope().launch {
-                        try {
-                            syncAlarmsUseCase(profileId)
-                        } catch (e: Exception) {
-                            android.util.Log.e("PillMateFcmService", "Remote sync failed", e)
-                        }
-                    }
-                }
+                val inputData = androidx.work.workDataOf("profileId" to profileIdFromFcm)
+                val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.example.pillmate.workers.AlarmSyncWorker>()
+                    .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .setInputData(inputData)
+                    .build()
+                androidx.work.WorkManager.getInstance(applicationContext).enqueue(workRequest)
+                android.util.Log.d("PillMateFcmService", "Sync work enqueued for profile: $profileIdFromFcm")
             }
             action == "SILENCE" -> {
                 requestCode?.let {

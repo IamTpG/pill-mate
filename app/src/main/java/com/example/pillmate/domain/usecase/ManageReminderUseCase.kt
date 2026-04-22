@@ -49,10 +49,11 @@ class ManageReminderUseCase(
                         add(Calendar.MINUTE, -reminder.minutesBefore)
                     }
                     
-                    if (target.timeInMillis < System.currentTimeMillis()) {
+                    // Buffer of 2 seconds to account for parsing precision loss
+                    while (target.timeInMillis < System.currentTimeMillis() - 2000) {
                         target.add(Calendar.DAY_OF_YEAR, 1)
                     }
-                    val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).toInt()
+                    val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0L).toInt()
                     
                     if (delaySeconds >= 0) {
                         val scheduled = notificationManager.scheduleTaskNotification(

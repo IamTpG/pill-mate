@@ -17,7 +17,8 @@ class AlarmSyncWorker(
     private val auth: FirebaseAuth by inject()
 
     override suspend fun doWork(): Result {
-        val profileId = auth.currentUser?.uid ?: return Result.success()
+        val profileId = inputData.getString("profileId") ?: auth.currentUser?.uid ?: return Result.success()
+        android.util.Log.d("AlarmSyncWorker", "Starting background sync for profile: $profileId")
 
         return try {
             syncAlarmsUseCase(profileId)
