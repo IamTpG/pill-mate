@@ -23,8 +23,8 @@ class CabinetRepositoryImpl(
 ) : CabinetRepository {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getCabinetMedications(): Flow<List<Medication>> {
-        return medicationDao.getAllMedications().flatMapLatest { entities ->
+    override fun getCabinetMedications(profileId: String): Flow<List<Medication>> {
+        return medicationDao.getMedicationsForProfile(profileId).flatMapLatest { entities ->
             if (entities.isEmpty()) return@flatMapLatest flowOf(emptyList())
 
             val domainFlows = entities.map { entity ->
@@ -36,16 +36,16 @@ class CabinetRepositoryImpl(
         }
     }
 
-    override fun insertMedication(medication: Medication) {
-        medicationDao.insertMedication(medication.toEntity())
+    override fun insertMedication(profileId: String, medication: Medication) {
+        medicationDao.insertMedication(medication.toEntity(profileId))
     }
 
-    override fun updateMedication(medication: Medication) {
-        medicationDao.updateMedication(medication.toEntity())
+    override fun updateMedication(profileId: String, medication: Medication) {
+        medicationDao.updateMedication(medication.toEntity(profileId))
     }
 
-    override fun deleteMedication(medication: Medication) {
-        medicationDao.deleteMedication(medication.toEntity())
+    override fun deleteMedication(profileId: String, medication: Medication) {
+        medicationDao.deleteMedication(medication.toEntity(profileId))
     }
 
     override fun logInventoryChange(medicationId: String, amount: Int, reason: String) {

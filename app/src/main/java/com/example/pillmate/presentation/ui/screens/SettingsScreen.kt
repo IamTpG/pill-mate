@@ -1,5 +1,9 @@
 package com.example.pillmate.presentation.ui.screens
 
+import com.example.pillmate.data.local.database.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -48,6 +52,7 @@ fun SettingsScreen(
     onNavigateToAuth: () -> Unit
 ) {
     val auth: FirebaseAuth = koinInject()
+    val database: AppDatabase = koinInject()
     val context = LocalContext.current
     val currentUser = auth.currentUser
 
@@ -58,11 +63,11 @@ fun SettingsScreen(
         profileViewModel.loadProfile()
     }
 
-    // Observe the profile data at the top level
-    val profileData by profileViewModel.profileData.collectAsState()
+    // Observe the CURRENT LOCAL PROFILE from Room
+    val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
 
-    // Determine the name to show (Firestore Data -> Auth Display Name -> Fallback)
-    val displayName = profileData["fullName"]?.takeIf { it.isNotBlank() } ?: currentUser?.displayName ?: "User"
+    // Use the local profile's name for the UI! (Falls back to Firebase/Auth if null)
+    val displayName = currentLocalProfile?.name ?: currentUser?.displayName ?: "User"
 
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
 
@@ -88,7 +93,7 @@ fun SettingsScreen(
                     userName = displayName,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onSwitchClick = { currentRoute = SettingsRoute.SWITCH_PROFILE },
-                    onLogoutClick = { performSignOut(context, auth, onSignOutComplete) }
+                    onLogoutClick = { performSignOut(context, auth, database, currentLocalProfile?.id, onSignOutComplete) }
                 )
             }
             SettingsRoute.EDIT_PROFILE -> {
@@ -103,6 +108,7 @@ fun SettingsScreen(
             }
             SettingsRoute.SWITCH_PROFILE -> {
                 SwitchProfileScreen(
+                    viewModel = profileViewModel,
                     paddingValues = paddingValues,
                     onBack = { currentRoute = SettingsRoute.OPTIONS },
                     onAddProfileClick = onNavigateToAuth
@@ -360,19 +366,14 @@ fun EditProfileScreen(
 
 @Composable
 fun SwitchProfileScreen(
+    viewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel,
     paddingValues: PaddingValues,
     onBack: () -> Unit,
     onAddProfileClick: () -> Unit
 ) {
-    // Dummy data to match UI
-    val profiles = listOf(
-        Pair("David Nguyen", "Primary User"),
-        Pair("Eric Nguyen", "Caregiver"),
-        Pair("Luong Tran", "Caregiver"),
-        Pair("Khoa Tran", "Caregiver")
-    )
-
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    // Observe profiles directly from the local Room database
+    val profiles by viewModel.localProfiles.collectAsState()
+    val currentProfile by viewModel.currentLocalProfile.collectAsState()
 
     Column(
         modifier = Modifier
@@ -380,7 +381,6 @@ fun SwitchProfileScreen(
             .padding(paddingValues),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Custom simple header since there's no back button in the mockup, but we need a way back
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -401,21 +401,26 @@ fun SwitchProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(profiles.size) { index ->
-                val profile = profiles[index]
-                ProfileSelectCard(
-                    name = profile.first,
-                    role = profile.second,
-                    isSelected = selectedIndex == index,
-                    onClick = { selectedIndex = index }
-                )
+        if (profiles.isEmpty()) {
+            CircularProgressIndicator(color = PrimaryGreen)
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(profiles) { profile ->
+                    ProfileSelectCard(
+                        name = profile.name,
+                        role = profile.role,
+                        isSelected = profile.id == currentProfile?.id, // Compare with the current active DB profile
+                        onClick = {
+                            viewModel.switchActiveProfile(profile.id)
+                        }
+                    )
+                }
             }
         }
 
@@ -548,15 +553,37 @@ fun ProfileSelectCard(
     }
 }
 
-private fun performSignOut(context: Context, auth: FirebaseAuth, onComplete: () -> Unit) {
+private fun performSignOut(
+    context: Context,
+    auth: FirebaseAuth,
+    database: com.example.pillmate.data.local.database.AppDatabase,
+    activeProfileId: String?,
+    onComplete: () -> Unit
+) {
     auth.signOut()
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(R.string.default_web_client_id))
-        .requestEmail()
-        .build()
-    val googleClient = GoogleSignIn.getClient(context, gso)
-    googleClient.signOut().addOnCompleteListener {
-        onComplete()
+
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        // 1. Target and delete ONLY the profile you were actively viewing in the UI
+        if (activeProfileId != null) {
+            database.profileDao().deleteProfileById(activeProfileId)
+        }
+
+        // 2. Reset the active flag so the NEXT person who logs in becomes the primary automatically
+        database.profileDao().clearCurrentProfile()
+
+        // Switch back to the Main thread to finish the UI navigation
+        launch(kotlinx.coroutines.Dispatchers.Main) {
+            val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+            )
+                .requestIdToken(context.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            val googleClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+            googleClient.signOut().addOnCompleteListener {
+                onComplete()
+            }
+        }
     }
 }
 

@@ -36,7 +36,7 @@ class LogTaskUseCase(
 
         // 2. If completed medication, deduct from inventory
         if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
-            val updateResult = medicationRepository.updateMedicationSupply(sourceId, -dose)
+            val updateResult = medicationRepository.updateMedicationSupply(profileId, sourceId, -dose)
             if (updateResult.isFailure) {
                 return updateResult
             }

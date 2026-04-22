@@ -29,4 +29,7 @@ interface MedicationDao {
 
     @Query("SELECT * FROM medications WHERE id = :id LIMIT 1")
     fun getMedicationById(id: String): MedicationEntity?
+
+    @Query("SELECT * FROM medications WHERE profileId = :profileId ORDER BY name ASC")
+    fun getMedicationsForProfile(profileId: String): Flow<List<MedicationEntity>>
 }

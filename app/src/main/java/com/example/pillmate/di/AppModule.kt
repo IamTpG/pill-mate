@@ -33,7 +33,7 @@ val appModule = module {
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
 
-    single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
+    single<MedicationRepository> { FirestoreMedicationRepository(get()) }
     single<LogRepository> { FirestoreLogRepository(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
     
@@ -47,14 +47,15 @@ val appModule = module {
     factory { com.example.pillmate.domain.usecase.ManageReminderUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.SyncAlarmsUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.SyncFcmTokenUseCase(get()) }
-    
+
     single { com.example.pillmate.notification.TaskNotificationManager(get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
     single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
-    
+    single { get<AppDatabase>().profileDao() }
+
     single {
         Retrofit.Builder()
             .baseUrl("https://api.fda.gov/")
@@ -71,8 +72,8 @@ val viewModelModule = module {
     viewModel { TaskLogViewModel(get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { CabinetViewModel(get(), get(), androidContext() as android.app.Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
     viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.ProfileViewModel(get(), get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.ProfileViewModel(get(), get(), get()) }
 }
