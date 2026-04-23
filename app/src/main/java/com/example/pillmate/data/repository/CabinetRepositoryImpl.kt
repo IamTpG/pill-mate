@@ -33,8 +33,8 @@ class CabinetRepositoryImpl(
     private val syncScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getCabinetMedications(): Flow<List<Medication>> {
-        return medicationDao.getAllMedications().flatMapLatest { entities ->
+    override fun getCabinetMedications(profileId: String): Flow<List<Medication>> {
+        return medicationDao.getMedicationsForProfile(profileId).flatMapLatest { entities ->
             if (entities.isEmpty()) return@flatMapLatest flowOf(emptyList())
 
             val domainFlows = entities.map { entity ->
@@ -46,61 +46,55 @@ class CabinetRepositoryImpl(
         }
     }
 
-    override fun insertMedication(medication: Medication) {
-        medicationDao.insertMedication(medication.toEntity())
+    override fun insertMedication(profileId: String, medication: Medication) {
+        medicationDao.insertMedication(medication.toEntity(profileId))
         syncScope.launch {
-            auth.currentUser?.uid?.let { uid ->
-                try {
-                    firestore.collection("profiles").document(uid)
-                        .collection("medications").document(medication.id)
-                        .set(medication).await()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            try {
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medication.id)
+                    .set(medication).await()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
-    override fun updateMedication(medication: Medication) {
-        medicationDao.updateMedication(medication.toEntity())
+    override fun updateMedication(profileId: String, medication: Medication) {
+        medicationDao.updateMedication(medication.toEntity(profileId))
         syncScope.launch {
-            auth.currentUser?.uid?.let { uid ->
-                try {
-                    firestore.collection("profiles").document(uid)
-                        .collection("medications").document(medication.id)
-                        .set(medication).await()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            try {
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medication.id)
+                    .set(medication).await()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
-    override fun deleteMedication(medication: Medication) {
-        medicationDao.deleteMedication(medication.toEntity())
+    override fun deleteMedication(profileId: String, medication: Medication) {
+        medicationDao.deleteMedication(medication.toEntity(profileId))
         syncScope.launch {
-            auth.currentUser?.uid?.let { uid ->
-                try {
-                    firestore.collection("profiles").document(uid)
-                        .collection("medications").document(medication.id)
-                        .delete().await()
-                        
-                    // Cascade delete schedules
-                    val schedules = firestore.collection("profiles").document(uid)
-                        .collection("schedules")
-                        .whereEqualTo("eventSnapshot.sourceId", medication.id)
-                        .get().await()
-                    for (doc in schedules.documents) {
-                        doc.reference.delete().await()
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+            try {
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medication.id)
+                    .delete().await()
+                    
+                // Cascade delete schedules
+                val schedules = firestore.collection("profiles").document(profileId)
+                    .collection("schedules")
+                    .whereEqualTo("eventSnapshot.sourceId", medication.id)
+                    .get().await()
+                for (doc in schedules.documents) {
+                    doc.reference.delete().await()
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
-    override fun logInventoryChange(medicationId: String, amount: Int, reason: String) {
+    override fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String) {
         val newLog = SupplyLogEntity(
             id = UUID.randomUUID().toString(),
             medicationId = medicationId,
@@ -111,21 +105,19 @@ class CabinetRepositoryImpl(
         supplyLogDao.insertSupplyLog(newLog)
         
         syncScope.launch {
-            auth.currentUser?.uid?.let { uid ->
-                try {
-                    val logData = hashMapOf(
-                        "id" to newLog.id,
-                        "changeAmount" to newLog.changeAmount,
-                        "reason" to newLog.reason,
-                        "timestamp" to newLog.timestamp
-                    )
-                    firestore.collection("profiles").document(uid)
-                        .collection("medications").document(medicationId)
-                        .collection("logs").document(newLog.id)
-                        .set(logData).await()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            try {
+                val logData = hashMapOf(
+                    "id" to newLog.id,
+                    "changeAmount" to newLog.changeAmount,
+                    "reason" to newLog.reason,
+                    "timestamp" to newLog.timestamp
+                )
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medicationId)
+                    .collection("logs").document(newLog.id)
+                    .set(logData).await()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

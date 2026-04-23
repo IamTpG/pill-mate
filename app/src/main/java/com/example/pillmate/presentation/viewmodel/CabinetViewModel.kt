@@ -3,15 +3,20 @@ package com.example.pillmate.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.repository.CabinetRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import com.example.pillmate.domain.model.Medication
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.UUID
 
 data class CabinetUiState(
@@ -26,6 +31,7 @@ data class CabinetUiState(
 
 class CabinetViewModel(
     private val cabinetRepository: CabinetRepository,
+    private val profileDao: ProfileDao, // 🟢 Injected ProfileDao
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -39,48 +45,52 @@ class CabinetViewModel(
         observeCabinet()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeCabinet() {
         viewModelScope.launch {
-            combine(
-                cabinetRepository.getCabinetMedications(),
-                _searchQuery
-            ) { allMedications, query ->
-                
-                // 1. Global counts (unaffected by search)
-                val allExpired = allMedications.filter {
-                    it.supply?.expirationDate?.before(java.util.Date()) == true
-                }
-                val allActive = allMedications.filter {
-                    !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
-                }
-                val penalty = allExpired.size * 5
-                val score = (100 - penalty).coerceIn(0, 100)
+// 🟢 Observe the current profile first
+            profileDao.getCurrentProfileFlow().flatMapLatest { profile ->
+                if (profile != null) {
+                    // 🟢 Fetch medications for the active profile
+                    combine(
+                        cabinetRepository.getCabinetMedications(profile.id),
+                        _searchQuery
+                    ) { allMedications, query ->
 
-                // 2. Handle the Search Bar for display list
-                val filteredMeds = if (query.isBlank()) {
-                    allMedications
+                        // 1. Handle the Search Bar
+                        val filteredMeds = if (query.isBlank()) {
+                            allMedications
+                        } else {
+                            allMedications.filter { it.name.contains(query, ignoreCase = true) }
+                        }
+
+                        // 2. Split into Expired vs Active
+                        val expired = filteredMeds.filter {
+                            it.supply?.expirationDate?.before(java.util.Date()) == true
+                        }
+                        val active = filteredMeds.filter {
+                            !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
+                        }
+
+                        // 3. Calculate Health Score
+                        val penalty = expired.size * 5
+                        val score = (100 - penalty).coerceIn(0, 100)
+
+                        // 4. Output state
+                        CabinetUiState(
+                            isLoading = false,
+                            healthScore = score,
+                            activeMedsCount = active.size,
+                            lowStockCount = filteredMeds.count { (it.supply?.quantity ?: 0f) < 10f },
+                            searchQuery = query,
+                            activeMedications = active,
+                            expiredMedications = expired
+                        )
+                    }
                 } else {
-                    allMedications.filter { it.name.contains(query, ignoreCase = true) }
+                    // Fallback empty state if no profile is active
+                    flowOf(CabinetUiState(isLoading = false))
                 }
-
-                // 3. Split filtered into Expired vs Active for display
-                val expired = filteredMeds.filter {
-                    it.supply?.expirationDate?.before(java.util.Date()) == true
-                }
-                val active = filteredMeds.filter {
-                    !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
-                }
-
-                // 4. Output state
-                CabinetUiState(
-                    isLoading = false,
-                    healthScore = score,
-                    activeMedsCount = allActive.size,
-                    lowStockCount = allMedications.count { (it.supply?.quantity ?: 0f) < 10f },
-                    searchQuery = query,
-                    activeMedications = active,
-                    expiredMedications = expired
-                )
             }.collect { finalState ->
                 _uiState.value = finalState
             }
@@ -113,9 +123,12 @@ class CabinetViewModel(
 
     fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
+            // 🟢 Get the active profile ID before inserting
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+
             val photoUrl = saveImageToInternalStorage(imageUriStr)
             val newId = UUID.randomUUID().toString()
-            
+
             // 1. Create base Medication
             val newMedication = Medication(
                 id = newId,
@@ -128,12 +141,14 @@ class CabinetViewModel(
                     expirationDate = if (expirationDate > 0) java.util.Date(expirationDate) else null
                 )
             )
-            
-            cabinetRepository.insertMedication(newMedication)
+
+            // 🟢 Pass activeProfileId to repository
+            cabinetRepository.insertMedication(activeProfileId, newMedication)
 
             // 2. Log initial stock
             if (initialCount > 0) {
                 cabinetRepository.logInventoryChange(
+                    profileId = activeProfileId,
                     medicationId = newId,
                     amount = initialCount,
                     reason = "INITIAL_STOCK"
@@ -144,6 +159,8 @@ class CabinetViewModel(
 
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            
             // Find current stock to enforce floor of 0
             val currentStock = _uiState.value.activeMedications
                 .find { it.id == medicationId }?.supply?.quantity?.toInt()
@@ -153,6 +170,7 @@ class CabinetViewModel(
             val clampedAmount = amountTaken.coerceAtMost(currentStock.coerceAtLeast(0))
             if (clampedAmount <= 0) return@launch
             cabinetRepository.logInventoryChange(
+                profileId = activeProfileId,
                 medicationId = medicationId,
                 amount = -clampedAmount,
                 reason = reason.ifBlank { "Taken" }
@@ -174,6 +192,9 @@ class CabinetViewModel(
         imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
+            // 🟢 Get the active profile ID before updating
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+
             val photoUrl = saveImageToInternalStorage(imageUriStr) ?: existingMedication.photoUrl
             val updatedMedication = existingMedication.copy(
                 name = newName,
@@ -187,13 +208,15 @@ class CabinetViewModel(
                     quantity = 0f
                 )
             )
-            
-            cabinetRepository.updateMedication(updatedMedication)
+
+            // 🟢 Pass activeProfileId to repository
+            cabinetRepository.updateMedication(activeProfileId, updatedMedication)
 
             val currentQuantity = (existingMedication.supply?.quantity ?: 0f).toInt()
             if (newCount != currentQuantity) {
                 val difference = newCount - currentQuantity
                 cabinetRepository.logInventoryChange(
+                    profileId = activeProfileId,
                     medicationId = existingMedication.id,
                     amount = difference,
                     reason = "ADJUSTMENT"
@@ -204,7 +227,8 @@ class CabinetViewModel(
 
     fun deleteMedication(medication: Medication) {
         viewModelScope.launch(Dispatchers.IO) {
-            cabinetRepository.deleteMedication(medication)
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            cabinetRepository.deleteMedication(activeProfileId, medication)
         }
     }
 }

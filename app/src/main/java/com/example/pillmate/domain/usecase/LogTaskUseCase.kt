@@ -42,6 +42,7 @@ class LogTaskUseCase(
         if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
             withContext(Dispatchers.IO) {
                 cabinetRepository.logInventoryChange(
+                    profileId = profileId,
                     medicationId = sourceId,
                     amount = -dose.toInt(),
                     reason = "Taken"

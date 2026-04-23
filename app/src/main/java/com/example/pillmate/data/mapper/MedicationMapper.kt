@@ -20,14 +20,14 @@ fun MedicationEntity.toDomainModel(inventory: Int): Medication {
     )
 }
 
-fun Medication.toEntity(): MedicationEntity {
-    return MedicationEntity(
-        id = id,
-        profileId = "", // Legacy field for local DB
-        name = name,
-        description = description ?: "",
-        unit = unit,
-        photoUrl = photoUrl,
-        expirationDate = supply?.expirationDate?.time ?: 0L
-    )
-}
+    fun Medication.toEntity(profileId: String): MedicationEntity {
+        return MedicationEntity(
+            id = id,
+            profileId = profileId,
+            name = name,
+            description = description ?: "",
+            unit = unit,
+            photoUrl = photoUrl,
+            expirationDate = supply?.expirationDate?.time ?: 0L
+        )
+    }

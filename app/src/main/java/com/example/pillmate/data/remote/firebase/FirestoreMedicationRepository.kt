@@ -7,11 +7,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class FirestoreMedicationRepository(
-    private val db: FirebaseFirestore,
-    private val profileId: String
+    private val db: FirebaseFirestore
 ) : MedicationRepository {
 
-    override suspend fun getMedication(id: String): Result<Medication?> {
+    override suspend fun getMedication(profileId: String, id: String): Result<Medication?> {
         return try {
             val doc = db.collection("profiles").document(profileId)
                 .collection("medications").document(id).get().await()
@@ -44,7 +43,7 @@ class FirestoreMedicationRepository(
         }
     }
 
-    override suspend fun updateMedicationSupply(medId: String, changeAmount: Float): Result<Unit> {
+    override suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float): Result<Unit> {
         return try {
             val inventoryLog = hashMapOf(
                 "id" to java.util.UUID.randomUUID().toString(),
