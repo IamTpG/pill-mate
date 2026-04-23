@@ -125,7 +125,7 @@ fun DebugMenuScreen(
                                     showReminderDialog = schedule
                                 }
                             ) {
-                                Text("${schedule.eventSnapshot.title} (${schedule.startTime})")
+                                Text("${schedule.eventSnapshot.title} (${schedule.doseTimes.joinToString { it.time }})")
                             }
                         }
                     }

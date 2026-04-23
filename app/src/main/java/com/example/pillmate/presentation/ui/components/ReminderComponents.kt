@@ -77,7 +77,7 @@ fun ScheduleReminderItem(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = formatScheduleTime(schedule.startTime),
+                            text = schedule.doseTimes.joinToString(", ") { formatScheduleTime(it.time) },
                             fontSize = 14.sp,
                             color = colorResource(id = R.color.status_upcoming)
                         )
