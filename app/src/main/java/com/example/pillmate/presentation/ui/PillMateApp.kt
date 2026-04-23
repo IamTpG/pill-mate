@@ -142,6 +142,21 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
+            
+            composable(route = Screen.Appointment.route) {
+                // Dynamically get the current user ID for the profileId
+                val currentUserId = auth.currentUser?.uid ?: ""
+                
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    val appointmentViewModel: AppointmentViewModel = koinViewModel()
+                    
+                    AppointmentScreen(
+                        viewModel = appointmentViewModel,
+                        profileId = currentUserId,
+                        paddingValues = innerPadding // Pass the scaffold padding here
+                    )
+                }
+            }
             composable(
                 route = Screen.TaskAlarm.route,
                 arguments = listOf(
