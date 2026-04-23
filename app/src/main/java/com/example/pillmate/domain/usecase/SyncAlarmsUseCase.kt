@@ -30,8 +30,13 @@ class SyncAlarmsUseCase(
         val result = scheduleRepository.getSchedules(profileId)
         val schedules = result.getOrNull() ?: return
 
-        val now = System.currentTimeMillis()
-        val todayLogsSnapshot = logRepository.getLogsForDay(profileId, Date()).getOrNull() ?: emptyList()
+        // Fetch logs for today to avoid scheduling already completed tasks
+        val todayLogsSnapshot: List<TaskLog> = try {
+            logRepository.getLogsForDayFlow(profileId, Date()).first()
+        } catch (e: Exception) {
+            Log.e("SyncAlarmsUseCase", "Failed to fetch logs for sync", e)
+            emptyList()
+        }
         val completedScheduleIds = todayLogsSnapshot.filter { it.status == LogStatus.COMPLETED || it.status == LogStatus.SKIPPED }.map { it.scheduleId }.toSet()
 
         val previouslyScheduledIds = alarmTracker.getScheduledIds()
@@ -79,19 +84,11 @@ class SyncAlarmsUseCase(
                         add(Calendar.MINUTE, -reminder.minutesBefore)
                     }
 
-                    // ROBUST TIME-SHIFTER:
-                    // 1. Shift to tomorrow only if it's more than 2 hours in the past
-                    while (target.timeInMillis < now - 2 * 60 * 60 * 1000) {
+                    // Buffer of 2 seconds to account for parsing precision loss (milliseconds)
+                    while (target.timeInMillis < System.currentTimeMillis() - 2000) {
                         target.add(Calendar.DAY_OF_YEAR, 1)
                     }
-                    
-                    // 2. If it's still in the past (within the 2hr window), skip to tomorrow ONLY if it's already logged.
-                    // This handles clock drift (e.g. 10s test) and missed meds.
-                    if (target.timeInMillis < now && completedScheduleIds.contains(schedule.id)) {
-                        target.add(Calendar.DAY_OF_YEAR, 1)
-                    }
-
-                    val delaySeconds = ((target.timeInMillis - now) / 1000).coerceAtLeast(0L).toInt()
+                    val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0L).toInt()
 
                     val scheduled = notificationManager.scheduleTaskNotification(
                         sourceId = schedule.eventSnapshot.sourceId,

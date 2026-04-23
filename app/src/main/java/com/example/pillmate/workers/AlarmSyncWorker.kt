@@ -20,9 +20,6 @@ class AlarmSyncWorker(
         val profileId = inputData.getString("profileId") ?: auth.currentUser?.uid ?: return Result.success()
         android.util.Log.d("AlarmSyncWorker", "Starting background sync for profile: $profileId")
 
-        // Wait 1s for Firestore network update to propagate to local cache after FCM arrival
-        kotlinx.coroutines.delay(1000)
-
         return try {
             syncAlarmsUseCase(profileId)
             Result.success()
