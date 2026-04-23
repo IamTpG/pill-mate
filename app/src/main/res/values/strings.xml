@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">Pillmate</string>
+    <string name="app_name">Pill Mate</string>
+
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="switch_profile">Switch Profile</string>
+    <string name="manage_caregiver_access">Manage Caregiver Access</string>
+    <string name="language">Language</string>
+    <string name="english">English</string>
+    <string name="vietnamese">Tiếng Việt</string>
+    <string name="log_out">Log out</string>
+    <string name="emergency">EMERGENCY</string>
+    <string name="user_default">User</string>
+    <string name="background_desc">Background</string>
+    <string name="avatar_desc">Avatar</string>
+    <string name="back_desc">Back</string>
+    <string name="save">Save</string>
+    <string name="edit_avatar">Edit Avatar</string>
+    <string name="name_label">Name</string>
+    <string name="dob_label">Date of Birth</string>
+    <string name="select_date">Select Date</string>
+    <string name="health_info_label">Health Information</string>
+    <string name="tap_to_edit">Tap to edit</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_profile">ADD PROFILE</string>
+    <string name="selected_desc">Selected</string>
 </resources>

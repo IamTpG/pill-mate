@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 data class ProfileEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val dateOfBirth: Long? = null,
+    val healthInformation: String = "",
     val role: String,
-    val isCurrent: Boolean = false
+    val isCurrent: Boolean = false,
 )

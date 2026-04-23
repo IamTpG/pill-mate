@@ -33,6 +33,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.example.pillmate.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -66,8 +70,9 @@ fun SettingsScreen(
     // Observe the CURRENT LOCAL PROFILE from Room
     val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
 
-    // Use the local profile's name for the UI! (Falls back to Firebase/Auth if null)
-    val displayName = currentLocalProfile?.name ?: currentUser?.displayName ?: "User"
+    // Use the localized default user string
+    val defaultUserText = stringResource(id = R.string.user_default)
+    val displayName = currentLocalProfile?.name ?: currentUser?.displayName ?: defaultUserText
 
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
 
@@ -75,7 +80,7 @@ fun SettingsScreen(
         // Shared Background
         Image(
             painter = painterResource(id = R.drawable.background),
-            contentDescription = "Background",
+            contentDescription = stringResource(id = R.string.background_desc),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -118,6 +123,7 @@ fun SettingsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileOptionsScreen(
     paddingValues: PaddingValues,
@@ -126,6 +132,20 @@ fun ProfileOptionsScreen(
     onSwitchClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+
+    val configuration = LocalConfiguration.current
+    val currentLanguageCode = configuration.locales[0].language
+
+    var showLanguageSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+
+    val currentLanguageDisplay = if (currentLanguageCode == "vi") {
+        stringResource(id = R.string.vietnamese)
+    } else {
+        stringResource(id = R.string.english)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -140,7 +160,7 @@ fun ProfileOptionsScreen(
             horizontalArrangement = Arrangement.Start
         ) {
             Text(
-                text = "Profile",
+                text = stringResource(id = R.string.profile),
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -158,7 +178,7 @@ fun ProfileOptionsScreen(
         ) {
             Icon(
                 imageVector = Icons.Outlined.Person,
-                contentDescription = "Avatar",
+                contentDescription = stringResource(id = R.string.avatar_desc),
                 tint = Color.White,
                 modifier = Modifier.fillMaxSize()
             )
@@ -166,6 +186,7 @@ fun ProfileOptionsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Username remains dynamic variable
         Text(
             text = userName,
             color = Color.White,
@@ -177,27 +198,77 @@ fun ProfileOptionsScreen(
 
         // Buttons
         SettingsButton(
-            text = "Edit Profile",
+            text = stringResource(id = R.string.edit_profile),
             icon = Icons.Default.Edit,
             onClick = onEditClick
         )
         SettingsButton(
-            text = "Switch Profile",
-            icon = Icons.Default.AccountCircle, // Placeholder icon
+            text = stringResource(id = R.string.switch_profile),
+            icon = Icons.Default.AccountCircle,
             onClick = onSwitchClick
         )
         SettingsButton(
-            text = "Manage Caregiver Access",
-            icon = Icons.Default.Lock, // Placeholder icon
+            text = stringResource(id = R.string.manage_caregiver_access),
+            icon = Icons.Default.Lock,
             onClick = { /* TODO */ }
         )
+
+        // Language Button with Dropdown Menu
+        Box(modifier = Modifier.fillMaxWidth()) {
+            SettingsButton(
+                text = "${stringResource(id = R.string.language)}: $currentLanguageDisplay",
+                icon = Icons.Default.Settings,
+                onClick = { showLanguageSheet = true }
+            )
+
+            if (showLanguageSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showLanguageSheet = false },
+                    sheetState = sheetState,
+                    containerColor = Color(0xFF1B1B1B),
+                    dragHandle = {
+                        BottomSheetDefaults.DragHandle(
+                            color = Color.White.copy(alpha = 0.4f)
+                        )
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 40.dp, start = 24.dp, end = 24.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.language),
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        LanguageItem(
+                            label = stringResource(id = R.string.english),
+                            isSelected = currentLanguageCode == "en",
+                            onClick = {
+                                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+                                showLanguageSheet = false
+                            }
+                        )
+
+                        LanguageItem(
+                            label = stringResource(id = R.string.vietnamese),
+                            isSelected = currentLanguageCode == "vi",
+                            onClick = {
+                                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("vi"))
+                                showLanguageSheet = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         SettingsButton(
-            text = "Language",
-            icon = Icons.Default.Settings, // Placeholder icon
-            onClick = { /* TODO */ }
-        )
-        SettingsButton(
-            text = "Log out",
+            text = stringResource(id = R.string.log_out),
             icon = Icons.AutoMirrored.Filled.ExitToApp,
             onClick = onLogoutClick
         )
@@ -211,13 +282,13 @@ fun ProfileOptionsScreen(
                 .padding(bottom = 24.dp)
                 .height(60.dp),
             shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)) // Red color
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "EMERGENCY",
+                    text = stringResource(id = R.string.emergency),
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -234,21 +305,34 @@ fun EditProfileScreen(
     paddingValues: PaddingValues,
     onBack: () -> Unit
 ) {
-    val profileData by viewModel.profileData.collectAsState()
+    // 🟢 Theo dõi trực tiếp từ Room DB để lấy dữ liệu realtime
+    val currentProfile by viewModel.currentLocalProfile.collectAsState()
 
     var name by remember { mutableStateOf("") }
     var dob by remember { mutableStateOf("") }
     var healthInfo by remember { mutableStateOf("") }
 
+    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+
     // Date Picker State
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    val configuration = LocalConfiguration.current
 
-    LaunchedEffect(profileData) {
-        if (profileData.isNotEmpty()) {
-            name = profileData["fullName"] ?: ""
-            dob = profileData["dateOfBirth"] ?: ""
-            healthInfo = profileData["healthInformation"] ?: ""
+    LaunchedEffect(currentProfile) {
+        currentProfile?.let {
+            name = it.name
+            healthInfo = it.healthInformation
+            selectedDateMillis = it.dateOfBirth
+
+            if (it.dateOfBirth != null) {
+                val currentLang = configuration.locales[0].language
+                val pattern = if (currentLang == "vi") "dd/MM/yyyy" else "MMM dd, yyyy"
+                val formatter = java.text.SimpleDateFormat(pattern, java.util.Locale(currentLang))
+                dob = formatter.format(java.util.Date(it.dateOfBirth))
+            } else {
+                dob = ""
+            }
         }
     }
 
@@ -259,16 +343,17 @@ fun EditProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CenterAlignedTopAppBar(
-            title = { Text("Edit Profile", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(id = R.string.edit_profile), color = Color.White, fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
                 }
             },
             actions = {
                 Button(
                     onClick = {
-                        viewModel.saveProfile(name, dob, healthInfo) {
+                        // 🟢 Truyền selectedDateMillis (Long) thay vì dob (String)
+                        viewModel.saveProfile(name, selectedDateMillis, healthInfo) {
                             onBack()
                         }
                     },
@@ -276,7 +361,7 @@ fun EditProfileScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
-                    Text("Save", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.save), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
@@ -292,7 +377,7 @@ fun EditProfileScreen(
                     .background(Color.Transparent, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.Person, contentDescription = "Avatar", tint = Color.White, modifier = Modifier.fillMaxSize())
+                Icon(Icons.Outlined.Person, contentDescription = stringResource(id = R.string.avatar_desc), tint = Color.White, modifier = Modifier.fillMaxSize())
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
@@ -301,7 +386,7 @@ fun EditProfileScreen(
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Edit Avatar", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.edit_avatar), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -318,20 +403,24 @@ fun EditProfileScreen(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                UnderlinedProfileField(label = "Name", value = name, onValueChange = { name = it })
+                UnderlinedProfileField(
+                    label = stringResource(id = R.string.name_label),
+                    value = name,
+                    onValueChange = { name = it }
+                )
 
                 // Clickable Date of Birth Field
                 ClickableUnderlinedProfileField(
-                    label = "Date of Birth",
-                    value = dob.ifBlank { "Select Date" },
+                    label = stringResource(id = R.string.dob_label),
+                    value = dob.ifBlank { stringResource(id = R.string.select_date) },
                     onClick = { showDatePicker = true }
                 )
 
                 UnderlinedProfileField(
-                    label = "Health Information",
+                    label = stringResource(id = R.string.health_info_label),
                     value = healthInfo,
                     onValueChange = { healthInfo = it },
-                    placeholder = "Tap to edit"
+                    placeholder = stringResource(id = R.string.tap_to_edit)
                 )
             }
         }
@@ -344,18 +433,21 @@ fun EditProfileScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        // Format the milliseconds into a readable string like "August 20, 1987"
-                        val formatter = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
+                        selectedDateMillis = millis
+
+                        val currentLang = configuration.locales[0].language
+                        val pattern = if (currentLang == "vi") "dd/MM/yyyy" else "MMM dd, yyyy"
+                        val formatter = java.text.SimpleDateFormat(pattern, java.util.Locale(currentLang))
                         dob = formatter.format(java.util.Date(millis))
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK", color = PrimaryGreen)
+                    Text(stringResource(id = R.string.ok), color = PrimaryGreen)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
                 }
             }
         ) {
@@ -388,10 +480,10 @@ fun SwitchProfileScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
             }
             Text(
-                text = "Switch Profile",
+                text = stringResource(id = R.string.switch_profile),
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
@@ -415,7 +507,7 @@ fun SwitchProfileScreen(
                     ProfileSelectCard(
                         name = profile.name,
                         role = profile.role,
-                        isSelected = profile.id == currentProfile?.id, // Compare with the current active DB profile
+                        isSelected = profile.id == currentProfile?.id,
                         onClick = {
                             viewModel.switchActiveProfile(profile.id)
                         }
@@ -433,7 +525,7 @@ fun SwitchProfileScreen(
             shape = RoundedCornerShape(15.dp),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
         ) {
-            Text("ADD PROFILE", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(id = R.string.add_profile), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -546,7 +638,7 @@ fun ProfileSelectCard(
                 contentAlignment = Alignment.Center
             ) {
                 if (isSelected) {
-                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = PrimaryGreen)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(id = R.string.selected_desc), tint = PrimaryGreen)
                 }
             }
         }
@@ -617,5 +709,24 @@ fun ClickableUnderlinedProfileField(
             ),
             textStyle = LocalTextStyle.current.copy(fontSize = 16.sp)
         )
+    }
+}
+
+@Composable
+fun LanguageItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isSelected) PrimaryGreen.copy(alpha = 0.2f) else Color.Transparent)
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = Color.White, fontSize = 16.sp)
+        if (isSelected) {
+            Icon(Icons.Default.Check, contentDescription = null, tint = PrimaryGreen)
+        }
     }
 }
