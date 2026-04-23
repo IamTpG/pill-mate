@@ -10,8 +10,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,6 +41,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 
 import androidx.compose.foundation.layout.PaddingValues
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleBuilderScreen(
@@ -49,6 +53,8 @@ fun ScheduleBuilderScreen(
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val context = LocalContext.current
     var showReminderDialog by remember { mutableStateOf(false) }
+    var reminderToDelete by remember { mutableStateOf<Int?>(null) }
+    var showDeleteScheduleDialog by remember { mutableStateOf(false) }
 
     fun openDatePicker(isStartDate: Boolean) {
         val cal = Calendar.getInstance()
@@ -66,7 +72,6 @@ fun ScheduleBuilderScreen(
             cal.get(Calendar.MONTH),
             cal.get(Calendar.DAY_OF_MONTH)
         )
-        // Date Logic Constraints
         if (isStartDate) {
             dpd.datePicker.minDate = System.currentTimeMillis() - 1000
         } else {
@@ -85,10 +90,9 @@ fun ScheduleBuilderScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            // Top bar
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
@@ -97,12 +101,70 @@ fun ScheduleBuilderScreen(
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Text("Schedule Builder", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
-                Spacer(modifier = Modifier.width(48.dp))
+                // Right side icons
+                if (uiState.readOnly) {
+                    // Read-only: pencil to enter edit mode
+                    IconButton(onClick = { viewModel.setEditMode() }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White)
+                    }
+                } else if (uiState.existingScheduleId != null) {
+                    // Edit mode on existing schedule: trash + tick
+                    IconButton(onClick = { showDeleteScheduleDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFE57373))
+                    }
+                    IconButton(onClick = { viewModel.saveSchedule() }) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Check, contentDescription = "Save", tint = Color(0xFF81C784))
+                        }
+                    }
+                } else {
+                    // New schedule: just tick to save
+                    IconButton(onClick = { viewModel.saveSchedule() }) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Check, contentDescription = "Save", tint = Color(0xFF81C784))
+                        }
+                    }
+                }
             }
             HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
 
+            // Error / success inline feedback
+            if (uiState.error != null) {
+                Text(uiState.error!!, color = Color(0xFFE57373), fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).align(Alignment.CenterHorizontally))
+            }
+            if (uiState.saveSuccess) {
+                Text("Saved!", color = Color(0xFF81C784), fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).align(Alignment.CenterHorizontally))
+            }
+
             LazyColumn(modifier = Modifier.fillMaxSize().weight(1f), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                
+
+                // Section 0: Schedule Name
+                item {
+                    Text("SCHEDULE NAME", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        OutlinedTextField(
+                            value = uiState.scheduleName,
+                            onValueChange = { viewModel.setScheduleName(it) },
+                            placeholder = { Text("e.g. Morning routine, Before bed", color = Color.LightGray) },
+                            singleLine = true,
+                            enabled = !uiState.readOnly,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                disabledBorderColor = Color.Transparent,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                disabledTextColor = Color.DarkGray
+                            ),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+
                 // Section 1: Selected Medication
                 item {
                     Text("SELECTED MEDICATION", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
@@ -138,7 +200,7 @@ fun ScheduleBuilderScreen(
                             Text("Current: ${uiState.repeatFrequency}", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 10.sp)
                         }
                     }
-                    
+
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         uiState.availableFrequencies.forEach { freq ->
                             val isSelected = uiState.repeatFrequency == freq
@@ -147,7 +209,7 @@ fun ScheduleBuilderScreen(
                                 .padding(end = if (freq != uiState.availableFrequencies.last()) 8.dp else 0.dp)
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(if (isSelected) Color(0xFF2E7D32) else Color.White)
-                                .clickable { viewModel.setFrequency(freq) }
+                                .clickable { if (!uiState.readOnly) viewModel.setFrequency(freq) }
                                 .padding(vertical = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -161,15 +223,17 @@ fun ScheduleBuilderScreen(
                 item {
                     Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text("REMINDER TIMES", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Box(modifier = Modifier.background(Color.White, RoundedCornerShape(16.dp)).clickable { showReminderDialog = true }.padding(horizontal = 12.dp, vertical = 6.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFF2E7D32), modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Add Time", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        if (!uiState.readOnly) {
+                            Box(modifier = Modifier.background(Color.White, RoundedCornerShape(16.dp)).clickable { showReminderDialog = true }.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFF2E7D32), modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Add Time", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
                             }
                         }
                     }
-                    
+
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         uiState.reminderTimes.forEach { reminder ->
                             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -184,8 +248,10 @@ fun ScheduleBuilderScreen(
                                             Text(reminder.doseContext, color = Color.Gray, fontSize = 14.sp)
                                         }
                                     }
-                                    IconButton(onClick = { viewModel.removeReminderTime(reminder.id) }) {
-                                        Icon(Icons.Outlined.Delete, contentDescription = "Remove", tint = Color(0xFFE57373))
+                                    if (!uiState.readOnly) {
+                                        IconButton(onClick = { reminderToDelete = reminder.id }) {
+                                            Icon(Icons.Outlined.Delete, contentDescription = "Remove", tint = Color(0xFFE57373))
+                                        }
                                     }
                                 }
                             }
@@ -199,7 +265,7 @@ fun ScheduleBuilderScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Start Date", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
-                            Card(modifier = Modifier.fillMaxWidth().clickable { openDatePicker(true) }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Card(modifier = Modifier.fillMaxWidth().clickable { if (!uiState.readOnly) openDatePicker(true) }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
                                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -209,7 +275,7 @@ fun ScheduleBuilderScreen(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Text("End Date (Optional)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
-                            Card(modifier = Modifier.fillMaxWidth().clickable { if (uiState.startDate != null) openDatePicker(false) }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = if (uiState.startDate != null) Color.White else Color.LightGray.copy(alpha = 0.5f))) {
+                            Card(modifier = Modifier.fillMaxWidth().clickable { if (!uiState.readOnly && uiState.startDate != null) openDatePicker(false) }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = if (uiState.startDate != null) Color.White else Color.LightGray.copy(alpha = 0.5f))) {
                                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -219,9 +285,7 @@ fun ScheduleBuilderScreen(
                                             imageVector = Icons.Default.Clear,
                                             contentDescription = "Clear End Date",
                                             tint = Color.Gray,
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clickable { viewModel.setEndDate(null) }
+                                            modifier = Modifier.size(20.dp).clickable { if (!uiState.readOnly) viewModel.setEndDate(null) }
                                         )
                                     }
                                 }
@@ -230,34 +294,16 @@ fun ScheduleBuilderScreen(
                     }
                 }
             }
-            
-            // Bottom Button
-            Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    if (uiState.error != null) {
-                        Text(uiState.error!!, color = Color(0xFFE57373), fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp).align(Alignment.CenterHorizontally))
-                    }
-                    Button(
-                        onClick = { viewModel.saveSchedule() },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                    } else {
-                        Text(if (uiState.saveSuccess) "Saved!" else "Confirm Schedule", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    }
-                }
-            }
         }
-    }
-        // Custom Logic Dialogs
+
+        // --- Dialogs ---
+
+        // Add reminder dialog
         if (showReminderDialog) {
             var selectedTimeText by remember { mutableStateOf("08:00 AM") }
             var doseText by remember { mutableStateOf("") }
             val unit = uiState.selectedMedication?.unit ?: "units"
-            
+
             fun pickTime() {
                 val cal = Calendar.getInstance()
                 TimePickerDialog(context, { _, hour, minute ->
@@ -279,11 +325,10 @@ fun ScheduleBuilderScreen(
                         }
                         OutlinedTextField(
                             value = doseText,
-                            onValueChange = { newValue -> 
+                            onValueChange = { newValue ->
                                 if (newValue.isEmpty()) {
                                     doseText = ""
                                 } else {
-                                    // only allow digits, and if starts with 0 and is more than 1 char, parse it out implicitly by converting to Int
                                     val formatted = newValue.filter { it.isDigit() }
                                     doseText = formatted
                                 }
@@ -312,6 +357,55 @@ fun ScheduleBuilderScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showReminderDialog = false }) { Text("Cancel", color = Color.Gray) }
+                }
+            )
+        }
+
+        // Delete reminder confirmation
+        if (reminderToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { reminderToDelete = null },
+                containerColor = Color.White,
+                title = { Text("Delete Reminder", color = Color.Black) },
+                text = { Text("Are you sure you want to delete this reminder time?", color = Color.Gray) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.removeReminderTime(reminderToDelete!!)
+                            reminderToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                    ) {
+                        Text("Delete", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { reminderToDelete = null }) { Text("Cancel", color = Color.Gray) }
+                }
+            )
+        }
+
+        // Delete schedule confirmation
+        if (showDeleteScheduleDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteScheduleDialog = false },
+                containerColor = Color.White,
+                title = { Text("Delete Schedule", color = Color.Black) },
+                text = { Text("Are you sure you want to delete this entire schedule? This action cannot be undone.", color = Color.Gray) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteSchedule()
+                            showDeleteScheduleDialog = false
+                            onBack()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                    ) {
+                        Text("Delete", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteScheduleDialog = false }) { Text("Cancel", color = Color.Gray) }
                 }
             )
         }

@@ -18,8 +18,11 @@ data class ReminderTime(val id: Int, val timeTitle: String, val doseContext: Str
 
 data class ScheduleBuilderUiState(
     val existingSchedules: List<Schedule> = emptyList(),
+    val existingScheduleId: String? = null,
+    val readOnly: Boolean = false,
     val selectedMedication: Medication? = null,
     
+    val scheduleName: String = "",
     val repeatFrequency: String = "Daily",
     val availableFrequencies: List<String> = listOf("Daily", "Weekly", "Interval", "As Needed"),
     
@@ -47,6 +50,8 @@ class ScheduleBuilderViewModel(
             state.copy(
                 selectedMedication = medication,
                 existingSchedules = emptyList(),
+                existingScheduleId = null,
+                readOnly = false,
                 reminderTimes = emptyList(),
                 startDate = null,
                 endDate = null,
@@ -59,21 +64,52 @@ class ScheduleBuilderViewModel(
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
             val result = scheduleRepository.getSchedules(userId)
             val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == medication.id } ?: emptyList()
-            if (existing.isNotEmpty()) {
-                val first = existing.first()
-                _uiState.update { state ->
-                    state.copy(
-                        existingSchedules = existing,
-                        repeatFrequency = first.frequency ?: "Daily",
-                        endDate = first.endDate,
-                        startDate = first.createdAt,
-                        reminderTimes = existing.mapIndexed { idx, sched ->
-                            ReminderTime(id = reminderIdCounter++, timeTitle = sched.startTime, doseContext = sched.eventSnapshot.instructions ?: "")
-                        }
-                    )
-                }
+            _uiState.update { it.copy(existingSchedules = existing) }
+        }
+    }
+
+    fun openScheduleBuilder(scheduleId: String?) {
+        val state = _uiState.value
+        if (scheduleId == null) {
+            _uiState.update { 
+                it.copy(
+                    existingScheduleId = null,
+                    readOnly = false,
+                    scheduleName = "",
+                    reminderTimes = emptyList(),
+                    startDate = null,
+                    endDate = null,
+                    repeatFrequency = "Daily",
+                    saveSuccess = false,
+                    error = null
+                )
+            }
+        } else {
+            val existing = state.existingSchedules.find { it.id == scheduleId }
+            if (existing != null) {
+                _uiState.update { it.copy(
+                    existingScheduleId = existing.id,
+                    readOnly = true,
+                    scheduleName = existing.name,
+                    repeatFrequency = existing.frequency ?: "Daily",
+                    endDate = existing.endDate,
+                    startDate = existing.createdAt,
+                    reminderTimes = existing.doseTimes.map { doseTime ->
+                        ReminderTime(id = reminderIdCounter++, timeTitle = doseTime.time, doseContext = doseTime.doseContext)
+                    },
+                    saveSuccess = false,
+                    error = null
+                )}
             }
         }
+    }
+
+    fun setEditMode() {
+        _uiState.update { it.copy(readOnly = false) }
+    }
+
+    fun setScheduleName(name: String) {
+        _uiState.update { it.copy(scheduleName = name) }
     }
 
     fun setStartDate(date: Date) {
@@ -129,37 +165,54 @@ class ScheduleBuilderViewModel(
             }
 
             try {
-                // Update or Create
-                for (i in state.reminderTimes.indices) {
-                    val reminder = state.reminderTimes[i]
-                    val existingId = if (i < state.existingSchedules.size) state.existingSchedules[i].id else ""
-                    
-                    val schedule = Schedule(
-                        id = existingId,
-                        type = com.example.pillmate.domain.model.TaskType.MEDICATION,
-                        startTime = reminder.timeTitle,
-                        frequency = state.repeatFrequency,
-                        endDate = state.endDate,
-                        createdAt = state.startDate ?: Date(),
-                        eventSnapshot = ScheduleEvent(
-                            sourceId = state.selectedMedication!!.id,
-                            title = state.selectedMedication.name,
-                            instructions = reminder.doseContext.ifBlank { "${state.selectedMedication.supply?.quantity ?: 0} ${state.selectedMedication.unit}" },
-                            dose = 1.0f
-                        )
+                val schedule = Schedule(
+                    id = state.existingScheduleId ?: "",
+                    name = state.scheduleName,
+                    type = com.example.pillmate.domain.model.TaskType.MEDICATION,
+                    doseTimes = state.reminderTimes.map { 
+                        com.example.pillmate.domain.model.DoseTime(time = it.timeTitle, doseContext = it.doseContext) 
+                    },
+                    frequency = state.repeatFrequency,
+                    endDate = state.endDate,
+                    createdAt = state.startDate ?: Date(),
+                    eventSnapshot = ScheduleEvent(
+                        sourceId = state.selectedMedication!!.id,
+                        title = state.selectedMedication.name,
+                        instructions = "${state.selectedMedication.supply?.quantity ?: 0} ${state.selectedMedication.unit}",
+                        dose = 1.0f
                     )
-                    scheduleRepository.saveSchedule(userId, schedule)
-                }
+                )
                 
-                // Delete orphaned records
-                for (i in state.reminderTimes.size until state.existingSchedules.size) {
-                    val orphanId = state.existingSchedules[i].id
-                    scheduleRepository.deleteSchedule(userId, orphanId)
-                }
+                scheduleRepository.saveSchedule(userId, schedule)
                 
                 // Refresh existing schedules to align with updated DB state
-                val refreshed = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
-                _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshed) }
+                val refreshedList = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
+                val refreshedDoc = refreshedList.find { it.id == schedule.id || (state.existingScheduleId.isNullOrBlank() && it.createdAt == schedule.createdAt) }
+                _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshedList, existingScheduleId = refreshedDoc?.id, readOnly = true) }
+            } catch (ex: Exception) {
+                _uiState.update { it.copy(isSaving = false, error = ex.message) }
+            }
+        }
+    }
+    
+    fun deleteSchedule(scheduleId: String? = null) {
+        val state = _uiState.value
+        val idToDelete = scheduleId ?: state.existingScheduleId ?: return
+        
+        _uiState.update { it.copy(isSaving = true, error = null) }
+        viewModelScope.launch {
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            try {
+                scheduleRepository.deleteSchedule(userId, idToDelete)
+                // Refresh existing schedules to align with updated DB state
+                val refreshedList = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication?.id } ?: emptyList()
+                _uiState.update { it.copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    existingScheduleId = null,
+                    existingSchedules = refreshedList,
+                    reminderTimes = emptyList()
+                )}
             } catch (ex: Exception) {
                 _uiState.update { it.copy(isSaving = false, error = ex.message) }
             }
