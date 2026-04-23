@@ -25,55 +25,35 @@ class ProfileViewModel(
     val currentLocalProfile: StateFlow<ProfileEntity?> = profileDao.getCurrentProfileFlow()
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    init {
-        // Automatically fetch Firestore details whenever the active profile changes!
-        viewModelScope.launch {
-            currentLocalProfile.collect { profile ->
-                if (profile != null) {
-                    loadProfileDetails(profile.id)
-                }
-            }
-        }
-    }
+    fun syncCurrentProfile() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1. Lấy người ĐANG ACTIVE trong máy (Ví dụ: A2)
+            val activeProfile = profileDao.getActiveProfile()
 
-    fun loadProfile() {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("profiles").document(uid).get().addOnSuccessListener { doc ->
-            if (doc.exists()) {
-                val name = doc.getString("fullName") ?: "Unknown User"
-                val dobMillis = doc.getLong("dateOfBirth")
-                val healthInfo = doc.getString("healthInformation") ?: ""
+            // 2. Nếu đã có người Active (A2), dùng ID của A2.
+            // Nếu chưa có ai (app mới mở lần đầu), mới dùng ID của tài khoản gốc (A4)
+            val targetUid = activeProfile?.id ?: auth.currentUser?.uid ?: return@launch
 
-                viewModelScope.launch(Dispatchers.IO) {
-                    val existing = profileDao.getProfileById(uid)
-                    val activeProfile = profileDao.getActiveProfile()
+            // 3. Tải đúng người đó về và cập nhật
+            db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val name = doc.getString("fullName") ?: "Unknown User"
+                    val dobMillis = doc.getLong("dateOfBirth")
+                    val healthInfo = doc.getString("healthInformation") ?: ""
 
-                    if (existing == null) {
-                        profileDao.clearCurrentProfile()
-                        profileDao.insertProfile(
-                            ProfileEntity(
-                                id = uid,
-                                name = name,
-                                role = "Primary User",
-                                isCurrent = true,
-                                dateOfBirth = dobMillis,
-                                healthInformation = healthInfo
+                    viewModelScope.launch(Dispatchers.IO) {
+                        val existing = profileDao.getProfileById(targetUid)
+                        if (existing == null) {
+                            // Nếu chưa có trong Room, tạo mới và đánh dấu Active
+                            profileDao.clearCurrentProfile()
+                            profileDao.insertProfile(
+                                ProfileEntity(targetUid, name, dobMillis, healthInfo, "Primary User", true)
                             )
-                        )
-                    } else {
-                        if (activeProfile == null) {
-                            profileDao.insertProfile(existing.copy(
-                                name = name,
-                                isCurrent = true,
-                                dateOfBirth = dobMillis,
-                                healthInformation = healthInfo
-                            ))
                         } else {
-                            profileDao.insertProfile(existing.copy(
-                                name = name,
-                                dateOfBirth = dobMillis,
-                                healthInformation = healthInfo
-                            ))
+                            // Cập nhật dữ liệu và LUÔN GIỮ NGƯỜI NÀY LÀM ACTIVE
+                            profileDao.insertProfile(
+                                existing.copy(name = name, isCurrent = true, dateOfBirth = dobMillis, healthInformation = healthInfo)
+                            )
                         }
                     }
                 }
@@ -132,7 +112,14 @@ class ProfileViewModel(
 
     fun switchActiveProfile(profileId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            profileDao.switchProfile(profileId)
+            profileDao.clearCurrentProfile()
+
+            val profile = profileDao.getProfileById(profileId)
+            if (profile != null) {
+                profileDao.insertProfile(profile.copy(isCurrent = true))
+            }
+
+            loadProfileDetails(profileId)
         }
     }
 }

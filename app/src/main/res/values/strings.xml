@@ -25,4 +25,19 @@
     <string name="cancel">Cancel</string>
     <string name="add_profile">ADD PROFILE</string>
     <string name="selected_desc">Selected</string>
+
+    <string name="create_account">Create an Account</string>
+    <string name="sign_in_with_email">Sign In with Email</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="terms_agreement">By continuing, you agree to our Privacy Policy and Terms of Service.</string>
+    <string name="dont_have_account">"Don\'t have an account? "</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_up_with_email">Sign Up with Email</string>
+    <string name="email">Email</string>
+    <string name="email_placeholder">email@example.com</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="full_name">Full Name</string>
+    <string name="fullname_placeholder">John Doe</string>
+    <string name="google_sign_in_failed">Google sign in failed: %1$s</string>
 </resources>

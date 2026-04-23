@@ -32,7 +32,7 @@ fun HomeScreen(
     profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
-        profileViewModel.loadProfile()
+        profileViewModel.syncCurrentProfile()
     }
 
     val uiState by viewModel.uiState.collectAsState()

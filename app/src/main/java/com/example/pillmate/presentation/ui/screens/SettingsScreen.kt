@@ -64,7 +64,7 @@ fun SettingsScreen(
 
     // Load data from Firestore when the screen opens
     LaunchedEffect(Unit) {
-        profileViewModel.loadProfile()
+        profileViewModel.syncCurrentProfile()
     }
 
     // Observe the CURRENT LOCAL PROFILE from Room
@@ -106,7 +106,7 @@ fun SettingsScreen(
                     viewModel = profileViewModel,
                     paddingValues = paddingValues,
                     onBack = {
-                        profileViewModel.loadProfile()
+                        profileViewModel.syncCurrentProfile()
                         currentRoute = SettingsRoute.OPTIONS
                     }
                 )
@@ -305,7 +305,7 @@ fun EditProfileScreen(
     paddingValues: PaddingValues,
     onBack: () -> Unit
 ) {
-    // 🟢 Theo dõi trực tiếp từ Room DB để lấy dữ liệu realtime
+    // Theo dõi trực tiếp từ Room DB để lấy dữ liệu realtime
     val currentProfile by viewModel.currentLocalProfile.collectAsState()
 
     var name by remember { mutableStateOf("") }
@@ -352,7 +352,6 @@ fun EditProfileScreen(
             actions = {
                 Button(
                     onClick = {
-                        // 🟢 Truyền selectedDateMillis (Long) thay vì dob (String)
                         viewModel.saveProfile(name, selectedDateMillis, healthInfo) {
                             onBack()
                         }
