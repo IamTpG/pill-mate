@@ -22,13 +22,13 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
 
     // Task Alarm Screen
     object TaskAlarm : Screen(
-        "task_alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}",
+        "task_alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}",
         "Task Alarm",
         0
     ) {
         fun createRoute(
             sourceId: String, scheduleId: String, title: String, details: String,
-            type: String, instructions: String, time: String, rrule: String
+            type: String, instructions: String, time: String, rrule: String, dose: Float
         ): String {
             val encTitle = android.net.Uri.encode(title.ifBlank { " " })
             val encDetails = android.net.Uri.encode(details.ifBlank { " " })
@@ -36,7 +36,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
             val encInstr = android.net.Uri.encode(instructions.ifBlank { " " })
             val encTime = android.net.Uri.encode(time.ifBlank { " " })
             val encRrule = android.net.Uri.encode(rrule.ifBlank { " " })
-            return "task_alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule"
+            return "task_alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule&dose=$dose"
         }
     }
 }

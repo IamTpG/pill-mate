@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import java.util.Date
 
-data class ReminderTime(val id: Int, val timeTitle: String, val doseContext: String)
+data class ReminderTime(val id: Int, val timeTitle: String, val doseContext: String, val dose: Float = 1.0f)
 
 data class ScheduleBuilderUiState(
     val existingSchedules: List<Schedule> = emptyList(),
@@ -95,7 +95,7 @@ class ScheduleBuilderViewModel(
                     endDate = existing.endDate,
                     startDate = existing.createdAt,
                     reminderTimes = existing.doseTimes.map { doseTime ->
-                        ReminderTime(id = reminderIdCounter++, timeTitle = doseTime.time, doseContext = doseTime.doseContext)
+                        ReminderTime(id = reminderIdCounter++, timeTitle = doseTime.time, doseContext = doseTime.doseContext, dose = doseTime.dose)
                     },
                     saveSuccess = false,
                     error = null
@@ -124,9 +124,9 @@ class ScheduleBuilderViewModel(
         _uiState.update { it.copy(repeatFrequency = freq) }
     }
 
-    fun addReminderTime(timeTitle: String, doseContext: String) {
+    fun addReminderTime(timeTitle: String, doseContext: String, dose: Float = 1.0f) {
         _uiState.update { state ->
-            val updated = state.reminderTimes + ReminderTime(reminderIdCounter++, timeTitle, doseContext)
+            val updated = state.reminderTimes + ReminderTime(reminderIdCounter++, timeTitle, doseContext, dose)
             state.copy(reminderTimes = updated, saveSuccess = false)
         }
     }
@@ -170,7 +170,7 @@ class ScheduleBuilderViewModel(
                     name = state.scheduleName,
                     type = com.example.pillmate.domain.model.TaskType.MEDICATION,
                     doseTimes = state.reminderTimes.map { 
-                        com.example.pillmate.domain.model.DoseTime(time = it.timeTitle, doseContext = it.doseContext) 
+                        com.example.pillmate.domain.model.DoseTime(time = it.timeTitle, doseContext = it.doseContext, dose = it.dose) 
                     },
                     frequency = state.repeatFrequency,
                     endDate = state.endDate,

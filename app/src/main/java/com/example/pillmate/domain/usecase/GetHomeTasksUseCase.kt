@@ -81,12 +81,15 @@ class GetHomeTasksUseCase(
                             schedule.eventSnapshot.instructions ?: ""
                         }
 
+                        val fallbackDose = doseTime.doseContext.split(" ").firstOrNull()?.toFloatOrNull() ?: doseTime.dose
+
                         HomeTask(
                             scheduleId = schedule.id,
                             sourceId = schedule.eventSnapshot.sourceId,
                             title = schedule.eventSnapshot.title,
                             time = displayTime,
                             doseDescription = details,
+                            dose = fallbackDose,
                             taskType = schedule.type,
                             status = status
                         )

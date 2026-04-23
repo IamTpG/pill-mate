@@ -4,7 +4,8 @@ import java.util.Date
 
 data class DoseTime(
     val time: String = "08:00", // "HH:mm"
-    val doseContext: String = ""
+    val doseContext: String = "",
+    val dose: Float = 1.0f
 )
 
 data class Schedule(

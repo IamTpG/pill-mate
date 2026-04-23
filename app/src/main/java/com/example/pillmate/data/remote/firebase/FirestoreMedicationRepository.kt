@@ -46,26 +46,18 @@ class FirestoreMedicationRepository(
 
     override suspend fun updateMedicationSupply(medId: String, changeAmount: Float): Result<Unit> {
         return try {
-            // Find the supply document
-            val supplyDocs = db.collection("profiles").document(profileId)
+            val inventoryLog = hashMapOf(
+                "id" to java.util.UUID.randomUUID().toString(),
+                "changeAmount" to changeAmount.toInt(),
+                "reason" to if (changeAmount < 0) "Taken" else "REFILL",
+                "timestamp" to System.currentTimeMillis()
+            )
+            db.collection("profiles").document(profileId)
                 .collection("medications").document(medId)
-                .collection("supply").limit(1).get().await()
-            
-            if (!supplyDocs.isEmpty) {
-                val supplyDoc = supplyDocs.documents[0]
-                
-                // Add inventory log (Quantity is inferred from these logs)
-                val inventoryLog = hashMapOf(
-                    "changeAmount" to changeAmount,
-                    "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
-                    "timestamp" to com.google.firebase.Timestamp.now()
-                )
-                supplyDoc.reference.collection("logs").add(inventoryLog).await()
-                
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("No supply record found for medication"))
-            }
+                .collection("logs").document(inventoryLog["id"] as String)
+                .set(inventoryLog).await()
+
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

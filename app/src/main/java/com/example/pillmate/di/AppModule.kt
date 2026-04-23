@@ -41,7 +41,7 @@ val appModule = module {
     single { com.example.pillmate.util.DataGenerator(get()) }
     single { com.example.pillmate.util.FcmTokenManager(get()) }
 
-    factory { LogTaskUseCase(get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get()) }
     factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
     factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
     factory { com.example.pillmate.domain.usecase.UpdateScheduleUseCase(get()) }

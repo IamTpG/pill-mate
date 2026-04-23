@@ -349,7 +349,7 @@ fun ScheduleBuilderScreen(
                         } else {
                             unit
                         }
-                        viewModel.addReminderTime(selectedTimeText, "$finalDose $finalUnit")
+                        viewModel.addReminderTime(selectedTimeText, "$finalDose $finalUnit", finalDose.toFloat())
                         showReminderDialog = false
                     }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))) {
                         Text("Add")
