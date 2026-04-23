@@ -54,7 +54,7 @@ val appModule = module {
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
-    single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
+    single<CabinetRepository> { CabinetRepositoryImpl(get(), get(), get(), get()) }
     
     single {
         Retrofit.Builder()

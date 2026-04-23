@@ -46,14 +46,24 @@ class CabinetViewModel(
                 _searchQuery
             ) { allMedications, query ->
                 
-                // 1. Handle the Search Bar
+                // 1. Global counts (unaffected by search)
+                val allExpired = allMedications.filter {
+                    it.supply?.expirationDate?.before(java.util.Date()) == true
+                }
+                val allActive = allMedications.filter {
+                    !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
+                }
+                val penalty = allExpired.size * 5
+                val score = (100 - penalty).coerceIn(0, 100)
+
+                // 2. Handle the Search Bar for display list
                 val filteredMeds = if (query.isBlank()) {
                     allMedications
                 } else {
                     allMedications.filter { it.name.contains(query, ignoreCase = true) }
                 }
 
-                // 2. Split into Expired vs Active
+                // 3. Split filtered into Expired vs Active for display
                 val expired = filteredMeds.filter {
                     it.supply?.expirationDate?.before(java.util.Date()) == true
                 }
@@ -61,16 +71,12 @@ class CabinetViewModel(
                     !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
                 }
 
-                // 3. Calculate Health Score
-                val penalty = expired.size * 5
-                val score = (100 - penalty).coerceIn(0, 100)
-
                 // 4. Output state
                 CabinetUiState(
                     isLoading = false,
                     healthScore = score,
-                    activeMedsCount = active.size,
-                    lowStockCount = filteredMeds.count { (it.supply?.quantity ?: 0f) < 10f }, // Keep low stock metric
+                    activeMedsCount = allActive.size,
+                    lowStockCount = allMedications.count { (it.supply?.quantity ?: 0f) < 10f },
                     searchQuery = query,
                     activeMedications = active,
                     expiredMedications = expired
@@ -138,9 +144,17 @@ class CabinetViewModel(
 
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            // Find current stock to enforce floor of 0
+            val currentStock = _uiState.value.activeMedications
+                .find { it.id == medicationId }?.supply?.quantity?.toInt()
+                ?: _uiState.value.expiredMedications
+                    .find { it.id == medicationId }?.supply?.quantity?.toInt()
+                ?: 0
+            val clampedAmount = amountTaken.coerceAtMost(currentStock.coerceAtLeast(0))
+            if (clampedAmount <= 0) return@launch
             cabinetRepository.logInventoryChange(
                 medicationId = medicationId,
-                amount = -amountTaken,
+                amount = -clampedAmount,
                 reason = reason.ifBlank { "Taken" }
             )
         }
@@ -185,6 +199,12 @@ class CabinetViewModel(
                     reason = "ADJUSTMENT"
                 )
             }
+        }
+    }
+
+    fun deleteMedication(medication: Medication) {
+        viewModelScope.launch(Dispatchers.IO) {
+            cabinetRepository.deleteMedication(medication)
         }
     }
 }
