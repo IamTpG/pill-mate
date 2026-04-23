@@ -72,12 +72,18 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                     val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
                     if (scheduleObj != null) {
                         val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                        val currentStart = format.parse(scheduleObj.startTime)
-                        if (currentStart != null) {
-                            val nextStart = Date(currentStart.time + 24 * 60 * 60 * 1000)
-                            val nextSchedule = scheduleObj.copy(startTime = format.format(nextStart))
-                            manageReminderUseCase(profileId, nextSchedule)
-                        }
+                        val nextSchedule = scheduleObj.copy(
+                            doseTimes = scheduleObj.doseTimes.map { dt ->
+                                val dtStart = try { format.parse(dt.time) } catch (e: Exception) { null }
+                                if (dtStart != null) {
+                                    val nextStart = Date(dtStart.time + 24 * 60 * 60 * 1000)
+                                    dt.copy(time = format.format(nextStart))
+                                } else {
+                                    dt
+                                }
+                            }
+                        )
+                        manageReminderUseCase(profileId, nextSchedule)
                     }
                 }
             } catch (e: Exception) {

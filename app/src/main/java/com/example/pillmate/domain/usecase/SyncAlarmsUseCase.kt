@@ -13,32 +13,40 @@ class SyncAlarmsUseCase(
         val schedules = result.getOrNull() ?: return
         
         schedules.forEach { schedule ->
-            schedule.reminders.forEach { reminder ->
-                val requestCode = (schedule.id + reminder.minutesBefore).hashCode()
-                
-                val timeParts = schedule.startTime.split(":")
-                if (timeParts.size == 2) {
-                    val target = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
-                        set(Calendar.MINUTE, timeParts[1].toInt())
-                        set(Calendar.SECOND, 0)
-                        add(Calendar.MINUTE, -reminder.minutesBefore)
-                    }
-                    if (target.timeInMillis < System.currentTimeMillis()) {
-                        target.add(Calendar.DAY_OF_YEAR, 1)
-                    }
-                    val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).toInt()
+            schedule.doseTimes.forEach { doseTime ->
+                schedule.reminders.forEach { reminder ->
+                    val requestCode = (schedule.id + doseTime.time + reminder.minutesBefore).hashCode()
                     
-                    notificationManager.scheduleTaskNotification(
-                        sourceId = schedule.eventSnapshot.sourceId,
-                        scheduleId = schedule.id,
-                        title = schedule.eventSnapshot.title,
-                        details = schedule.eventSnapshot.instructions ?: "",
-                        delaySeconds = delaySeconds,
-                        requestCode = requestCode,
-                        taskType = schedule.type.name,
-                        reminderType = reminder.type.name
-                    )
+                    val timeParts = doseTime.time.split(":")
+                    if (timeParts.size >= 2) {
+                        val hrStr = timeParts[0]
+                        val cleanMin = timeParts[1].filter { it.isDigit() }.toInt()
+                        var hr = hrStr.filter { it.isDigit() }.toInt()
+                        if (doseTime.time.contains("PM", ignoreCase = true) && hr < 12) hr += 12
+                        if (doseTime.time.contains("AM", ignoreCase = true) && hr == 12) hr = 0
+                        
+                        val target = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, hr)
+                            set(Calendar.MINUTE, cleanMin)
+                            set(Calendar.SECOND, 0)
+                            add(Calendar.MINUTE, -reminder.minutesBefore)
+                        }
+                        if (target.timeInMillis < System.currentTimeMillis()) {
+                            target.add(Calendar.DAY_OF_YEAR, 1)
+                        }
+                        val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).toInt()
+                        
+                        notificationManager.scheduleTaskNotification(
+                            sourceId = schedule.eventSnapshot.sourceId,
+                            scheduleId = schedule.id,
+                            title = schedule.eventSnapshot.title,
+                            details = doseTime.doseContext.ifBlank { schedule.eventSnapshot.instructions ?: "" },
+                            delaySeconds = delaySeconds,
+                            requestCode = requestCode,
+                            taskType = schedule.type.name,
+                            reminderType = reminder.type.name
+                        )
+                    }
                 }
             }
         }

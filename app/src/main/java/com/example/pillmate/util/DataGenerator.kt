@@ -48,7 +48,7 @@ class DataGenerator(private val db: FirebaseFirestore) {
 
                 val schedule = Schedule(
                     type = type,
-                    startTime = isoStartTime,
+                    doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = isoStartTime)),
                     recurrenceRule = "FREQ=DAILY",
                     reminders = listOf(
                         com.example.pillmate.domain.model.Reminder(0, com.example.pillmate.domain.model.ReminderType.ALARM),

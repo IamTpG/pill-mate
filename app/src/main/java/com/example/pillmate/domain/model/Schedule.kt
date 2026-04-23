@@ -2,10 +2,16 @@ package com.example.pillmate.domain.model
 
 import java.util.Date
 
+data class DoseTime(
+    val time: String = "08:00", // "HH:mm"
+    val doseContext: String = ""
+)
+
 data class Schedule(
     val id: String = "",
+    val name: String = "",
     val type: TaskType = TaskType.MEDICATION,
-    val startTime: String = "08:00", // "HH:mm"
+    val doseTimes: List<DoseTime> = emptyList(),
     val recurrenceRule: String? = null,
     val frequency: String? = null,
     val enabled: Boolean = true,
