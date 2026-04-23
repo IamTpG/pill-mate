@@ -29,23 +29,18 @@ class SyncAlarmsUseCase(
         Log.d("SyncAlarmsUseCase", "Starting sync for $profileId")
         val result = scheduleRepository.getSchedules(profileId)
         val schedules = result.getOrNull() ?: return
-        
-        // Fetch logs for today to avoid scheduling already completed tasks
-        val todayLogsSnapshot: List<TaskLog> = try {
-            logRepository.getLogsForDayFlow(profileId, Date()).first()
-        } catch (e: Exception) {
-            Log.e("SyncAlarmsUseCase", "Failed to fetch logs for sync", e)
-            emptyList()
-        }
+
+        val now = System.currentTimeMillis()
+        val todayLogsSnapshot = logRepository.getLogsForDay(profileId, Date()).getOrNull() ?: emptyList()
         val completedScheduleIds = todayLogsSnapshot.filter { it.status == LogStatus.COMPLETED || it.status == LogStatus.SKIPPED }.map { it.scheduleId }.toSet()
 
         val previouslyScheduledIds = alarmTracker.getScheduledIds()
         val desiredScheduledIds = mutableSetOf<Int>()
-        
+
         schedules.forEach { schedule ->
             schedule.reminders.forEach { reminder ->
                 val requestCode = "${schedule.id}_${reminder.minutesBefore}_${reminder.type.name}".hashCode()
-                
+
                 // ROBUST TIME PARSING (Matches TaskAlarmScreen)
                 val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
                 val displayFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
@@ -53,13 +48,17 @@ class SyncAlarmsUseCase(
 
                 val parsedStart: java.util.Date? = try {
                     if (completedScheduleIds.contains(schedule.id)) {
-                        android.util.Log.d("SyncAlarmsUseCase", "Skipping completed schedule: ${schedule.id}")
+                        Log.d("SyncAlarmsUseCase", "Cancelling completed schedule: ${schedule.id}")
+                        // Cancel the pending alarm
+                        notificationManager.cancelNotification(requestCode)
+                        // Dismiss any visible notification for this schedule
+                        notificationManager.dismissNotification(schedule.id)
                         null
                     } else {
                         when {
                             schedule.startTime.contains("T") -> isoFormat.parse(schedule.startTime)
                             schedule.startTime.isNotBlank() -> {
-                                try { displayFormat.parse(schedule.startTime) } 
+                                try { displayFormat.parse(schedule.startTime) }
                                 catch (e: Exception) { fallbackFormat.parse(schedule.startTime) }
                             }
                             else -> null
@@ -79,13 +78,21 @@ class SyncAlarmsUseCase(
                         }
                         add(Calendar.MINUTE, -reminder.minutesBefore)
                     }
-                    
-                    // Buffer of 2 seconds to account for parsing precision loss (milliseconds)
-                    while (target.timeInMillis < System.currentTimeMillis() - 2000) {
+
+                    // ROBUST TIME-SHIFTER:
+                    // 1. Shift to tomorrow only if it's more than 2 hours in the past
+                    while (target.timeInMillis < now - 2 * 60 * 60 * 1000) {
                         target.add(Calendar.DAY_OF_YEAR, 1)
                     }
-                    val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0L).toInt()
                     
+                    // 2. If it's still in the past (within the 2hr window), skip to tomorrow ONLY if it's already logged.
+                    // This handles clock drift (e.g. 10s test) and missed meds.
+                    if (target.timeInMillis < now && completedScheduleIds.contains(schedule.id)) {
+                        target.add(Calendar.DAY_OF_YEAR, 1)
+                    }
+
+                    val delaySeconds = ((target.timeInMillis - now) / 1000).coerceAtLeast(0L).toInt()
+
                     val scheduled = notificationManager.scheduleTaskNotification(
                         sourceId = schedule.eventSnapshot.sourceId,
                         scheduleId = schedule.id,
@@ -99,7 +106,7 @@ class SyncAlarmsUseCase(
                         rrule = schedule.recurrenceRule,
                         startTime = schedule.startTime
                     )
-                    
+
                     // Track ANY successfully scheduled alarm (Exact or not)
                     if (scheduled) {
                         desiredScheduledIds.add(requestCode)
@@ -107,17 +114,17 @@ class SyncAlarmsUseCase(
                 }
             }
         }
-        
+
         // ORPHAN CANCELLATION: IDs that are on the device but no longer in the DB
         val orphans = previouslyScheduledIds - desiredScheduledIds
-        
+
         // Protect snoozes: If a snooze is active but not in Firestore (obviously), don't kill it
         val trueOrphans = orphans.filter { !isSnoozeId(it, schedules) }
-        
+
         trueOrphans.forEach { orphanId ->
             notificationManager.cancelNotification(orphanId)
         }
-        
+
         // Update local state: Keep the desired ones AND any preserved snoozes
         val preservedSnoozes = orphans.filter { isSnoozeId(it, schedules) }
         alarmTracker.updateScheduledIds(desiredScheduledIds + preservedSnoozes)

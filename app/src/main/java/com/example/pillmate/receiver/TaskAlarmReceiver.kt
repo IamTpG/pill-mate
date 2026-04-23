@@ -3,6 +3,7 @@ package com.example.pillmate.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.example.pillmate.notification.TaskNotificationManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -16,18 +17,23 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
     private val db: com.google.firebase.firestore.FirebaseFirestore by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d(
+            "TaskAlarmReceiver",
+            "onReceive triggered. scheduleId=${intent.getStringExtra("SCHEDULE_ID")} profileId=${intent.getStringExtra("PROFILE_ID")}"
+        )
+
         val intentProfileId = intent.getStringExtra("PROFILE_ID")
         val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: return
         val currentUser = auth.currentUser
 
         // Security check: Only show if user is logged in and belongs to this profile
         if (currentUser == null) {
-            android.util.Log.d("TaskAlarmReceiver", "Alarm skipped: No user logged in")
+            Log.d("TaskAlarmReceiver", "Alarm skipped: No user logged in")
             return
         }
         
         if (intentProfileId != null && intentProfileId != currentProfileId) {
-            android.util.Log.d("TaskAlarmReceiver", "Alarm skipped: Profile mismatch")
+            Log.d("TaskAlarmReceiver", "Alarm skipped: Profile mismatch")
             return
         }
 
@@ -60,7 +66,7 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
                 }
 
                 if (alreadyHandled) {
-                    android.util.Log.d("TaskAlarmReceiver", "Alarm skipped: Already handled for today")
+                    Log.d("TaskAlarmReceiver", "Alarm skipped: Already handled for today")
                     return@launch
                 }
 

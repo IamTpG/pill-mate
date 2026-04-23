@@ -31,7 +31,7 @@ class FirestoreLogRepository(
         cal.set(java.util.Calendar.MINUTE, 0)
         cal.set(java.util.Calendar.SECOND, 0)
         val start = cal.time
-        
+
         cal.set(java.util.Calendar.HOUR_OF_DAY, 23)
         cal.set(java.util.Calendar.MINUTE, 59)
         cal.set(java.util.Calendar.SECOND, 59)
@@ -47,11 +47,40 @@ class FirestoreLogRepository(
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    val logs = snapshot.documents.mapNotNull { it.toObject(TaskLog::class.java)?.copy(id = it.id) }
+                    val logs = snapshot.documents.mapNotNull {
+                        it.toObject(TaskLog::class.java)?.copy(id = it.id)
+                    }
                     trySend(logs)
                 }
             }
         
         awaitClose { registration.remove() }
+    }
+
+    override suspend fun getLogsForDay(profileId: String, date: Date): Result<List<TaskLog>> {
+        val cal = java.util.Calendar.getInstance()
+        cal.time = date
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        val start = cal.time
+
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        cal.set(java.util.Calendar.MINUTE, 59)
+        cal.set(java.util.Calendar.SECOND, 59)
+        val end = cal.time
+
+        return try {
+            val snapshot = db.collection("profiles").document(profileId)
+                .collection("logs")
+                .whereGreaterThanOrEqualTo("scheduledTime", start)
+                .whereLessThanOrEqualTo("scheduledTime", end)
+                .get()
+                .await()
+            val logs = snapshot.documents.mapNotNull { it.toObject(TaskLog::class.java)?.copy(id = it.id) }
+            Result.success(logs)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

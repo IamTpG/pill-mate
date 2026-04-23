@@ -16,4 +16,5 @@ interface MedicationRepository {
 interface LogRepository {
     suspend fun saveLog(profileId: String, log: TaskLog): Result<Unit>
     fun getLogsForDayFlow(profileId: String, date: Date): Flow<List<TaskLog>>
+    suspend fun getLogsForDay(profileId: String, date: Date): Result<List<TaskLog>>
 }

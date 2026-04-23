@@ -1,7 +1,10 @@
 package com.example.pillmate.service
 
+import android.util.Log
+import androidx.work.*
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import com.example.pillmate.notification.TaskNotificationManager
+import com.example.pillmate.workers.AlarmSyncWorker
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.MainScope
@@ -14,6 +17,7 @@ class PillMateFcmService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
+        android.util.Log.d("PillMateFcmService", ">>> FCM RECEIVED! data=${message.data}")
 
         val action = message.data["action"]
         val type = message.data["type"]
@@ -23,14 +27,14 @@ class PillMateFcmService : FirebaseMessagingService() {
 
         // Handle both legacy "action" and new Cloud Function "type"
         when {
-            type == "alarm_event" || type?.startsWith("SCHEDULE_") == true || action == "SYNC" -> {
-                val inputData = androidx.work.workDataOf("profileId" to profileIdFromFcm)
-                val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.example.pillmate.workers.AlarmSyncWorker>()
-                    .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            type == "alarm_event" || type?.startsWith("schedule_") == true || action == "SYNC" -> {
+                val inputData = workDataOf("profileId" to profileIdFromFcm)
+                val workRequest = OneTimeWorkRequestBuilder<AlarmSyncWorker>()
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .setInputData(inputData)
                     .build()
-                androidx.work.WorkManager.getInstance(applicationContext).enqueue(workRequest)
-                android.util.Log.d("PillMateFcmService", "Sync work enqueued for profile: $profileIdFromFcm")
+                WorkManager.getInstance(applicationContext).enqueue(workRequest)
+                Log.d("PillMateFcmService", "Sync work enqueued for profile: $profileIdFromFcm")
             }
             action == "SILENCE" -> {
                 requestCode?.let {
