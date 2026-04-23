@@ -38,20 +38,30 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Setup Real-time Sync
+        // Setup Real-time Sync (with debounce to avoid clobbering ManageReminderUseCase)
         if (profileId.isNotBlank()) {
+            var isInitialSnapshot = true
             scheduleListener = db.collection("profiles").document(profileId)
                 .collection("schedules")
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) return@addSnapshotListener
                     if (snapshot != null) {
-                        // Debounce/Cancel previous sync if multiple fire quickly
+                        // Skip the initial snapshot (existing data on registration)
+                        if (isInitialSnapshot) {
+                            isInitialSnapshot = false
+                            Log.d("MainActivity", "Firestore listener: skipping initial snapshot")
+                            return@addSnapshotListener
+                        }
+                        // Cancel any pending sync to debounce rapid-fire events
                         syncJob?.cancel()
                         syncJob = lifecycleScope.launch {
+                            // Wait 3s so ManageReminderUseCase's alarm isn't immediately overwritten
+                            kotlinx.coroutines.delay(3000)
+                            Log.d("MainActivity", "Firestore listener: running debounced sync")
                             try {
                                 syncAlarmsUseCase(profileId)
                             } catch (e: Exception) {
-                                // Silent fail for sync
+                                Log.e("MainActivity", "Sync from listener failed", e)
                             }
                         }
                     }

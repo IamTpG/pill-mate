@@ -142,7 +142,7 @@ class DebugViewModel(
         viewModelScope.launch {
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                val futureTime = Date(System.currentTimeMillis() + 60000) // 10s in future
+                val futureTime = Date(System.currentTimeMillis() + 10000) // 10s in future
                 val startTime = dateFormat.format(futureTime)
 
                 // Try to find a real medication to link to
