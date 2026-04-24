@@ -1,5 +1,6 @@
 package com.example.pillmate.data.repository
 
+import com.example.pillmate.domain.model.Appointment
 import com.example.pillmate.domain.model.AppointmentLog
 import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.repository.AppointmentRepository
@@ -8,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import java.util.*
 
 class AppointmentRepositoryImpl(private val firestore: FirebaseFirestore) : AppointmentRepository {
@@ -26,18 +28,33 @@ class AppointmentRepositoryImpl(private val firestore: FirebaseFirestore) : Appo
 			.addSnapshotListener { snapshot, _ ->
 				val logs = snapshot?.documents?.mapNotNull { doc ->
 					val event = doc.get("eventSnapshot") as? Map<*, *>
-					AppointmentLog(
-						id = doc.id,
-						status = LogStatus.valueOf(doc.getString("status") ?: "PENDING"),
-						scheduledTime = doc.getTimestamp("scheduledTime")?.toDate() ?: Date(),
-						title = event?.get("title") as? String ?: "No Title",
-						instructions = event?.get("instructions") as? String ?: "",
-						location = event?.get("location") as? String,
-						doctorName = event?.get("doctorName") as? String
-					)
+//					AppointmentLog(
+//						id = doc.id,
+//						status = LogStatus.valueOf(doc.getString("status") ?: "PENDING"),
+//						scheduledTime = doc.getTimestamp("scheduledTime")?.toDate() ?: Date(),
+//						title = event?.get("title") as? String ?: "No Title",
+//						instructions = event?.get("instructions") as? String ?: "",
+//						location = event?.get("location") as? String,
+//						doctorName = event?.get("doctorName") as? String
+//					)
 				} ?: emptyList()
-				trySend(logs)
+				//trySend(logs)
 			}
 		awaitClose { listener.remove() }
+	}
+	
+	override suspend fun addAppointment(profileId: String, appointment: Appointment): Result<Unit> {
+		return try {
+			// Path: profiles/{profileId}/appointment
+			firestore.collection("profiles")
+				.document(profileId)
+				.collection("appointment")
+				.add(appointment) // Firebase generates a unique ID for the document
+				.await() // From kotlinx-coroutines-play-services
+			
+			Result.success(Unit)
+		} catch (e: Exception) {
+			Result.failure(e)
+		}
 	}
 }

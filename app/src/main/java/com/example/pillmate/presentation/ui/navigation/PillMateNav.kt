@@ -9,7 +9,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object Reminders : Screen("reminders", "Reminders", R.drawable.ic_reminder)
     object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
     
-    object Appointment : Screen("appointment_detail/{apptId}", "Appointment", R.drawable.ic_launcher_background) {
+    object Appointment : Screen("appointment_detail/{apptId}", "Appointment", R.drawable.ic_calendar) {
         fun createRoute(apptId: String) = "appointment_detail/$apptId"
     }
     // Auth screens

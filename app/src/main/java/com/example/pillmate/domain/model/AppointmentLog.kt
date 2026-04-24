@@ -1,15 +1,21 @@
 package com.example.pillmate.domain.model
 
+import kotlinx.serialization.descriptors.SerialDescriptor
 import java.util.Date
 
 // enum class LogStatus { COMPLETED, MISSED, SKIPPED, LATE, PENDING } // PENDING for 'Upcoming'
 
 data class AppointmentLog(
 	val id: String,
-	val status: LogStatus,
-	val scheduledTime: Date,
-	val title: String,        // From eventSnapshot.title
-	val instructions: String, // From eventSnapshot.instructions
-	val location: String?,    // From eventSnapshot.location
-	val doctorName: String?   // Extracted from title or notes
+	val name: String = "",
+	val location: String = "",
+	val doctorName: String = "",
+	val description: String = ""
+)
+
+data class Appointment(
+	val name: String = "",
+	val location: String = "",
+	val doctorName: String = "",
+	val description: String = ""
 )
