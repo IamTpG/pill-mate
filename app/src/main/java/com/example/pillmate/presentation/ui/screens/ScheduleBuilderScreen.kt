@@ -302,6 +302,7 @@ fun ScheduleBuilderScreen(
         if (showReminderDialog) {
             var selectedTimeText by remember { mutableStateOf("08:00 AM") }
             var doseText by remember { mutableStateOf("") }
+            var doseError by remember { mutableStateOf(false) }
             val unit = uiState.selectedMedication?.unit ?: "units"
 
             fun pickTime() {
@@ -326,6 +327,7 @@ fun ScheduleBuilderScreen(
                         OutlinedTextField(
                             value = doseText,
                             onValueChange = { newValue ->
+                                doseError = false
                                 if (newValue.isEmpty()) {
                                     doseText = ""
                                 } else {
@@ -334,6 +336,10 @@ fun ScheduleBuilderScreen(
                                 }
                             },
                             label = { Text("Amount ($unit)") },
+                            isError = doseError,
+                            supportingText = if (doseError) {
+                                { Text("Amount is required and must be greater than 0") }
+                            } else null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -342,8 +348,12 @@ fun ScheduleBuilderScreen(
                 confirmButton = {
                     Button(onClick = {
                         val parsedDose = doseText.toIntOrNull()
-                        val finalDose = if (parsedDose == null || parsedDose <= 0) "1" else parsedDose.toString()
-                        val amount = finalDose.toInt()
+                        if (parsedDose == null || parsedDose <= 0) {
+                            doseError = true
+                            return@Button
+                        }
+                        val finalDose = parsedDose.toString()
+                        val amount = parsedDose
                         val finalUnit = if (amount == 1 && (unit.equals("capsules", ignoreCase = true) || unit.equals("tablets", ignoreCase = true) || unit.equals("pills", ignoreCase = true))) {
                             unit.dropLast(1)
                         } else {
