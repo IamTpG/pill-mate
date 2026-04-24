@@ -61,7 +61,9 @@ fun SignUpOptionsScreen(
             val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
             viewModel.signInWithGoogle(credential)
         } catch (e: ApiException) {
-            Toast.makeText(context, "Google sign in failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            // 🟢 Dùng context.getString cho Toast bên ngoài Composable
+            val errorMessage = context.getString(R.string.google_sign_in_failed, e.message ?: "")
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -86,7 +88,7 @@ fun SignUpOptionsScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.weight(0.15f))
-            
+
             Image(
                 painter = painterResource(id = R.drawable.pill),
                 contentDescription = "pill icon",
@@ -94,7 +96,7 @@ fun SignUpOptionsScreen(
             )
 
             Text(
-                text = "Create an Account",
+                text = stringResource(id = R.string.create_account), // 🟢 Đã dịch
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -112,7 +114,7 @@ fun SignUpOptionsScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
                 Text(
-                    text = "Sign In with Email",
+                    text = stringResource(id = R.string.sign_in_with_email), // 🟢 Đã dịch
                     fontSize = 18.sp,
                     color = Color.White
                 )
@@ -130,7 +132,7 @@ fun SignUpOptionsScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
             ) {
                 Text(
-                    text = "Continue with Google",
+                    text = stringResource(id = R.string.continue_with_google), // 🟢 Đã dịch
                     fontSize = 18.sp
                 )
             }
@@ -138,7 +140,7 @@ fun SignUpOptionsScreen(
             Spacer(modifier = Modifier.weight(0.1f))
 
             Text(
-                text = "By continuing, you agree to our Privacy Policy and Terms of Service.",
+                text = stringResource(id = R.string.terms_agreement), // 🟢 Đã dịch
                 color = Color.White,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
@@ -148,13 +150,16 @@ fun SignUpOptionsScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
+            val dontHaveAccountText = stringResource(id = R.string.dont_have_account)
+            val signUpText = stringResource(id = R.string.sign_up)
+
             val annotatedString = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp)) {
-                    append("Don't have an account? ")
+                    append(dontHaveAccountText) // 🟢 Đã dịch
                 }
                 pushStringAnnotation(tag = "signup", annotation = "signup")
                 withStyle(style = SpanStyle(color = Color.White, fontSize = 20.sp, textDecoration = TextDecoration.Underline, fontWeight = FontWeight.Bold)) {
-                    append("Sign up")
+                    append(signUpText) // 🟢 Đã dịch
                 }
                 pop()
             }
@@ -225,7 +230,7 @@ fun SignInScreen(
             )
 
             Text(
-                text = "Sign In with Email",
+                text = stringResource(id = R.string.sign_in_with_email), // 🟢 Đã dịch
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -236,7 +241,7 @@ fun SignInScreen(
 
             Column(modifier = Modifier.width(350.dp)) {
                 Text(
-                    text = "Email",
+                    text = stringResource(id = R.string.email), // 🟢 Đã dịch
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -244,7 +249,7 @@ fun SignInScreen(
                 TextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = { Text("email@example.com") },
+                    placeholder = { Text(stringResource(id = R.string.email_placeholder)) }, // 🟢 Đã dịch
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -262,7 +267,7 @@ fun SignInScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Password",
+                    text = stringResource(id = R.string.password), // 🟢 Đã dịch
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -297,14 +302,14 @@ fun SignInScreen(
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Sign In", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.sign_in), fontSize = 18.sp, fontWeight = FontWeight.Bold) // 🟢 Đã dịch
             }
 
             TextButton(
                 onClick = onBack,
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(id = R.string.cancel), color = Color.White) // 🟢 Đã dịch
             }
         }
 
@@ -364,7 +369,7 @@ fun SignUpScreen(
             )
 
             Text(
-                text = "Sign Up with Email",
+                text = stringResource(id = R.string.sign_up_with_email), // 🟢 Đã dịch
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
@@ -375,7 +380,7 @@ fun SignUpScreen(
 
             Column(modifier = Modifier.width(350.dp)) {
                 Text(
-                    text = "Full Name",
+                    text = stringResource(id = R.string.full_name), // 🟢 Đã dịch
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -383,7 +388,7 @@ fun SignUpScreen(
                 TextField(
                     value = fullname,
                     onValueChange = { fullname = it },
-                    placeholder = { Text("John Doe") },
+                    placeholder = { Text(stringResource(id = R.string.fullname_placeholder)) }, // 🟢 Đã dịch
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(55.dp),
@@ -400,7 +405,7 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Email",
+                    text = stringResource(id = R.string.email), // 🟢 Đã dịch
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -408,7 +413,7 @@ fun SignUpScreen(
                 TextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = { Text("email@example.com") },
+                    placeholder = { Text(stringResource(id = R.string.email_placeholder)) }, // 🟢 Đã dịch
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -426,7 +431,7 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Password",
+                    text = stringResource(id = R.string.password), // 🟢 Đã dịch
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -461,14 +466,14 @@ fun SignUpScreen(
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.sign_up), fontSize = 18.sp, fontWeight = FontWeight.Bold) // 🟢 Đã dịch
             }
 
             TextButton(
                 onClick = onBack,
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text("Cancel", color = Color.White)
+                Text(stringResource(id = R.string.cancel), color = Color.White) // 🟢 Đã dịch
             }
         }
 

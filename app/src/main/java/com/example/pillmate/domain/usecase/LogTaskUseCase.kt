@@ -43,7 +43,7 @@ class LogTaskUseCase(
             if (updateResult.isFailure) {
                 return updateResult
             }
-            
+
             // 3. IMMEDIATE LOW STOCK ALERT
             try {
                 // Fetch supplies directly to check stock levels
@@ -55,7 +55,7 @@ class LogTaskUseCase(
                     supplies.filter { it.quantity > 0 }.minOfOrNull { it.quantity } ?: 0f
                 }
 
-                if (currentStock < 5.0f) { 
+                if (currentStock < 5.0f) {
                     notificationManager.showLowStockNotification(sourceId, currentStock)
                 }
             } catch (e: Exception) {

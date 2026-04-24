@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Ensure FCM token and topic are synced for current profile
         if (profileId.isNotBlank()) {
             fcmJob = lifecycleScope.launch {

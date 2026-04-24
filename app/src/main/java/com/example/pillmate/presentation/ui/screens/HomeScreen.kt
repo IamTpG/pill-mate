@@ -1,5 +1,6 @@
 package com.example.pillmate.presentation.ui.screens
 
+import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -30,8 +32,13 @@ fun HomeScreen(
     paddingValues: PaddingValues,
     onTaskClick: (HomeTask) -> Unit,
     onAddClick: () -> Unit,
-    onDebugClick: () -> Unit
+    onDebugClick: () -> Unit,
+    profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
 ) {
+    LaunchedEffect(Unit) {
+        profileViewModel.syncCurrentProfile()
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val calendarState = rememberLazyListState()
  

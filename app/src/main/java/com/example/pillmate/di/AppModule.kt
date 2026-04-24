@@ -48,7 +48,7 @@ val appModule = module {
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
-    
+
     factory { LogTaskUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
@@ -56,16 +56,17 @@ val appModule = module {
     factory { ManageReminderUseCase(get(), get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
-    
+
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
-    
+
     single { TaskNotificationManager(get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
     single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
-    
+    single { get<AppDatabase>().profileDao() }
+
     single {
         Retrofit.Builder()
             .baseUrl("https://api.fda.gov/")
@@ -85,4 +86,5 @@ val viewModelModule = module {
     viewModel { CabinetViewModel(get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { AuthViewModel(get(), get(), get(), get()) }
+    viewModel { ProfileViewModel(get(), get(), get()) }
 }

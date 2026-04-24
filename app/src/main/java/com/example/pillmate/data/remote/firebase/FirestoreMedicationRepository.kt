@@ -23,11 +23,11 @@ class FirestoreMedicationRepository(
                 val suppliesResult = getMedicationSupplies(id)
                 val supplies = suppliesResult.getOrNull() ?: emptyList()
                 val totalQty = supplies.sumOf { it.quantity.toDouble() }.toFloat()
-                
-                // For the "primary" supply displayed on the main med object, 
+
+                // For the "primary" supply displayed on the main med object,
                 // we'll pick the one with lowest stock > 0 as the "active" one,
                 // or just the first if all 0.
-                val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity } 
+                val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
                     ?: supplies.firstOrNull()
                 
                 Result.success(med?.copy(supply = activeSupply?.copy(quantity = totalQty)))
@@ -51,7 +51,7 @@ class FirestoreMedicationRepository(
                 val supplies = getMedicationSupplies(medId).getOrNull() ?: emptyList()
                 val target = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
                     ?: supplies.firstOrNull() // Fallback to first if all empty
-                
+
                 if (target != null) {
                     db.collection("profiles").document(profileId)
                         .collection("medications").document(medId)
@@ -81,11 +81,11 @@ class FirestoreMedicationRepository(
             val supplyDocs = db.collection("profiles").document(profileId)
                 .collection("medications").document(medId)
                 .collection("supply").get().await()
-            
+
             val supplies = supplyDocs.documents.map { doc ->
                 val inventoryLogs = doc.reference.collection("logs").get().await()
                 val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
-                
+
                 doc.toObject(MedicationSupply::class.java)!!.copy(
                     id = doc.id,
                     quantity = totalQty

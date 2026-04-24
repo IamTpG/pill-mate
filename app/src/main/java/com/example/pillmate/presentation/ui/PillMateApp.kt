@@ -17,7 +17,6 @@ import com.example.pillmate.presentation.ui.navigation.bottomNavItems
 import com.example.pillmate.presentation.ui.screens.*
 import com.example.pillmate.presentation.viewmodel.*
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
@@ -132,6 +131,8 @@ fun PillMateApp(
                         navController.navigate("auth_graph") {
                             popUpTo("main_graph") { inclusive = true }
                         }
+                    }, onNavigateToAuth = {
+                        navController.navigate("auth_graph")
                     })
                 }
             }

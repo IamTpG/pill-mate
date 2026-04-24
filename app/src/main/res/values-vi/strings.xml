@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pill Mate</string>
+
+    <string name="profile">Hồ sơ</string>
+    <string name="edit_profile">Chỉnh sửa hồ sơ</string>
+    <string name="switch_profile">Đổi hồ sơ</string>
+    <string name="manage_caregiver_access">Quyền người chăm sóc</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="english">English</string>
+    <string name="vietnamese">Tiếng Việt</string>
+    <string name="log_out">Đăng xuất</string>
+    <string name="emergency">KHẨN CẤP</string>
+    <string name="user_default">Người dùng</string>
+    <string name="background_desc">Hình nền</string>
+    <string name="avatar_desc">Ảnh đại diện</string>
+    <string name="back_desc">Quay lại</string>
+    <string name="save">Lưu</string>
+    <string name="edit_avatar">Đổi ảnh đại diện</string>
+    <string name="name_label">Tên</string>
+    <string name="dob_label">Ngày sinh</string>
+    <string name="select_date">Chọn ngày</string>
+    <string name="health_info_label">Thông tin sức khỏe</string>
+    <string name="tap_to_edit">Chạm để sửa</string>
+    <string name="ok">Đồng ý</string>
+    <string name="cancel">Hủy</string>
+    <string name="add_profile">THÊM HỒ SƠ</string>
+    <string name="selected_desc">Đã chọn</string>
+
+    <string name="create_account">Tạo tài khoản</string>
+    <string name="sign_in_with_email">Đăng nhập bằng Email</string>
+    <string name="continue_with_google">Tiếp tục với Google</string>
+    <string name="terms_agreement">Bằng việc tiếp tục, bạn đồng ý với Chính sách Bảo mật và Điều khoản của chúng tôi.</string>
+    <string name="dont_have_account">"Chưa có tài khoản? "</string>
+    <string name="sign_up">Đăng ký</string>
+    <string name="sign_up_with_email">Đăng ký bằng Email</string>
+    <string name="email">Email</string>
+    <string name="email_placeholder">email@vidu.com</string>
+    <string name="password">Mật khẩu</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="full_name">Họ và tên</string>
+    <string name="fullname_placeholder">Nguyễn Văn A</string>
+    <string name="google_sign_in_failed">Đăng nhập Google thất bại: %1$s</string>
+</resources>
