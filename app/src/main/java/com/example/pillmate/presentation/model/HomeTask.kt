@@ -8,6 +8,7 @@ data class HomeTask(
     val title: String,
     val time: String,
     val doseDescription: String,
+    val dose: Float = 1.0f,
     val taskType: com.example.pillmate.domain.model.TaskType,
     val status: LogStatus? = null // null means upcoming
 )

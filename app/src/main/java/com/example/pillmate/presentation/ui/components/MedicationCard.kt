@@ -37,7 +37,7 @@ fun MedicationCard(
         ) {
             if (medication.photoUrl != null) {
                 AsyncImage(
-                    model = java.io.File(medication.photoUrl),
+                    model = android.net.Uri.parse(medication.photoUrl),
                     contentDescription = medication.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

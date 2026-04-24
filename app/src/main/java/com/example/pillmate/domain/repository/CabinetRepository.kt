@@ -11,7 +11,7 @@ interface CabinetRepository {
     fun deleteMedication(profileId: String, medication: Medication)
 
     // Log a dose or refill
-    fun logInventoryChange(medicationId: String, amount: Int, reason: String)
+    fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String)
     
     // Get logs for history
     fun getLogsForMedication(medicationId: String): Flow<List<com.example.pillmate.data.local.entity.SupplyLogEntity>>

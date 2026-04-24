@@ -73,21 +73,26 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             try {
                 val scheduleDoc = db.collection("profiles").document(profileId)
                     .collection("schedules").document(scheduleId).get().await()
-                
-                val scheduleObj = scheduleDoc.toObject(Schedule::class.java)?.copy(id = scheduleId)
+                val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
                 if (scheduleObj != null) {
                     // CANCELLATION: Cancel other pending reminders AND snoozes
                     TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders, sourceId)
 
                     val rrule = scheduleDoc.getString("recurrenceRule")
                     if (rrule != null && rrule.contains("FREQ=DAILY")) {
-                        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", getDefault())
-                        val currentStart = format.parse(scheduleObj.startTime)
-                        if (currentStart != null) {
-                            val nextStart = Date(currentStart.time + 24 * 60 * 60 * 1000)
-                            val nextSchedule = scheduleObj.copy(startTime = format.format(nextStart))
-                            manageReminderUseCase(profileId, nextSchedule)
-                        }
+                        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                        val nextSchedule = scheduleObj.copy(
+                            doseTimes = scheduleObj.doseTimes.map { dt ->
+                                val dtStart = try { format.parse(dt.time) } catch (e: Exception) { null }
+                                if (dtStart != null) {
+                                    val nextStart = Date(dtStart.time + 24 * 60 * 60 * 1000)
+                                    dt.copy(time = format.format(nextStart))
+                                } else {
+                                    dt
+                                }
+                            }
+                        )
+                        manageReminderUseCase(profileId, nextSchedule)
                     }
                 }
             } catch (e: Exception) {

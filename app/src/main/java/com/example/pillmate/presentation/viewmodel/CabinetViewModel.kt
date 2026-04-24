@@ -48,7 +48,7 @@ class CabinetViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeCabinet() {
         viewModelScope.launch {
-            // 🟢 Observe the current profile first
+// 🟢 Observe the current profile first
             profileDao.getCurrentProfileFlow().flatMapLatest { profile ->
                 if (profile != null) {
                     // 🟢 Fetch medications for the active profile
@@ -148,6 +148,7 @@ class CabinetViewModel(
             // 2. Log initial stock
             if (initialCount > 0) {
                 cabinetRepository.logInventoryChange(
+                    profileId = activeProfileId,
                     medicationId = newId,
                     amount = initialCount,
                     reason = "INITIAL_STOCK"
@@ -158,9 +159,20 @@ class CabinetViewModel(
 
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            
+            // Find current stock to enforce floor of 0
+            val currentStock = _uiState.value.activeMedications
+                .find { it.id == medicationId }?.supply?.quantity?.toInt()
+                ?: _uiState.value.expiredMedications
+                    .find { it.id == medicationId }?.supply?.quantity?.toInt()
+                ?: 0
+            val clampedAmount = amountTaken.coerceAtMost(currentStock.coerceAtLeast(0))
+            if (clampedAmount <= 0) return@launch
             cabinetRepository.logInventoryChange(
+                profileId = activeProfileId,
                 medicationId = medicationId,
-                amount = -amountTaken,
+                amount = -clampedAmount,
                 reason = reason.ifBlank { "Taken" }
             )
         }
@@ -204,11 +216,19 @@ class CabinetViewModel(
             if (newCount != currentQuantity) {
                 val difference = newCount - currentQuantity
                 cabinetRepository.logInventoryChange(
+                    profileId = activeProfileId,
                     medicationId = existingMedication.id,
                     amount = difference,
                     reason = "ADJUSTMENT"
                 )
             }
+        }
+    }
+
+    fun deleteMedication(medication: Medication) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            cabinetRepository.deleteMedication(activeProfileId, medication)
         }
     }
 }

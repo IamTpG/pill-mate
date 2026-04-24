@@ -103,7 +103,11 @@ fun CabinetScreen(
                 logs = logs,
                 onBack = { selectedMedication = null },
                 onEditClick = { medicationToEdit = selectedMedication },
-                onLogDoseClick = { showLogDoseDialog = true }
+                onLogDoseClick = { showLogDoseDialog = true },
+                onDeleteClick = {
+                    viewModel.deleteMedication(selectedMedication!!)
+                    selectedMedication = null
+                }
             )
         } else {
         Image(
@@ -230,7 +234,7 @@ fun CabinetScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = amountText,
-                            onValueChange = { amountText = it },
+                            onValueChange = { newVal -> amountText = newVal.filter { it.isDigit() } },
                             label = { Text("Amount Taken") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,

@@ -18,6 +18,7 @@ import org.koin.dsl.module
 import com.example.pillmate.data.local.database.AppDatabase
 import com.example.pillmate.data.repository.CabinetRepositoryImpl
 import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.presentation.viewmodel.ScheduleBuilderViewModel
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 import org.koin.android.ext.koin.androidContext
 import com.example.pillmate.data.remote.api.OpenFdaApi
@@ -50,7 +51,7 @@ val appModule = module {
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
@@ -65,9 +66,8 @@ val appModule = module {
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
-    single<CabinetRepository> { CabinetRepositoryImpl(get(), get()) }
+    single<CabinetRepository> { CabinetRepositoryImpl(get(), get(), get(), get()) }
     single { get<AppDatabase>().profileDao() }
-
     single {
         Retrofit.Builder()
             .baseUrl("https://api.fda.gov/")
@@ -86,6 +86,7 @@ val viewModelModule = module {
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
+    viewModel { ScheduleBuilderViewModel(get()) }
     viewModel { AuthViewModel(get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
 }

@@ -98,7 +98,8 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
-                                    rrule = ""
+                                    rrule = "",
+                                    dose = task.dose
                                 )
                             )
                         },
@@ -121,7 +122,10 @@ fun PillMateApp(
             composable(Screen.Reminders.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     val viewModel: ReminderViewModel = koinViewModel()
-                    ReminderScreen(viewModel = viewModel, paddingValues = innerPadding)
+                    ReminderScreen(
+                        viewModel = viewModel, 
+                        paddingValues = innerPadding
+                    )
                 }
             }
             composable(Screen.Settings.route) {
@@ -143,6 +147,21 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
+            composable(Screen.ScheduleBuilder.route) {
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    ScheduleBuilderFlowScreen(
+                        paddingValues = innerPadding,
+                        onCompleteMapping = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
+                        },
+                        onBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
             composable(
                 route = Screen.TaskAlarm.route,
                 arguments = listOf(
@@ -153,10 +172,11 @@ fun PillMateApp(
                     androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("instructions") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("time") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" }
+                    androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
+                    androidx.navigation.navArgument("dose") { type = androidx.navigation.NavType.FloatType; defaultValue = 1.0f }
                 ),
                 deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}" }
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}" }
                 )
             ) { backStackEntry ->
                 val viewModel: TaskLogViewModel = koinViewModel()
@@ -170,6 +190,7 @@ fun PillMateApp(
                     instructions = backStackEntry.arguments?.getString("instructions") ?: "",
                     startTimeStr = backStackEntry.arguments?.getString("time") ?: "",
                     rrule = backStackEntry.arguments?.getString("rrule") ?: "",
+                    dose = backStackEntry.arguments?.getFloat("dose") ?: 1.0f,
                     onDismiss = { navController.popBackStack() }
                 )
             }

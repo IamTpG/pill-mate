@@ -37,6 +37,7 @@ fun TaskAlarmScreen(
     instructions: String,
     startTimeStr: String,
     rrule: String,
+    dose: Float = 1.0f,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -208,7 +209,7 @@ fun TaskAlarmScreen(
             Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), 1.0f, selectedSupplyId) },
+                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), dose, selectedSupplyId) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
