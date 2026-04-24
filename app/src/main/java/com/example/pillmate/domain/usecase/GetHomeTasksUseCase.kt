@@ -24,7 +24,28 @@ class GetHomeTasksUseCase(
         return scheduleRepository.getSchedulesFlow(profileId)
             .combine(logRepository.getLogsForDayFlow(profileId, date)) { schedules, logs ->
                 val now = Date()
-                val homeTasks = schedules.flatMap { schedule ->
+                
+                val cal = Calendar.getInstance().apply {
+                    time = date
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val targetDateStart = cal.time
+                cal.add(Calendar.DAY_OF_YEAR, 1)
+                val targetDateEnd = cal.time
+                
+                val activeSchedules = schedules.filter { schedule ->
+                    // Schedule must start on or before the end of the target day
+                    val startsBeforeOrOnTarget = schedule.createdAt.before(targetDateEnd)
+                    // Schedule must end on or after the start of the target day
+                    val endsAfterOrOnTarget = schedule.endDate == null || schedule.endDate.after(targetDateStart)
+                    
+                    startsBeforeOrOnTarget && endsAfterOrOnTarget
+                }
+
+                val homeTasks = activeSchedules.flatMap { schedule ->
                     schedule.doseTimes.map { doseTime ->
                         val displayTime: String
                         
