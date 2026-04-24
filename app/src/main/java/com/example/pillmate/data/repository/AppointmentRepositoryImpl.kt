@@ -14,32 +14,37 @@ import java.util.*
 
 class AppointmentRepositoryImpl(private val firestore: FirebaseFirestore) : AppointmentRepository {
 	override fun getAppointmentLogs(profileId: String, date: Date): Flow<List<AppointmentLog>> = callbackFlow {
-		val calendar = Calendar.getInstance().apply { time = date }
-		calendar.set(Calendar.HOUR_OF_DAY, 0)
-		val start = calendar.time
-		calendar.set(Calendar.HOUR_OF_DAY, 23)
-		val end = calendar.time
-		
-		val listener = firestore.collection("profiles")
+		// 1. Path check: Ensure "profiles" and "appointments" match your Firebase Console exactly
+		val query = firestore.collection("profiles")
 			.document(profileId)
 			.collection("appointments")
-			.whereGreaterThanOrEqualTo("scheduledTime", Timestamp(start))
-			.whereLessThanOrEqualTo("scheduledTime", Timestamp(end))
-			.addSnapshotListener { snapshot, _ ->
-				val logs = snapshot?.documents?.mapNotNull { doc ->
-					val event = doc.get("eventSnapshot") as? Map<*, *>
-//					AppointmentLog(
-//						id = doc.id,
-//						status = LogStatus.valueOf(doc.getString("status") ?: "PENDING"),
-//						scheduledTime = doc.getTimestamp("scheduledTime")?.toDate() ?: Date(),
-//						title = event?.get("title") as? String ?: "No Title",
-//						instructions = event?.get("instructions") as? String ?: "",
-//						location = event?.get("location") as? String,
-//						doctorName = event?.get("doctorName") as? String
-//					)
-				} ?: emptyList()
-				//trySend(logs)
+		
+		val listener = query.addSnapshotListener { snapshot, error ->
+			if (error != null) {
+				// Log the error - critical for debugging Firestore
+				close(error)
+				return@addSnapshotListener
 			}
+			
+			val logs = snapshot?.documents?.mapNotNull { doc ->
+				try {
+					// If data is at the root of the document:
+					AppointmentLog(
+						id = doc.id,
+						name = doc.getString("name") ?: "Unnamed",
+						location = doc.getString("location") ?: "",
+						doctorName = doc.getString("doctorName") ?: "",
+						description = doc.getString("description") ?: ""
+					)
+				} catch (e: Exception) {
+					null // Skip documents that don't match the model
+				}
+			} ?: emptyList()
+			
+			trySend(logs)
+		}
+		
+		// Clean up the listener when the Flow is cancelled or ViewModel is cleared
 		awaitClose { listener.remove() }
 	}
 	
@@ -48,7 +53,7 @@ class AppointmentRepositoryImpl(private val firestore: FirebaseFirestore) : Appo
 			// Path: profiles/{profileId}/appointment
 			firestore.collection("profiles")
 				.document(profileId)
-				.collection("appointment")
+				.collection("appointments")
 				.add(appointment) // Firebase generates a unique ID for the document
 				.await() // From kotlinx-coroutines-play-services
 			

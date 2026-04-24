@@ -63,6 +63,7 @@ fun AppointmentScreen(
 //					completedCount = logs.count { it.status.name == "COMPLETED" },
 //					totalCount = logs.size
 //				)
+				AppointmentHeader(3, 10)
 			}
 			
 			items(logs) { log ->
