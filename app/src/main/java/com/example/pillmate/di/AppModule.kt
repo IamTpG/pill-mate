@@ -30,6 +30,7 @@ import com.example.pillmate.domain.usecase.*
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.presentation.viewmodel.AuthViewModel
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
@@ -83,7 +84,7 @@ val viewModelModule = module {
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { AuthViewModel(get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }

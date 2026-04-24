@@ -1,6 +1,7 @@
 package com.example.pillmate.domain.repository
 
 import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.domain.model.MedicationSupply
 import com.example.pillmate.domain.model.TaskLog
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
