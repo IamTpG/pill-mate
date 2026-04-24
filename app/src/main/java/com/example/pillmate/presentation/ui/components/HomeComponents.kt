@@ -3,8 +3,10 @@ package com.example.pillmate.presentation.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -70,7 +72,8 @@ fun HomeHeader(
 @Composable
 fun ProgressCard(
     completed: Int,
-    total: Int
+    total: Int,
+    isToday: Boolean = true
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -81,7 +84,7 @@ fun ProgressCard(
         Box(modifier = Modifier.padding(20.dp)) {
             Column {
                 Text(
-                    text = "TODAY'S PROGRESS",
+                    text = if (isToday) "TODAY'S PROGRESS" else "DAILY PROGRESS",
                     color = colorResource(id = R.color.primary_green),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -130,9 +133,11 @@ fun ProgressCard(
 @Composable
 fun CalendarRow(
     days: List<CalendarDay>,
-    onDateSelected: (Date) -> Unit
+    onDateSelected: (Date) -> Unit,
+    state: LazyListState = rememberLazyListState()
 ) {
     LazyRow(
+        state = state,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 24.dp),

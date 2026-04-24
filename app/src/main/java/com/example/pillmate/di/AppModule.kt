@@ -1,5 +1,6 @@
 package com.example.pillmate.di
 
+import android.app.Application
 import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
 import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
@@ -26,6 +27,14 @@ import com.example.pillmate.domain.repository.DrugLibraryRepository
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.example.pillmate.domain.usecase.*
+import com.example.pillmate.notification.TaskNotificationManager
+import com.example.pillmate.presentation.viewmodel.AuthViewModel
+import com.example.pillmate.presentation.viewmodel.DebugViewModel
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
+import com.example.pillmate.util.AlarmTracker
+import com.example.pillmate.util.DataGenerator
+import com.example.pillmate.util.FcmTokenManager
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
@@ -33,23 +42,26 @@ val appModule = module {
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
+    single<DataGenerator> { DataGenerator(get()) }
 
-    single<MedicationRepository> { FirestoreMedicationRepository(get()) }
+    single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
     single<LogRepository> { FirestoreLogRepository(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
     
-    single { com.example.pillmate.util.DataGenerator(get()) }
-    single { com.example.pillmate.util.FcmTokenManager(get()) }
+    single { AlarmTracker(get()) }
+    single { FcmTokenManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get()) }
-    factory { com.example.pillmate.domain.usecase.GetHomeTasksUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.CreateScheduleUseCase(get()) }
-    factory { com.example.pillmate.domain.usecase.UpdateScheduleUseCase(get()) }
-    factory { com.example.pillmate.domain.usecase.ManageReminderUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.SyncAlarmsUseCase(get(), get()) }
-    factory { com.example.pillmate.domain.usecase.SyncFcmTokenUseCase(get()) }
+    factory { LogTaskUseCase(get(), get(), get(), get()) }
+    factory { GetHomeTasksUseCase(get(), get()) }
+    factory { CreateScheduleUseCase(get()) }
+    factory { UpdateScheduleUseCase(get()) }
+    factory { ManageReminderUseCase(get(), get(), get()) }
+    factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
+    factory { SyncFcmTokenUseCase(get()) }
 
-    single { com.example.pillmate.notification.TaskNotificationManager(get()) }
+    viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+
+    single { TaskNotificationManager(get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
@@ -68,13 +80,13 @@ val appModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get(), get(), get()) }
-    viewModel { TaskLogViewModel(get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), androidContext() as android.app.Application) }
-    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
+    viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.ProfileViewModel(get(), get(), get()) }
+    viewModel { AuthViewModel(get(), get(), get(), get()) }
+    viewModel { ProfileViewModel(get(), get(), get()) }
 }

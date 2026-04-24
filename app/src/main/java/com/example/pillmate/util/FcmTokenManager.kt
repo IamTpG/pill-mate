@@ -13,6 +13,10 @@ class FcmTokenManager(private val db: FirebaseFirestore) {
         try {
             val token = FirebaseMessaging.getInstance().token.await()
             saveToken(profileId, token)
+            
+            // Subscribe to profile-specific topic for broadcasts
+            FirebaseMessaging.getInstance().subscribeToTopic("profile_$profileId").await()
+            Log.d("FcmTokenManager", "Subscribed to topic: profile_$profileId")
         } catch (e: Exception) {
             Log.e("FcmTokenManager", "Failed to get/save FCM token", e)
         }
