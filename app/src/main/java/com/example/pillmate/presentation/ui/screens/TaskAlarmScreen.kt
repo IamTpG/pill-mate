@@ -44,12 +44,28 @@ fun TaskAlarmScreen(
 
     // Observers
     val logResult by viewModel.logResult.collectAsState()
+    val availableSupplies by viewModel.availableSupplies.collectAsState()
+    var selectedSupplyId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(sourceId) {
+        if (taskType == TaskType.MEDICATION) {
+            viewModel.fetchSupplies(sourceId)
+        }
+    }
+
+    // Effect to select the smartest default (lowest stock)
+    LaunchedEffect(availableSupplies) {
+        if (selectedSupplyId == null && availableSupplies.isNotEmpty()) {
+            selectedSupplyId = availableSupplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }?.id 
+                ?: availableSupplies.firstOrNull()?.id
+        }
+    }
 
     LaunchedEffect(logResult) {
         logResult?.let { result ->
             if (result.isSuccess) {
                 Toast.makeText(context, "Task completed!", Toast.LENGTH_SHORT).show()
-                TaskNotificationManager(context).dismissNotification()
+                TaskNotificationManager(context).dismissNotification(scheduleId)
                 onDismiss()
             } else {
                 Toast.makeText(context, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
@@ -110,7 +126,7 @@ fun TaskAlarmScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(0.1f))
+            Spacer(modifier = Modifier.weight(0.05f))
 
             Image(
                 painter = painterResource(id = R.drawable.pill),
@@ -161,15 +177,43 @@ fun TaskAlarmScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(0.15f))
+            // SUPPLY SELECTION UI
+            if (taskType == TaskType.MEDICATION && availableSupplies.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(text = "Select Batch", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                androidx.compose.foundation.lazy.LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(availableSupplies.size) { index ->
+                        val supply = availableSupplies[index]
+                        val isSelected = selectedSupplyId == supply.id
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedSupplyId = supply.id },
+                            label = { Text("${supply.batchName} (${supply.quantity})") },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color(0x20FFFFFF),
+                                selectedContainerColor = Color(0xFF4CAF50),
+                                labelColor = Color.White,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), 1.0f) },
+                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), 1.0f, selectedSupplyId) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
                 shape = RoundedCornerShape(15.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
             ) {
                 Text(text = actionButtonText, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }

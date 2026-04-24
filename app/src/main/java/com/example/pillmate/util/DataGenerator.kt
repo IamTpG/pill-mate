@@ -31,12 +31,24 @@ class DataGenerator(private val db: FirebaseFirestore) {
                 val itemRef = profileRef.collection(collectionPath).add(itemData).await()
 
                 if (collectionPath == "medications") {
-                    val supplyRef = itemRef.collection("supply").add(mapOf("updatedAt" to Timestamp.now())).await()
-                    supplyRef.collection("logs").add(mapOf(
-                        "changeAmount" to 30.0,
-                        "reason" to "INITIAL",
-                        "timestamp" to Timestamp.now()
-                    )).await()
+                    val batchNames = listOf("Main Bottle", "Travel Pack", "Medicine Cabinet")
+                    val numBatches = (2..3).random()
+                    
+                    for (i in 0 until numBatches) {
+                        val supplyData = mapOf(
+                            "batchName" to batchNames[i],
+                            "updatedAt" to Timestamp.now()
+                        )
+                        val supplyRef = itemRef.collection("supply").add(supplyData).await()
+                        
+                        // Different stock levels to test smart selection
+                        val initialStock = if (i == 0) 20.0 else 5.0 * (i + 1)
+                        supplyRef.collection("logs").add(mapOf(
+                            "changeAmount" to initialStock,
+                            "reason" to "INITIAL",
+                            "timestamp" to Timestamp.now()
+                        )).await()
+                    }
                 }
 
                 // Distribute times: 8am, 12pm, 4pm, 8pm across items
@@ -69,17 +81,24 @@ class DataGenerator(private val db: FirebaseFirestore) {
     suspend fun clearUserData(profileId: String) {
         val profileRef = db.collection("profiles").document(profileId)
         
-        // Delete Categories
-        deleteCollection(profileRef.collection("medications"))
+        // Delete Medications and their nested subcollections (supply -> logs)
+        val medications = profileRef.collection("medications").get().await()
+        for (medDoc in medications.documents) {
+            val supplies = medDoc.reference.collection("supply").get().await()
+            for (supplyDoc in supplies.documents) {
+                // Delete logs under each supply
+                deleteCollection(supplyDoc.reference.collection("logs"))
+                supplyDoc.reference.delete().await()
+            }
+            medDoc.reference.delete().await()
+        }
+
+        // Delete other top-level subcollections
         deleteCollection(profileRef.collection("meals"))
         deleteCollection(profileRef.collection("appointments"))
         deleteCollection(profileRef.collection("exercises"))
         deleteCollection(profileRef.collection("tasks"))
-        
-        // Delete Schedules
         deleteCollection(profileRef.collection("schedules"))
-        
-        // Delete Logs
         deleteCollection(profileRef.collection("logs"))
     }
 

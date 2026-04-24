@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 data class HomeUiState(
-    val todayProgress: Pair<Int, Int> = 0 to 0,
-    val todayTasks: List<HomeTask> = emptyList(),
+    val dateProgress: Pair<Int, Int> = 0 to 0,
+    val dateTasks: List<HomeTask> = emptyList(),
     val selectedDate: Date = Date(),
     val calendarDays: List<CalendarDay> = emptyList(),
     val isLoading: Boolean = false
@@ -24,6 +24,7 @@ data class HomeUiState(
 class HomeViewModel(
     private val medicationRepository: MedicationRepository,
     private val getHomeTasksUseCase: GetHomeTasksUseCase,
+    private val syncAlarmsUseCase: com.example.pillmate.domain.usecase.SyncAlarmsUseCase,
     private val profileId: String
 ) : ViewModel() {
 
@@ -32,7 +33,7 @@ class HomeViewModel(
 
     private var loadDataJob: kotlinx.coroutines.Job? = null
 
-    private val calendarStartDate: Date by lazy {
+    private val calendarStartDate: java.util.Date by lazy {
         val cal = java.util.Calendar.getInstance()
         cal.add(java.util.Calendar.DAY_OF_MONTH, -15)
         cal.time
@@ -41,6 +42,11 @@ class HomeViewModel(
     init {
         generateCalendarDays()
         loadData()
+        
+        // Self-Healing: Sync alarms on launch to catch missed ones
+        viewModelScope.launch {
+            syncAlarmsUseCase(profileId)
+        }
     }
 
     private fun generateCalendarDays() {
@@ -84,8 +90,8 @@ class HomeViewModel(
             getHomeTasksUseCase.execute(profileId, date)
                 .collect { data ->
                     _uiState.value = _uiState.value.copy(
-                        todayTasks = data.tasks,
-                        todayProgress = data.completedCount to data.totalCount,
+                        dateTasks = data.tasks,
+                        dateProgress = data.completedCount to data.totalCount,
                         isLoading = false
                     )
                 }

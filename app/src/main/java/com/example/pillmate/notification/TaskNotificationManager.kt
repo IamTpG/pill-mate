@@ -18,6 +18,8 @@ class TaskNotificationManager(private val context: Context) {
         const val NOTIFICATION_ID = 1001
         const val ALARM_CHANNEL_ID = "task_alarms"
         const val ALARM_CHANNEL_NAME = "Critical Task Alarms"
+        const val LOW_STOCK_CHANNEL_ID = "low_stock_alerts"
+        const val LOW_STOCK_CHANNEL_NAME = "Low Stock Alerts"
     }
 
     init {
@@ -46,6 +48,12 @@ class TaskNotificationManager(private val context: Context) {
                     .build())
             }
             notificationManager.createNotificationChannel(alarmChannel)
+
+            // Low Stock Channel
+            val lowStockChannel = NotificationChannel(LOW_STOCK_CHANNEL_ID, LOW_STOCK_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Alerts when medication stock is low"
+            }
+            notificationManager.createNotificationChannel(lowStockChannel)
         }
     }
 
@@ -140,7 +148,7 @@ class TaskNotificationManager(private val context: Context) {
             .setOngoing(true)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, builder.build())
+        notificationManager.notify(scheduleId.hashCode(), builder.build())
     }
 
     fun scheduleTaskNotification(
@@ -150,6 +158,7 @@ class TaskNotificationManager(private val context: Context) {
         details: String,
         delaySeconds: Int,
         requestCode: Int,
+        profileId: String, // Added profileId
         taskType: String = "OTHER",
         reminderType: String = "NOTIFICATION",
         rrule: String? = null,
@@ -160,6 +169,7 @@ class TaskNotificationManager(private val context: Context) {
         val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
             putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("PROFILE_ID", profileId) // Added PROFILE_ID
             putExtra("TITLE", title)
             putExtra("DETAILS", details)
             putExtra("TASK_TYPE", taskType)
@@ -177,37 +187,37 @@ class TaskNotificationManager(private val context: Context) {
         )
 
         val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
+        android.util.Log.d("TaskNotificationManager", "Scheduling $title for $triggerTime (delay: $delaySeconds, requestCode: $requestCode)")
 
         return try {
-            if (reminderType == "ALARM") {
+            val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                alarmManager.canScheduleExactAlarms()
+            } else true
+
+            if (reminderType == "ALARM" && canScheduleExact) {
                 val alarmClockInfo = android.app.AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                android.util.Log.d("TaskNotificationManager", "setAlarmClock SUCCESS for $requestCode")
                 true
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
+                android.util.Log.d("TaskNotificationManager", "Exact alarm permission: $canScheduleExact")
+                if (canScheduleExact) {
                     alarmManager.setExactAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
-                    true
                 } else {
+                    android.util.Log.d("TaskNotificationManager", "FALLBACK: Inexact alarm used")
                     alarmManager.setAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP,
                         triggerTime,
                         pendingIntent
                     )
-                    false // Scheduled but not exact
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    android.app.AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
                 true
             } else {
-                alarmManager.setExact(
+                alarmManager.setExactAndAllowWhileIdle(
                     android.app.AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
@@ -215,13 +225,14 @@ class TaskNotificationManager(private val context: Context) {
                 true
             }
         } catch (e: Exception) {
+            android.util.Log.e("TaskNotificationManager", "Scheduling FAILED", e)
             false
         }
     }
 
-    fun dismissNotification() {
+    fun dismissNotification(scheduleId: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_ID)
+        notificationManager.cancel(scheduleId.hashCode())
     }
 
     fun cancelNotification(requestCode: Int) {
@@ -234,5 +245,28 @@ class TaskNotificationManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+    }
+
+    fun cancelAllReminders(scheduleId: String, reminders: List<com.example.pillmate.domain.model.Reminder>, sourceId: String? = null) {
+        reminders.forEach { reminder ->
+            val requestCode = "${scheduleId}_${reminder.minutesBefore}_${reminder.type.name}".hashCode()
+            cancelNotification(requestCode)
+        }
+        // Also cancel standard snooze if sourceId provided
+        sourceId?.let {
+            cancelNotification(it.hashCode())
+        }
+    }
+
+    fun showLowStockNotification(medName: String, remaining: Float) {
+        val builder = NotificationCompat.Builder(context, LOW_STOCK_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle("Low Stock Alert")
+            .setContentText("You only have $remaining remaining of $medName.")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(medName.hashCode(), builder.build())
     }
 }
