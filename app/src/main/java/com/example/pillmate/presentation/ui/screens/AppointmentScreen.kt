@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.example.pillmate.R
 import com.example.pillmate.presentation.ui.components.AddAppointment
 import com.example.pillmate.presentation.ui.components.AppointmentAddOptions
-import com.example.pillmate.presentation.ui.components.ScheduleCard
+import com.example.pillmate.presentation.ui.components.AppointmentCard
 import com.example.pillmate.presentation.viewmodel.AppointmentViewModel
 import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.ui.components.AppointmentHeader
@@ -66,7 +66,7 @@ fun AppointmentScreen(
 			}
 			
 			items(logs) { log ->
-				ScheduleCard(log = log)
+				AppointmentCard(log = log)
 			}
 			
 			item {

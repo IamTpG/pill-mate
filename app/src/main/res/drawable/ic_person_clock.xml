@@ -1,0 +1,52 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="128"
+    android:viewportHeight="128">
+
+    <!-- Head -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="
+            M64,28
+            a18,18 0 1,1 0,36
+            a18,18 0 1,1 0,-36" />
+
+    <!-- Body (smooth arc + vertical ends) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="
+            M28,88
+            L28,72
+            Q64,60 100,72
+            L100,88" />
+
+    <!-- Clock circle (slightly overlapping body) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6"
+        android:pathData="
+        M92,78
+        a18,18 0 1,1 0,36
+        a18,18 0 1,1 0,-36" />
+
+    <!-- Clock hands -->
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="
+        M92,96
+        L92,86
+        M92,96
+        L102,96" />
+
+</vector>
