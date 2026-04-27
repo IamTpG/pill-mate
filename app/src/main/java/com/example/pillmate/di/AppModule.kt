@@ -27,6 +27,13 @@ import com.example.pillmate.domain.repository.DrugLibraryRepository
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import com.example.pillmate.data.repository.AppointmentRepositoryImpl
+import com.example.pillmate.domain.repository.AppointmentRepository
+import com.example.pillmate.domain.usecase.AddAppointmentUseCase
+import com.example.pillmate.domain.usecase.DeleteAppointmentUseCase
+import com.example.pillmate.domain.usecase.GetAppointmentsUseCase
+import com.example.pillmate.domain.usecase.UpdateAppointmentUseCase
+import com.example.pillmate.presentation.viewmodel.AppointmentViewModel
 import com.example.pillmate.domain.usecase.*
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.presentation.viewmodel.AuthViewModel
@@ -77,12 +84,24 @@ val appModule = module {
     }
     
     single<DrugLibraryRepository> { DrugLibraryRepositoryImpl(get()) }
+    
+    
+    single<AppointmentRepository> { AppointmentRepositoryImpl(get()) }
+    factory { GetAppointmentsUseCase(get()) }
+    factory { AddAppointmentUseCase(get()) }
+    factory { UpdateAppointmentUseCase(get()) }
+    factory { DeleteAppointmentUseCase(get()) }
 }
 
 val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
+    viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
+    viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }

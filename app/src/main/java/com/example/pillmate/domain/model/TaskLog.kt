@@ -2,9 +2,9 @@ package com.example.pillmate.domain.model
 
 import java.util.Date
 
-enum class LogStatus {
-    COMPLETED, MISSED, SKIPPED, LATE, SNOOZED
-}
+//enum class LogStatus {
+//    COMPLETED, MISSED, SKIPPED, LATE, SNOOZED
+//}
 
 enum class TaskType {
     MEDICATION, MEAL, APPOINTMENT, TASK, EXERCISE, OTHER
