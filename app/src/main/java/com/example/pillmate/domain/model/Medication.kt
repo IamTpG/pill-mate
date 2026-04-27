@@ -15,6 +15,7 @@ data class Medication(
 
 data class MedicationSupply(
     val id: String = "",
+    val batchName: String = "Main Bottle",
     val quantity: Float = 0f, // Inferred from logs in repository
     val expirationDate: Date? = null,
     val updatedAt: Date = Date()

@@ -8,12 +8,15 @@ import com.example.pillmate.data.local.dao.MedicationDao
 import com.example.pillmate.data.local.entity.MedicationEntity
 import com.example.pillmate.data.local.dao.SupplyLogDao
 import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.data.local.dao.ProfileDao
+import com.example.pillmate.data.local.entity.ProfileEntity
 
-@Database(entities = [MedicationEntity::class, SupplyLogEntity::class], version = 1, exportSchema = false)
+@Database(entities = [MedicationEntity::class, SupplyLogEntity::class, ProfileEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun medicationDao(): MedicationDao
     abstract fun supplyLogDao(): SupplyLogDao
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         @Volatile
@@ -25,7 +28,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "pillmate_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration() // Useful for dev: wipes DB on version change
+                .build()
                 INSTANCE = instance
                 instance
             }

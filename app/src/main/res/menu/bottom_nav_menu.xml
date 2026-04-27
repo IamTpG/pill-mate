@@ -12,9 +12,9 @@
         android:title="Cabinet" />
 
     <item
-        android:id="@+id/reminder_fragment"
+        android:id="@+id/schedule_builder_fragment"
         android:icon="@drawable/ic_reminder"
-        android:title="Reminders" />
+        android:title="Schedule" />
 
     <item
         android:id="@+id/settings_fragment"

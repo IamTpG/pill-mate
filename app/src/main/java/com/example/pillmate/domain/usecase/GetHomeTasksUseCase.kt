@@ -24,59 +24,97 @@ class GetHomeTasksUseCase(
         return scheduleRepository.getSchedulesFlow(profileId)
             .combine(logRepository.getLogsForDayFlow(profileId, date)) { schedules, logs ->
                 val now = Date()
-                val homeTasks = schedules.map { schedule ->
-                    val matchingLog = logs.find { it.scheduleId == schedule.id }
+                
+                val cal = Calendar.getInstance().apply {
+                    time = date
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val targetDateStart = cal.time
+                cal.add(Calendar.DAY_OF_YEAR, 1)
+                val targetDateEnd = cal.time
+                
+                val activeSchedules = schedules.filter { schedule ->
+                    // Schedule must start on or before the end of the target day
+                    val startsBeforeOrOnTarget = schedule.createdAt.before(targetDateEnd)
+                    // Schedule must end on or after the start of the target day
+                    val endsAfterOrOnTarget = schedule.endDate == null || schedule.endDate.after(targetDateStart)
                     
-                    var status = matchingLog?.status
-                    val displayTime: String
-                    
-                    // SimpleDateFormat for ISO parsing
-                    val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                    val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                    
-                    val scheduledTimeDate: Date? = try {
-                        if (schedule.startTime.contains("T")) {
-                            isoFormat.parse(schedule.startTime)
+                    startsBeforeOrOnTarget && endsAfterOrOnTarget
+                }
+
+                val homeTasks = activeSchedules.flatMap { schedule ->
+                    schedule.doseTimes.map { doseTime ->
+                        val displayTime: String
+                        
+                        // SimpleDateFormat for ISO parsing
+                        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                        val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                        
+                        val scheduledTimeDate: Date? = try {
+                            if (doseTime.time.contains("T")) {
+                                isoFormat.parse(doseTime.time)
+                            } else {
+                                val timeParts = doseTime.time.split(":")
+                                if (timeParts.size >= 2) {
+                                    val hrStr = timeParts[0]
+                                    val cleanMin = timeParts[1].filter { it.isDigit() }.toInt()
+                                    var hr = hrStr.filter { it.isDigit() }.toInt()
+                                    if (doseTime.time.contains("PM", ignoreCase = true) && hr < 12) hr += 12
+                                    if (doseTime.time.contains("AM", ignoreCase = true) && hr == 12) hr = 0
+
+                                    val cal = Calendar.getInstance().apply {
+                                        time = date
+                                        set(Calendar.HOUR_OF_DAY, hr)
+                                        set(Calendar.MINUTE, cleanMin)
+                                        set(Calendar.SECOND, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }
+                                    cal.time
+                                } else null
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+
+                        // Match against both schedule ID and the explicit scheduled time
+                        val matchingLog = logs.find { log -> 
+                            log.scheduleId == schedule.id && 
+                            scheduledTimeDate != null && 
+                            Math.abs(log.scheduledTime.time - scheduledTimeDate.time) < 60000 
+                        }
+                        
+                        var status = matchingLog?.status
+
+                        if (status == null && scheduledTimeDate != null) {
+                            if (scheduledTimeDate.before(now)) {
+                                status = LogStatus.MISSED
+                            }
+                        }
+                        
+                        displayTime = scheduledTimeDate?.let { displayFormat.format(it) } ?: doseTime.time
+
+                        val details = if (schedule.type == TaskType.MEDICATION) {
+                            doseTime.doseContext.ifBlank { "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}" }
                         } else {
-                            val timeParts = schedule.startTime.split(":")
-                            if (timeParts.size == 2) {
-                                val cal = Calendar.getInstance().apply {
-                                    time = date
-                                    set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
-                                    set(Calendar.MINUTE, timeParts[1].toInt())
-                                    set(Calendar.SECOND, 0)
-                                    set(Calendar.MILLISECOND, 0)
-                                }
-                                cal.time
-                            } else null
+                            schedule.eventSnapshot.instructions ?: ""
                         }
-                    } catch (e: Exception) {
-                        null
-                    }
 
-                    if (status == null && scheduledTimeDate != null) {
-                        if (scheduledTimeDate.before(now)) {
-                            status = LogStatus.MISSED
-                        }
-                    }
-                    
-                    displayTime = scheduledTimeDate?.let { displayFormat.format(it) } ?: schedule.startTime
+                        val fallbackDose = doseTime.doseContext.split(" ").firstOrNull()?.toFloatOrNull() ?: doseTime.dose
 
-                    val details = if (schedule.type == TaskType.MEDICATION) {
-                        "Take ${schedule.eventSnapshot.dose} ${schedule.eventSnapshot.unit ?: "dose"}"
-                    } else {
-                        schedule.eventSnapshot.instructions ?: ""
+                        HomeTask(
+                            scheduleId = schedule.id,
+                            sourceId = schedule.eventSnapshot.sourceId,
+                            title = schedule.eventSnapshot.title,
+                            time = displayTime,
+                            doseDescription = details,
+                            dose = fallbackDose,
+                            taskType = schedule.type,
+                            status = status
+                        )
                     }
-
-                    HomeTask(
-                        scheduleId = schedule.id,
-                        sourceId = schedule.eventSnapshot.sourceId,
-                        title = schedule.eventSnapshot.title,
-                        time = displayTime,
-                        doseDescription = details,
-                        taskType = schedule.type,
-                        status = status
-                    )
                 }.sortedBy { it.time }
 
                 val completed = homeTasks.count { it.status == LogStatus.COMPLETED }

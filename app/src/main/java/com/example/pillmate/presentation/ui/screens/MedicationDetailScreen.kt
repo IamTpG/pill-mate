@@ -10,12 +10,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,8 +44,11 @@ fun MedicationDetailScreen(
     logs: List<SupplyLogEntity>,
     onBack: () -> Unit,
     onEditClick: () -> Unit,
-    onLogDoseClick: () -> Unit
+    onLogDoseClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.background),
@@ -69,6 +76,9 @@ fun MedicationDetailScreen(
                 actions = {
                     IconButton(onClick = onEditClick) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White)
+                    }
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
@@ -116,7 +126,7 @@ fun MedicationDetailScreen(
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "${medication.name} ${medication.supply?.quantity?.toInt() ?: ""} ${medication.unit}",
+                                text = medication.name,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E3D34)
@@ -148,11 +158,13 @@ fun MedicationDetailScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        val qty = medication.supply?.quantity?.toInt() ?: 0
+                        val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                         InfoCard(
                             modifier = Modifier.weight(1f),
-                            label = "FREQUENCY",
-                            value = "Every 8 hours",
-                            icon = Icons.Default.Notifications
+                            label = "AMOUNT",
+                            value = "$qty $unitLabel",
+                            icon = Icons.Outlined.Info
                         )
                         val expiryDate = medication.supply?.expirationDate?.let {
                             SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it)
@@ -172,8 +184,12 @@ fun MedicationDetailScreen(
                     if (logs.isEmpty()) {
                         Text("No logs yet", modifier = Modifier.padding(horizontal = 16.dp), color = Color.Gray)
                     } else {
-                        logs.forEach { log ->
-                            val status = if (log.changeAmount <= 0) "Taken" else "Refilled/Adjusted"
+                        logs.filter { it.reason != "INITIAL_STOCK" }.forEach { log ->
+                            val status = if (log.changeAmount <= 0) {
+                                val qty = kotlin.math.abs(log.changeAmount)
+                                val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
+                                "Taken $qty $unitLabel"
+                            } else "Refilled/Adjusted"
                             val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(java.util.Date(log.timestamp))
                             HistoryCard(status, timestampStr, isSkipped = false, reason = log.reason)
                         }
@@ -183,16 +199,23 @@ fun MedicationDetailScreen(
         }
 
         val isExpired = medication.supply?.expirationDate?.before(java.util.Date()) == true
+        val isOutOfStock = (medication.supply?.quantity?.toInt() ?: 0) <= 0
+        val isDisabled = isExpired || isOutOfStock
+        val buttonLabel = when {
+            isExpired -> "Medication Expired"
+            isOutOfStock -> "Out of Stock"
+            else -> "+ Log Current Dose"
+        }
 
         // Floating Action Button - Bottom Sticky
         Button(
             onClick = onLogDoseClick,
-            enabled = !isExpired,
+            enabled = !isDisabled,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 100.dp)
+                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 140.dp)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF1E6C54),
@@ -200,7 +223,32 @@ fun MedicationDetailScreen(
                 disabledContentColor = Color.White
             )
         ) {
-            Text(if (isExpired) "Medication Expired" else "+ Log Current Dose", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(buttonLabel, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                containerColor = Color.White,
+                title = { Text("Delete Medication", color = Color.Black) },
+                text = { Text("Are you sure you want to delete this medication?", color = Color.Gray) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeleteDialog = false
+                            onDeleteClick()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                    ) {
+                        Text("Delete", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Cancel", color = Color.Gray)
+                    }
+                }
+            )
         }
     }
 }

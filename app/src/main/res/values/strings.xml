@@ -1,3 +1,43 @@
 <resources>
-    <string name="app_name">Pillmate</string>
+    <string name="app_name">Pill Mate</string>
+
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="switch_profile">Switch Profile</string>
+    <string name="manage_caregiver_access">Manage Caregiver Access</string>
+    <string name="language">Language</string>
+    <string name="english">English</string>
+    <string name="vietnamese">Tiếng Việt</string>
+    <string name="log_out">Log out</string>
+    <string name="emergency">EMERGENCY</string>
+    <string name="user_default">User</string>
+    <string name="background_desc">Background</string>
+    <string name="avatar_desc">Avatar</string>
+    <string name="back_desc">Back</string>
+    <string name="save">Save</string>
+    <string name="edit_avatar">Edit Avatar</string>
+    <string name="name_label">Name</string>
+    <string name="dob_label">Date of Birth</string>
+    <string name="select_date">Select Date</string>
+    <string name="health_info_label">Health Information</string>
+    <string name="tap_to_edit">Tap to edit</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_profile">ADD PROFILE</string>
+    <string name="selected_desc">Selected</string>
+
+    <string name="create_account">Create an Account</string>
+    <string name="sign_in_with_email">Sign In with Email</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="terms_agreement">By continuing, you agree to our Privacy Policy and Terms of Service.</string>
+    <string name="dont_have_account">"Don\'t have an account? "</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_up_with_email">Sign Up with Email</string>
+    <string name="email">Email</string>
+    <string name="email_placeholder">email@example.com</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="full_name">Full Name</string>
+    <string name="fullname_placeholder">John Doe</string>
+    <string name="google_sign_in_failed">Google sign in failed: %1$s</string>
 </resources>

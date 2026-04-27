@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
@@ -35,11 +36,12 @@ fun AddMedicationDialog(
     onConfirm: (name: String, unit: String, count: Int, description: String, expirationDate: Long, imageUri: Uri?) -> Unit
 ) {
     var name by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.name ?: "") }
-    var unit by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.unit ?: "Capsules") }
+    var unit by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.unit ?: "") }
     var countText by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.quantity?.toInt()?.let { if (it > 0) it.toString() else "" } ?: "") }
     var description by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.description ?: "") }
     
     var showDatePicker by remember { mutableStateOf(false) }
+    var hasPickedDate by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.expirationDate != null) }
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = medicationToEdit?.supply?.expirationDate?.time,
         selectableDates = object : SelectableDates {
@@ -51,15 +53,22 @@ fun AddMedicationDialog(
             }
         }
     )
-    val formattedDate = datePickerState.selectedDateMillis?.let {
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it)
-    } ?: ""
+    val formattedDate = if (hasPickedDate) {
+        datePickerState.selectedDateMillis?.let {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it)
+        } ?: ""
+    } else ""
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> imageUri = uri }
     )
+
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var unitError by remember { mutableStateOf<String?>(null) }
+    var countError by remember { mutableStateOf<String?>(null) }
+    var dateError by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -121,8 +130,10 @@ fun AddMedicationDialog(
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = { name = it; nameError = null },
                     label = { Text("Medication Name (e.g., Ibuprofen)") },
+                    isError = nameError != null,
+                    supportingText = nameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -135,43 +146,49 @@ fun AddMedicationDialog(
                 )
                 OutlinedTextField(
                     value = unit,
-                    onValueChange = { unit = it },
+                    onValueChange = { newVal -> unit = newVal.filter { it.isLetter() || it == ' ' }; unitError = null },
                     label = { Text("Unit (e.g., Tablets, mg)") },
+                    isError = unitError != null,
+                    supportingText = unitError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = countText,
-                    onValueChange = { countText = it },
+                    onValueChange = { newVal -> countText = newVal.filter { it.isDigit() }; countError = null },
                     label = { Text("Current Inventory Count") },
+                    isError = countError != null,
+                    supportingText = countError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedButton(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { showDatePicker = true; dateError = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = if (dateError != null) ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error) else ButtonDefaults.outlinedButtonColors()
                 ) {
                     Text(if (formattedDate.isNotBlank()) "Expires: $formattedDate" else "Select Expiration Date")
+                }
+                if (dateError != null) {
+                    Text(dateError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val count = countText.toIntOrNull() ?: 0
-                    
-                    // Parse the date (default to 1 year from now if invalid/empty)
-                    val selectedMillis = datePickerState.selectedDateMillis
-                    val expDateLong = if (selectedMillis != null) {
-                        selectedMillis
-                    } else {
-                        System.currentTimeMillis() + 31536000000L
-                    }
+                    var hasError = false
+                    if (name.isBlank()) { nameError = "Name is required"; hasError = true }
+                    if (unit.isBlank()) { unitError = "Unit is required"; hasError = true }
+                    if (countText.isBlank() || countText.toIntOrNull() == null) { countError = "Enter a valid number"; hasError = true }
+                    if (!hasPickedDate || datePickerState.selectedDateMillis == null) { dateError = "Expiration date is required"; hasError = true }
+                    if (hasError) return@Button
 
-                    if (name.isNotBlank()) {
-                        onConfirm(name, unit, count, description, expDateLong, imageUri)
-                    }
+                    val count = countText.toIntOrNull() ?: 0
+                    val expDateLong = datePickerState.selectedDateMillis!!
+
+                    onConfirm(name, unit, count, description, expDateLong, imageUri)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1c5f55)) // Brand Green
             ) {
@@ -189,7 +206,7 @@ fun AddMedicationDialog(
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = { hasPickedDate = true; showDatePicker = false }) {
                     Text("OK", color = Color(0xFF1c5f55))
                 }
             },

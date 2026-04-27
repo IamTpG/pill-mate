@@ -1,5 +1,7 @@
 package com.example.pillmate.presentation.ui.screens
 
+import android.app.AlarmManager
+import android.app.AlertDialog
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -15,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale.getDefault
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,10 +86,14 @@ fun DebugMenuScreen(
                 onClick = {
                     viewModel.createTestScheduleIn1Min(
                         onSuccess = {
-                            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+                            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                             val next = alarmManager.nextAlarmClock?.triggerTime
                             val timeMsg = if (next != null) {
-                                java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(next))
+                                SimpleDateFormat("HH:mm:ss", getDefault()).format(
+                                    Date(
+                                        next
+                                    )
+                                )
                             } else "None"
                             Toast.makeText(context, "Next alarm: $timeMsg", Toast.LENGTH_LONG).show()
                         },
@@ -110,6 +119,70 @@ fun DebugMenuScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) { Text("Trigger Specific Reminder") }
+
+            Button(
+                onClick = {
+                    viewModel.forceSync(
+                        onSuccess = { Toast.makeText(context, "Sync Completed!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) { Text("Force Alarm Sync") }
+
+            Button(
+                onClick = {
+                    val ids = viewModel.getScheduledIds()
+                    if (ids.isEmpty()) Toast.makeText(context, "No alarms tracked in local storage", Toast.LENGTH_SHORT).show()
+                    else {
+                        AlertDialog.Builder(context)
+                            .setTitle("Active RequestCodes")
+                            .setMessage(ids.joinToString("\n"))
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) { Text("View Alarm Tracker Prefs") }
+
+            Button(
+                onClick = {
+                    viewModel.syncFcmToken(
+                        onSuccess = { Toast.makeText(context, "FCM Topic Subscribed!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.outline)
+            ) { Text("Sync FCM & Topic") }
+
+            Button(
+                onClick = {
+                    viewModel.clearAlarmTracker()
+                    Toast.makeText(context, "Alarm Tracker Cleared!", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) { Text("Clear Alarm Tracker Prefs") }
+
+            Button(
+                onClick = {
+                    val intent = android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) { Text("Open Battery Optimization Settings") }
+
+            Button(
+                onClick = {
+                    viewModel.copyFcmTokenToClipboard(context)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) { Text("Copy FCM Token for Direct Test") }
         }
 
         if (showScheduleDialog) {
@@ -125,7 +198,7 @@ fun DebugMenuScreen(
                                     showReminderDialog = schedule
                                 }
                             ) {
-                                Text("${schedule.eventSnapshot.title} (${schedule.startTime})")
+                                Text("${schedule.eventSnapshot.title} (${schedule.doseTimes.joinToString { it.time }})")
                             }
                         }
                     }
