@@ -1,12 +1,13 @@
 package com.example.pillmate.presentation.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -17,33 +18,80 @@ import androidx.compose.ui.unit.*
 import com.example.pillmate.domain.model.AppointmentLog
 import com.example.pillmate.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentCard(log: AppointmentLog) {
+fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: String) -> Unit) {
 	//val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-	Card(
-		shape = RoundedCornerShape(20.dp),
-		colors = CardDefaults.cardColors(containerColor = Color.White),
-		modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-	) {
-		Row(
-			modifier = Modifier.fillMaxWidth(),
-			Arrangement.SpaceBetween,
-			verticalAlignment = Alignment.CenterVertically
-		) {
-			Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-				Text(log.name, color = colorResource(R.color.primary_green),fontSize = 16.sp, fontWeight = FontWeight.Bold)
-				Spacer(modifier = Modifier.height(10.dp))
-				Text("Location: ${log.location}")
-				Text("Doctor: ${log.doctorName}")
-				Text("Description: ${log.description}")
+
+	
+	val swipetoDismissBoxState = rememberSwipeToDismissBoxState(
+		confirmValueChange = {
+			if (it == SwipeToDismissBoxValue.EndToStart) {
+				onSwipeEndToStart(log.id)
 			}
 			
-			Icon(
-				painter = painterResource(R.drawable.ic_person_clock),
-				contentDescription = "Appointment Card Icon"
-			)
+			it != SwipeToDismissBoxValue.StartToEnd && it != SwipeToDismissBoxValue.EndToStart
 		}
+	)
+	
+	SwipeToDismissBox(
+		state = swipetoDismissBoxState,
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(vertical = 8.dp),
+		backgroundContent = {
+			when (swipetoDismissBoxState.dismissDirection) {
+				SwipeToDismissBoxValue.StartToEnd -> { }
+				
+				SwipeToDismissBoxValue.EndToStart -> {
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(
+								color = Color.Red,
+								shape = RoundedCornerShape(20.dp)
+							),
+						contentAlignment = Alignment.CenterEnd
+					) {
+						Icon(
+							imageVector = Icons.Default.Delete,
+							contentDescription = "Remove item",
+							modifier = Modifier.padding(12.dp),
+							tint = Color.White
+						)
+					}
+				}
+				
+				SwipeToDismissBoxValue.Settled -> {}
+			}
+	  }
+	) {
+			Card(
+				shape = RoundedCornerShape(20.dp),
+				colors = CardDefaults.cardColors(containerColor = Color.White),
+				modifier = Modifier.fillMaxWidth()
+			) {
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					Arrangement.SpaceBetween,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
+						Text(log.name, color = colorResource(R.color.primary_green),fontSize = 16.sp, fontWeight = FontWeight.Bold)
+						Spacer(modifier = Modifier.height(10.dp))
+						Text("Location: ${log.location}")
+						Text("Doctor: ${log.doctorName}")
+						Text("Description: ${log.description}")
+					}
+		
+					Icon(
+						painter = painterResource(R.drawable.ic_person_clock),
+						contentDescription = "Appointment Card Icon"
+					)
+				}
+			}
 	}
+	
 }
 
 @Preview
@@ -55,5 +103,5 @@ fun PreviewAppointmentCard() {
 		"Doctor House",
 		"Mr. Thang",
 		"Don't be late"
-	))
+	), {})
 }

@@ -6,6 +6,7 @@ import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.repository.AppointmentRepository
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -62,4 +63,37 @@ class AppointmentRepositoryImpl(private val firestore: FirebaseFirestore) : Appo
 			Result.failure(e)
 		}
 	}
+	
+	override suspend fun updateApponitment(profileId: String, appointmentId: String, appointment: Appointment): Result<Unit> {
+		return try {
+			firestore
+				.collection("profiles")
+				.document(profileId)
+				.collection("appointments")
+				.document(appointmentId)
+				.set(appointment, SetOptions.merge())
+				.await()
+			
+			Result.success(Unit)
+		} catch (e: Exception) {
+			Result.failure(e)
+		}
+	}
+	
+	override suspend fun deleteAppointment(profileId: String, appointmentId: String): Result<Unit> {
+		return try {
+			firestore
+				.collection("profiles")
+				.document(profileId)
+				.collection("appointments")
+				.document(appointmentId)
+				.delete()
+				.await()
+			
+			Result.success(Unit)
+		} catch (e: Exception) {
+			Result.failure(e)
+		}
+	}
+	
 }

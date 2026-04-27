@@ -28,7 +28,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import com.example.pillmate.data.repository.AppointmentRepositoryImpl
 import com.example.pillmate.domain.repository.AppointmentRepository
 import com.example.pillmate.domain.usecase.AddAppointmentUseCase
+import com.example.pillmate.domain.usecase.DeleteAppointmentUseCase
 import com.example.pillmate.domain.usecase.GetAppointmentsUseCase
+import com.example.pillmate.domain.usecase.UpdateAppointmentUseCase
 import com.example.pillmate.presentation.viewmodel.AppointmentViewModel
 
 val appModule = module {
@@ -74,6 +76,8 @@ val appModule = module {
     single<AppointmentRepository> { AppointmentRepositoryImpl(get()) }
     factory { GetAppointmentsUseCase(get()) }
     factory { AddAppointmentUseCase(get()) }
+    factory { UpdateAppointmentUseCase(get()) }
+    factory { DeleteAppointmentUseCase(get()) }
 }
 
 val viewModelModule = module {
@@ -84,5 +88,5 @@ val viewModelModule = module {
     viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
     viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
-    viewModel { AppointmentViewModel(get(), get()) }
+    viewModel { AppointmentViewModel(get(), get(), get(), get()) }
 }
