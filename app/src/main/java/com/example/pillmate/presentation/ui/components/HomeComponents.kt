@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +34,8 @@ import java.util.Date
 @Composable
 fun HomeHeader(
     onAddClick: () -> Unit,
-    onDebugClick: () -> Unit
+    onDebugClick: () -> Unit,
+    onMapClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -51,6 +53,13 @@ fun HomeHeader(
             fontWeight = FontWeight.Bold
         )
         Row {
+            IconButton(onClick = onMapClick) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Open Map",
+                    tint = Color.White
+                )
+            }
             IconButton(onClick = onDebugClick) {
                 Icon(
                     imageVector = Icons.Default.Info,

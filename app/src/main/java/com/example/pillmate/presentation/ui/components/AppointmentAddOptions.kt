@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun AppointmentAddOptions(
@@ -99,8 +100,8 @@ fun AppointmentAddOptions(
 	}
 }
 
-//@Preview
-//@Composable
-//fun PreviewComponents() {
-//	AppointmentAddingOptions()
-//}
+@Preview
+@Composable
+fun PreviewComponents() {
+	AppointmentAddOptions({}, {})
+}

@@ -19,7 +19,8 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     
     // Debug screen
     object DebugMenu : Screen("debug_menu", "Debug Menu", 0)
-
+    
+    object Map: Screen("map", "Map", 0)
     // Schedule Builder screen
     object ScheduleBuilder : Screen("schedule_builder", "Schedule", android.R.drawable.ic_menu_today)
 

@@ -104,7 +104,8 @@ fun PillMateApp(
                             )
                         },
                         onAddClick = { /* TODO */ },
-                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) }
+                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
+                        onMapClick = { navController.navigate(Screen.Map.route)}
                     )
                 }
             }
@@ -145,6 +146,11 @@ fun PillMateApp(
                 DebugMenuScreen(
                     navController = navController,
                     viewModel = viewModel
+                )
+            }
+            composable(route = Screen.Map.route) {
+                MapScreen(
+                    navController = navController
                 )
             }
             

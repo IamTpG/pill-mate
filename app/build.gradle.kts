@@ -94,4 +94,6 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     
     debugImplementation("org.jetbrains.compose.ui:ui-tooling:1.10.0")
+    
+    implementation(libs.maplibre.compose)
 }
