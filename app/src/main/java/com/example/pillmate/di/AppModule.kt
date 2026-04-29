@@ -102,6 +102,6 @@ val viewModelModule = module {
     viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get()) }
-    viewModel { AuthViewModel(get(), get(), get(), get()) }
+    viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
 }

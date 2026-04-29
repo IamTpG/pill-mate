@@ -40,4 +40,26 @@
     <string name="full_name">Full Name</string>
     <string name="fullname_placeholder">John Doe</string>
     <string name="google_sign_in_failed">Google sign in failed: %1$s</string>
+
+    <string name="care_management">Care Management</string>
+    <string name="following_tab">Following</string>
+    <string name="grant_access_tab">Grant Access</string>
+    <string name="back_to_your_profile">BACK TO YOUR PROFILE</string>
+    <string name="no_one_followed">You are not following anyone.</string>
+    <string name="follow_new_person">FOLLOW NEW PERSON</string>
+    <string name="follow_patient_title">Follow a patient</string>
+    <string name="follow_patient_desc">Enter the 6-character access code or scan the QR code on the patient\'s device.</string>
+    <string name="code_placeholder">e.g., A8X2B9</string>
+    <string name="scan_qr">Scan QR Code</string>
+    <string name="link_button">Link</string>
+    <string name="close">Close</string>
+    <string name="grant_access_desc">Provide this code to your caregiver so they can view your medicine cabinet and schedule.</string>
+    <string name="access_code_label">ACCESS CODE</string>
+    <string name="invalid_code">Invalid or expired code.</string>
+    <string name="link_success">Linked successfully!</string>
+    <string name="caregiver_hub">Caregiver Hub</string>
+    <string name="recent_login">Recent login</string>
+    <string name="use_another_account">Use another account</string>
+    <string name="following">Following</string>
+    <string name="grant_access">Grant access</string>
 </resources>
