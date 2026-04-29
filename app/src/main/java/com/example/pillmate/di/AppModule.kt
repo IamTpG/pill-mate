@@ -97,9 +97,9 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
-    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
+//    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get()) }
+//    viewModel { CabinetViewModel(get(), androidContext() as android.app.Application) }
+//    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
     viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }

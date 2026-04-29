@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.tasks.await
 
 class ProfileViewModel(
     private val auth: FirebaseAuth,
@@ -24,6 +27,9 @@ class ProfileViewModel(
 
     val currentLocalProfile: StateFlow<ProfileEntity?> = profileDao.getCurrentProfileFlow()
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    private val _shareCode = MutableStateFlow<String?>(null)
+    val shareCode = _shareCode.asStateFlow()
 
     fun syncCurrentProfile() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -120,6 +126,81 @@ class ProfileViewModel(
             }
 
             loadProfileDetails(profileId)
+        }
+    }
+
+    // Hàm tạo mã chia sẻ an toàn
+    fun generateSecureShareCode() {
+        val activeId = currentLocalProfile.value?.id ?: return
+
+        // 1. Tạo mã 6 ký tự ngẫu nhiên (Chữ hoa và Số)
+        val allowedChars = ('A'..'Z') + ('0'..'9')
+        val newCode = (1..6).map { allowedChars.random() }.joinToString("")
+
+        // 2. Lưu mã này lên Firestore của người bệnh
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val updates = mapOf(
+                    "shareCode" to newCode,
+                    // Tùy chọn: Thêm thời gian hết hạn (VD: 24h sau)
+                    "shareCodeExpiresAt" to System.currentTimeMillis() + (24 * 60 * 60 * 1000)
+                )
+                db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).await()
+
+                // 3. Cập nhật UI
+                _shareCode.value = newCode
+            } catch (e: Exception) {
+                // Xử lý lỗi (Log hoặc Toast)
+            }
+        }
+    }
+
+    // Hàm dọn dẹp mã khi không dùng nữa (Bảo mật)
+    fun clearShareCode() {
+        _shareCode.value = null
+    }
+
+    // Hàm nhập mã và liên kết người bệnh
+    fun linkCaregiverProfile(shareCode: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Tìm kiếm trên Firestore bằng shareCode
+                val snapshot = db.collection("profiles").whereEqualTo("shareCode", shareCode).get().await()
+
+                if (snapshot.isEmpty) {
+                    launch(Dispatchers.Main) { onResult(false, "Mã không hợp lệ hoặc đã hết hạn.") }
+                    return@launch
+                }
+
+                val doc = snapshot.documents.first()
+                val targetUid = doc.id
+
+                // 2. Chặn việc tự nhập mã của chính mình
+                if (targetUid == auth.currentUser?.uid) {
+                    launch(Dispatchers.Main) { onResult(false, "Không thể tự theo dõi chính mình.") }
+                    return@launch
+                }
+
+                val name = doc.getString("fullName") ?: "Unknown Patient"
+                val dobMillis = doc.getLong("dateOfBirth")
+                val healthInfo = doc.getString("healthInformation") ?: ""
+
+                // 3. Lưu vào Room DB trên máy người chăm sóc với role = "Caregiver_View"
+                val existing = profileDao.getProfileById(targetUid)
+                if (existing == null) {
+                    profileDao.insertProfile(
+                        ProfileEntity(targetUid, name, dobMillis, healthInfo, "Caregiver_View", false)
+                    )
+                } else {
+                    profileDao.insertProfile(
+                        existing.copy(name = name, dateOfBirth = dobMillis, healthInformation = healthInfo, role = "Caregiver_View")
+                    )
+                }
+
+                launch(Dispatchers.Main) { onResult(true, "Đã liên kết thành công với $name!") }
+            } catch (e: Exception) {
+                launch(Dispatchers.Main) { onResult(false, "Lỗi kết nối: ${e.message}") }
+            }
         }
     }
 }

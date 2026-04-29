@@ -15,6 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -38,15 +44,18 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.example.pillmate.R
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
+import com.example.pillmate.utils.generateQRCodeBitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 // Define internal navigation states
 enum class SettingsRoute {
-    OPTIONS, EDIT_PROFILE, SWITCH_PROFILE
+    OPTIONS, EDIT_PROFILE, SWITCH_PROFILE, CAREGIVER_SHARE
 }
 
 @Composable
@@ -92,13 +101,14 @@ fun SettingsScreen(
 
         // Internal Navigation
         when (currentRoute) {
-            SettingsRoute.OPTIONS -> {
+                SettingsRoute.OPTIONS -> {
                 ProfileOptionsScreen(
                     paddingValues = paddingValues,
                     userName = displayName,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onSwitchClick = { currentRoute = SettingsRoute.SWITCH_PROFILE },
-                    onLogoutClick = { performSignOut(context, auth, database, currentLocalProfile?.id, onSignOutComplete) }
+                    onLogoutClick = { performSignOut(context, auth, database, currentLocalProfile?.id, onSignOutComplete) },
+                            onCaregiverClick = { currentRoute = SettingsRoute.CAREGIVER_SHARE }
                 )
             }
             SettingsRoute.EDIT_PROFILE -> {
@@ -119,6 +129,12 @@ fun SettingsScreen(
                     onAddProfileClick = onNavigateToAuth
                 )
             }
+            SettingsRoute.CAREGIVER_SHARE -> {
+                CaregiverShareScreen(
+                    viewModel = profileViewModel,
+                    onBack = { currentRoute = SettingsRoute.OPTIONS }
+                )
+            }
         }
     }
 }
@@ -130,7 +146,8 @@ fun ProfileOptionsScreen(
     userName: String,
     onEditClick: () -> Unit,
     onSwitchClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onCaregiverClick: () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
@@ -210,7 +227,7 @@ fun ProfileOptionsScreen(
         SettingsButton(
             text = stringResource(id = R.string.manage_caregiver_access),
             icon = Icons.Default.Lock,
-            onClick = { /* TODO */ }
+            onClick = onCaregiverClick
         )
 
         // Language Button with Dropdown Menu
@@ -466,6 +483,29 @@ fun SwitchProfileScreen(
     val profiles by viewModel.localProfiles.collectAsState()
     val currentProfile by viewModel.currentLocalProfile.collectAsState()
 
+    var showLinkDialog by remember { mutableStateOf(false) }
+    var shareCodeInput by remember { mutableStateOf("") }
+    var linkMessage by remember { mutableStateOf("") }
+
+    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            // Khi quét thành công, nó sẽ trả về chuỗi "pillmate://share/A8X2B9"
+            // Mình cắt lấy 6 ký tự cuối cùng
+            val scannedCode = result.contents.replace("pillmate://share/", "")
+
+            if (scannedCode.length == 6) {
+                shareCodeInput = scannedCode // Điền tự động vào ô Text
+                // Tự động gọi API luôn cho tiện
+                viewModel.linkCaregiverProfile(scannedCode) { success, msg ->
+                    linkMessage = msg
+                    if (success) shareCodeInput = ""
+                }
+            } else {
+                linkMessage = "Mã QR không hợp lệ!"
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -515,6 +555,15 @@ fun SwitchProfileScreen(
             }
         }
 
+        OutlinedButton(
+            onClick = { showLinkDialog = true },
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp).height(60.dp),
+            shape = RoundedCornerShape(15.dp),
+            border = BorderStroke(2.dp, PrimaryGreen)
+        ) {
+            Text("THEO DÕI NGƯỜI BỆNH", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+
         Button(
             onClick = onAddProfileClick,
             modifier = Modifier
@@ -526,6 +575,73 @@ fun SwitchProfileScreen(
         ) {
             Text(stringResource(id = R.string.add_profile), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
+    }
+
+    if (showLinkDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showLinkDialog = false
+                linkMessage = ""
+            },
+            title = { Text("Theo dõi người bệnh") },
+            text = {
+                Column {
+                    Text("Nhập mã truy cập 6 ký tự để xem tủ thuốc và lịch uống.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = shareCodeInput,
+                        onValueChange = { shareCodeInput = it.uppercase().take(6) }, // Ép viết hoa và tối đa 6 ký tự
+                        placeholder = { Text("VD: A8X2B9") },
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // NÚT MỞ CAMERA QUÉT QR
+                    Button(
+                        onClick = {
+                            val options = ScanOptions()
+                            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                            options.setPrompt("Hướng camera về phía mã QR của người bệnh")
+                            options.setCameraId(0) // Dùng Camera sau
+                            options.setBeepEnabled(true) // Kêu "Bíp" khi quét xong
+                            options.setOrientationLocked(false)
+                            scanLauncher.launch(options)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Quét mã QR", color = Color.White)
+                    }
+
+                    if (linkMessage.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(linkMessage, color = if (linkMessage.contains("thành công")) PrimaryGreen else Color.Red)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (shareCodeInput.length == 6) {
+                        viewModel.linkCaregiverProfile(shareCodeInput) { success, msg ->
+                            linkMessage = msg
+                            if (success) { shareCodeInput = "" }
+                        }
+                    } else {
+                        linkMessage = "Mã phải có đúng 6 ký tự."
+                    }
+                }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)) {
+                    Text("Liên kết")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showLinkDialog = false
+                    linkMessage = ""
+                }) { Text("Đóng", color = Color.Gray) }
+            }
+        )
     }
 }
 
@@ -726,6 +842,73 @@ fun LanguageItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
         Text(text = label, color = Color.White, fontSize = 16.sp)
         if (isSelected) {
             Icon(Icons.Default.Check, contentDescription = null, tint = PrimaryGreen)
+        }
+    }
+}
+
+@Composable
+fun CaregiverShareScreen(
+    viewModel: ProfileViewModel,
+    onBack: () -> Unit
+) {
+    val shareCode by viewModel.shareCode.collectAsState()
+
+    // Tự động tạo mã khi vào màn hình
+    LaunchedEffect(Unit) {
+        viewModel.generateSecureShareCode()
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
+            }
+            Text(
+                text = "Caregiver Access",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
+
+        Text("Quét mã QR hoặc nhập mã bên dưới bằng điện thoại của người chăm sóc.", color = Color.LightGray, textAlign = TextAlign.Center)
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Hiển thị QR Code
+        if (shareCode != null) {
+            val qrBitmap = remember(shareCode) { generateQRCodeBitmap("pillmate://share/$shareCode") }
+
+            if (qrBitmap != null) {
+                Image(
+                    bitmap = qrBitmap,
+                    contentDescription = "QR Code",
+                    modifier = Modifier.size(250.dp).clip(RoundedCornerShape(16.dp))
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Hiển thị Code chữ để nhập tay
+            Text("MÃ TRUY CẬP", color = Color.Gray, fontSize = 14.sp)
+            Text(
+                text = shareCode!!,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 8.sp,
+                color = PrimaryGreen
+            )
+        } else {
+            CircularProgressIndicator(color = PrimaryGreen)
         }
     }
 }
