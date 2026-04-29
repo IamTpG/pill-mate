@@ -2,7 +2,7 @@ package com.example.pillmate
 
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
@@ -14,7 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()

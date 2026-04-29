@@ -51,36 +51,35 @@ class ProfileViewModel(
             val firebaseUser = auth.currentUser ?: return@launch
             val firebaseUid = firebaseUser.uid // ID của tài khoản chính chủ đang đăng nhập
 
-            // 1. Đồng bộ danh sách người theo dõi trước
-            syncFollowedProfiles(firebaseUid)
-
-            // 2. Xác định người đang được chọn (Active)
+            // Xác định người đang được chọn (Active)
             val activeProfile = profileDao.getActiveProfile()
             val targetUid = activeProfile?.id ?: firebaseUid
 
-            db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
-                if (doc.exists()) {
-                    val name = doc.getString("fullName") ?: "Unknown User"
-                    val dobMillis = doc.getLong("dateOfBirth")
-                    val healthInfo = doc.getString("healthInformation") ?: ""
+            if (targetUid == firebaseUid) {
+                db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val name = doc.getString("fullName") ?: "Unknown User"
+                        val dobMillis = doc.getLong("dateOfBirth")
+                        val healthInfo = doc.getString("healthInformation") ?: ""
 
-                    viewModelScope.launch(Dispatchers.IO) {
-                        // TỰ ĐỘNG GHI NHỚ TÀI KHOẢN KHI ĐĂNG NHẬP THÀNH CÔNG
-                        profileDao.insertSavedAccount(
-                            SavedAccountEntity(
-                                id = firebaseUid,
-                                email = firebaseUser.email ?: "",
-                                name = name,
-                                loginMethod = if (firebaseUser.providerData.any { it.providerId == "google.com" }) "GOOGLE" else "EMAIL"
+                        viewModelScope.launch(Dispatchers.IO) {
+                            // TỰ ĐỘNG GHI NHỚ TÀI KHOẢN KHI ĐĂNG NHẬP THÀNH CÔNG
+                            profileDao.insertSavedAccount(
+                                SavedAccountEntity(
+                                    id = firebaseUid,
+                                    email = firebaseUser.email ?: "",
+                                    name = name,
+                                    loginMethod = if (firebaseUser.providerData.any { it.providerId == "google.com" }) "GOOGLE" else "EMAIL"
+                                )
                             )
-                        )
 
-                        // Chỉ lưu duy nhất 1 Primary User vào Room tại 1 thời điểm
-                        profileDao.clearAllProfiles()
-                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
+                            // Chỉ lưu duy nhất 1 Primary User vào Room tại 1 thời điểm
+                            profileDao.clearAllProfiles()
+                            profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
 
-                        // Đồng bộ người theo dõi của tài khoản này
-                        syncFollowedProfiles(firebaseUid)
+                            // Đồng bộ người theo dõi của tài khoản này
+                            syncFollowedProfiles(firebaseUid)
+                        }
                     }
                 }
             }
@@ -233,9 +232,6 @@ class ProfileViewModel(
     private fun syncFollowedProfiles(myUid: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. Xóa sạch người theo dõi cũ của User trước đó trong Room để tránh dính dữ liệu
-                profileDao.deleteProfilesByRole("Caregiver_View")
-
                 // 2. Lấy danh sách connections của TÔI từ Firestore
                 val connections = db.collection("connections")
                     .whereEqualTo("caregiverId", myUid).get().await()
