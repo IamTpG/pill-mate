@@ -50,12 +50,17 @@ import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.utils.generateQRCodeBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
 // Define internal navigation states
 enum class SettingsRoute {
-    OPTIONS, EDIT_PROFILE, SWITCH_PROFILE, CAREGIVER_SHARE
+    OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
 }
 
 @Composable
@@ -82,6 +87,7 @@ fun SettingsScreen(
     // Use the localized default user string
     val defaultUserText = stringResource(id = R.string.user_default)
     val displayName = currentLocalProfile?.name ?: currentUser?.displayName ?: defaultUserText
+    val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
 
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
 
@@ -105,10 +111,10 @@ fun SettingsScreen(
                 ProfileOptionsScreen(
                     paddingValues = paddingValues,
                     userName = displayName,
+                    isCaregiver = isCaregiver,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
-                    onSwitchClick = { currentRoute = SettingsRoute.SWITCH_PROFILE },
-                    onLogoutClick = { performSignOut(context, auth, database, currentLocalProfile?.id, onSignOutComplete) },
-                            onCaregiverClick = { currentRoute = SettingsRoute.CAREGIVER_SHARE }
+                    onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
+                    onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB }
                 )
             }
             SettingsRoute.EDIT_PROFILE -> {
@@ -121,17 +127,10 @@ fun SettingsScreen(
                     }
                 )
             }
-            SettingsRoute.SWITCH_PROFILE -> {
-                SwitchProfileScreen(
+            SettingsRoute.CAREGIVER_HUB -> {
+                CaregiverHubScreen (
                     viewModel = profileViewModel,
                     paddingValues = paddingValues,
-                    onBack = { currentRoute = SettingsRoute.OPTIONS },
-                    onAddProfileClick = onNavigateToAuth
-                )
-            }
-            SettingsRoute.CAREGIVER_SHARE -> {
-                CaregiverShareScreen(
-                    viewModel = profileViewModel,
                     onBack = { currentRoute = SettingsRoute.OPTIONS }
                 )
             }
@@ -144,10 +143,10 @@ fun SettingsScreen(
 fun ProfileOptionsScreen(
     paddingValues: PaddingValues,
     userName: String,
+    isCaregiver: Boolean,
     onEditClick: () -> Unit,
-    onSwitchClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onCaregiverClick: () -> Unit
+    onCaregiverHubClick: () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
@@ -214,20 +213,17 @@ fun ProfileOptionsScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         // Buttons
+        if (!isCaregiver) {
+            SettingsButton(
+                text = stringResource(id = R.string.edit_profile),
+                icon = Icons.Default.Edit,
+                onClick = onEditClick
+            )
+        }
         SettingsButton(
-            text = stringResource(id = R.string.edit_profile),
-            icon = Icons.Default.Edit,
-            onClick = onEditClick
-        )
-        SettingsButton(
-            text = stringResource(id = R.string.switch_profile),
-            icon = Icons.Default.AccountCircle,
-            onClick = onSwitchClick
-        )
-        SettingsButton(
-            text = stringResource(id = R.string.manage_caregiver_access),
-            icon = Icons.Default.Lock,
-            onClick = onCaregiverClick
+            text = "Trung tâm chăm sóc",
+            icon = Icons.Default.Face,
+            onClick = onCaregiverHubClick
         )
 
         // Language Button with Dropdown Menu
@@ -284,32 +280,36 @@ fun ProfileOptionsScreen(
             }
         }
 
-        SettingsButton(
-            text = stringResource(id = R.string.log_out),
-            icon = Icons.AutoMirrored.Filled.ExitToApp,
-            onClick = onLogoutClick
-        )
+        if (!isCaregiver) {
+            SettingsButton(
+                text = stringResource(id = R.string.log_out),
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                onClick = onLogoutClick
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(
-            onClick = { /* Emergency Action */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-                .height(60.dp),
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(id = R.string.emergency),
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+        if (!isCaregiver) {
+            Button(
+                onClick = { /* Emergency Action */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+                    .height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(id = R.string.emergency),
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -472,181 +472,7 @@ fun EditProfileScreen(
     }
 }
 
-@Composable
-fun SwitchProfileScreen(
-    viewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel,
-    paddingValues: PaddingValues,
-    onBack: () -> Unit,
-    onAddProfileClick: () -> Unit
-) {
-    // Observe profiles directly from the local Room database
-    val profiles by viewModel.localProfiles.collectAsState()
-    val currentProfile by viewModel.currentLocalProfile.collectAsState()
-
-    var showLinkDialog by remember { mutableStateOf(false) }
-    var shareCodeInput by remember { mutableStateOf("") }
-    var linkMessage by remember { mutableStateOf("") }
-
-    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
-        if (result.contents != null) {
-            // Khi quét thành công, nó sẽ trả về chuỗi "pillmate://share/A8X2B9"
-            // Mình cắt lấy 6 ký tự cuối cùng
-            val scannedCode = result.contents.replace("pillmate://share/", "")
-
-            if (scannedCode.length == 6) {
-                shareCodeInput = scannedCode // Điền tự động vào ô Text
-                // Tự động gọi API luôn cho tiện
-                viewModel.linkCaregiverProfile(scannedCode) { success, msg ->
-                    linkMessage = msg
-                    if (success) shareCodeInput = ""
-                }
-            } else {
-                linkMessage = "Mã QR không hợp lệ!"
-            }
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
-            }
-            Text(
-                text = stringResource(id = R.string.switch_profile),
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (profiles.isEmpty()) {
-            CircularProgressIndicator(color = PrimaryGreen)
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(profiles) { profile ->
-                    ProfileSelectCard(
-                        name = profile.name,
-                        role = profile.role,
-                        isSelected = profile.id == currentProfile?.id,
-                        onClick = {
-                            viewModel.switchActiveProfile(profile.id)
-                        }
-                    )
-                }
-            }
-        }
-
-        OutlinedButton(
-            onClick = { showLinkDialog = true },
-            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp).height(60.dp),
-            shape = RoundedCornerShape(15.dp),
-            border = BorderStroke(2.dp, PrimaryGreen)
-        ) {
-            Text("THEO DÕI NGƯỜI BỆNH", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        }
-
-        Button(
-            onClick = onAddProfileClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-                .height(60.dp),
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
-        ) {
-            Text(stringResource(id = R.string.add_profile), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        }
-    }
-
-    if (showLinkDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                showLinkDialog = false
-                linkMessage = ""
-            },
-            title = { Text("Theo dõi người bệnh") },
-            text = {
-                Column {
-                    Text("Nhập mã truy cập 6 ký tự để xem tủ thuốc và lịch uống.")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = shareCodeInput,
-                        onValueChange = { shareCodeInput = it.uppercase().take(6) }, // Ép viết hoa và tối đa 6 ký tự
-                        placeholder = { Text("VD: A8X2B9") },
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // NÚT MỞ CAMERA QUÉT QR
-                    Button(
-                        onClick = {
-                            val options = ScanOptions()
-                            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                            options.setPrompt("Hướng camera về phía mã QR của người bệnh")
-                            options.setCameraId(0) // Dùng Camera sau
-                            options.setBeepEnabled(true) // Kêu "Bíp" khi quét xong
-                            options.setOrientationLocked(false)
-                            scanLauncher.launch(options)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
-                    ) {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Quét mã QR", color = Color.White)
-                    }
-
-                    if (linkMessage.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(linkMessage, color = if (linkMessage.contains("thành công")) PrimaryGreen else Color.Red)
-                    }
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (shareCodeInput.length == 6) {
-                        viewModel.linkCaregiverProfile(shareCodeInput) { success, msg ->
-                            linkMessage = msg
-                            if (success) { shareCodeInput = "" }
-                        }
-                    } else {
-                        linkMessage = "Mã phải có đúng 6 ký tự."
-                    }
-                }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)) {
-                    Text("Liên kết")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showLinkDialog = false
-                    linkMessage = ""
-                }) { Text("Đóng", color = Color.Gray) }
-            }
-        )
-    }
-}
-
 // --- Helper Components ---
-
 @Composable
 fun SettingsButton(text: String, icon: ImageVector, onClick: () -> Unit) {
     Button(
@@ -764,30 +590,20 @@ private fun performSignOut(
     context: Context,
     auth: FirebaseAuth,
     database: com.example.pillmate.data.local.database.AppDatabase,
-    activeProfileId: String?,
     onComplete: () -> Unit
 ) {
+    // 1. Đăng xuất khỏi Firebase (Phiên làm việc hiện tại)
     auth.signOut()
 
-    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-        // 1. Target and delete ONLY the profile you were actively viewing in the UI
-        if (activeProfileId != null) {
-            database.profileDao().deleteProfileById(activeProfileId)
-        }
+    kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+        // 🟢 1. Xóa toàn bộ bảng profiles (Bao gồm cả Primary hiện tại và Caregiver_View)
+        // Thông tin đăng nhập đã được lưu ở bảng 'saved_accounts' từ trước nên không bị mất
+        database.profileDao().clearAllProfiles()
 
-        // 2. Reset the active flag so the NEXT person who logs in becomes the primary automatically
-        database.profileDao().clearCurrentProfile()
-
-        // Switch back to the Main thread to finish the UI navigation
-        launch(kotlinx.coroutines.Dispatchers.Main) {
-            val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
-                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
-            )
-                .requestIdToken(context.getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
-            val googleClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
-            googleClient.signOut().addOnCompleteListener {
+        launch(Dispatchers.Main) {
+            // 2. Đăng xuất Google Client
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+            GoogleSignIn.getClient(context, gso).signOut().addOnCompleteListener {
                 onComplete()
             }
         }
@@ -847,66 +663,237 @@ fun LanguageItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun CaregiverShareScreen(
+fun CaregiverHubScreen(
     viewModel: ProfileViewModel,
+    paddingValues: PaddingValues,
     onBack: () -> Unit
 ) {
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Người đang theo dõi", "Trao quyền")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        // --- HEADER ---
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+            Text("Quản lý chăm sóc", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        }
+
+        // --- TAB BAR ---
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            containerColor = Color.Transparent,
+            contentColor = PrimaryGreen,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                    color = Color.White
+                )
+            },
+            divider = {}
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = {
+                        Text(
+                            title,
+                            color = if (selectedTabIndex == index) Color.White else Color.Gray,
+                            fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+            }
+        }
+
+        // --- CONTENT ---
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (selectedTabIndex) {
+                0 -> FollowedTabContent(viewModel) // Nội dung danh sách người theo dõi
+                1 -> GrantAccessTabContent(viewModel) // Nội dung tạo mã QR
+            }
+        }
+    }
+}
+
+@Composable
+fun FollowedTabContent(viewModel: ProfileViewModel) {
+    val followedProfiles by viewModel.followedProfiles.collectAsState()
+    val currentProfile by viewModel.currentLocalProfile.collectAsState()
+
+    val localProfiles by viewModel.localProfiles.collectAsState()
+    val primaryProfile = localProfiles.firstOrNull()
+
+    var showLinkDialog by remember { mutableStateOf(false) }
+    var shareCodeInput by remember { mutableStateOf("") }
+    var linkMessage by remember { mutableStateOf("") }
+    val primaryGreen = Color(0xFF1c5f55)
+
+    val scanLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            val scannedCode = result.contents.replace("pillmate://share/", "")
+            if (scannedCode.length == 6) {
+                shareCodeInput = scannedCode
+                viewModel.linkCaregiverProfile(scannedCode) { success, msg ->
+                    linkMessage = msg
+                    if (success) shareCodeInput = ""
+                }
+            } else {
+                linkMessage = "Mã QR không hợp lệ!"
+            }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+        if (primaryProfile != null && currentProfile?.id != primaryProfile.id) {
+            Button(
+                onClick = { viewModel.switchActiveProfile(primaryProfile.id) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .padding(bottom = 12.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)) // Màu đỏ hoặc cam để nổi bật
+            ) {
+                Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("QUAY LẠI HỒ SƠ CỦA BẠN", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (followedProfiles.isEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Bạn chưa theo dõi ai.", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(followedProfiles) { profile ->
+                    ProfileSelectCard(
+                        name = profile.name,
+                        role = "Đang theo dõi",
+                        isSelected = profile.id == currentProfile?.id,
+                        onClick = { viewModel.switchActiveProfile(profile.id) }
+                    )
+                }
+            }
+        }
+
+        Button(
+            onClick = { showLinkDialog = true },
+            modifier = Modifier.fillMaxWidth().height(60.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+        ) {
+            Text("THEO DÕI NGƯỜI MỚI")
+        }
+    }
+
+    // --- DIALOG NHẬP MÃ / QUÉT MÃ ---
+    if (showLinkDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showLinkDialog = false
+                linkMessage = ""
+            },
+            title = { Text("Theo dõi người bệnh") },
+            text = {
+                Column {
+                    Text("Nhập mã truy cập 6 ký tự hoặc quét mã QR trên máy người bệnh.")
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = shareCodeInput,
+                        onValueChange = { shareCodeInput = it.uppercase().take(6) },
+                        placeholder = { Text("VD: A8X2B9") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Nút quét QR
+                    Button(
+                        onClick = {
+                            val options = ScanOptions()
+                            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                            options.setPrompt("Hướng camera về phía mã QR của người bệnh")
+                            options.setCameraId(0)
+                            options.setBeepEnabled(true)
+                            options.setOrientationLocked(false)
+                            scanLauncher.launch(options)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Quét mã QR", color = Color.White)
+                    }
+
+                    if (linkMessage.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(linkMessage, color = if (linkMessage.contains("thành công")) PrimaryGreen else Color.Red)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (shareCodeInput.length == 6) {
+                        viewModel.linkCaregiverProfile(shareCodeInput) { success, msg ->
+                            linkMessage = msg
+                            if (success) { shareCodeInput = "" }
+                        }
+                    } else {
+                        linkMessage = "Mã phải có đúng 6 ký tự."
+                    }
+                }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)) {
+                    Text("Liên kết")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showLinkDialog = false
+                    linkMessage = ""
+                }) { Text("Đóng", color = Color.Gray) }
+            }
+        )
+    }
+}
+
+@Composable
+fun GrantAccessTabContent(viewModel: ProfileViewModel) {
     val shareCode by viewModel.shareCode.collectAsState()
 
-    // Tự động tạo mã khi vào màn hình
     LaunchedEffect(Unit) {
         viewModel.generateSecureShareCode()
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
-            }
-            Text(
-                text = "Caregiver Access",
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-        }
-
-        Text("Quét mã QR hoặc nhập mã bên dưới bằng điện thoại của người chăm sóc.", color = Color.LightGray, textAlign = TextAlign.Center)
-
+        Text(
+            "Cung cấp mã này cho người chăm sóc của bạn để họ có thể xem tủ thuốc và lịch uống.",
+            color = Color.LightGray, textAlign = TextAlign.Center
+        )
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Hiển thị QR Code
         if (shareCode != null) {
             val qrBitmap = remember(shareCode) { generateQRCodeBitmap("pillmate://share/$shareCode") }
-
-            if (qrBitmap != null) {
-                Image(
-                    bitmap = qrBitmap,
-                    contentDescription = "QR Code",
-                    modifier = Modifier.size(250.dp).clip(RoundedCornerShape(16.dp))
-                )
+            qrBitmap?.let {
+                Image(bitmap = it, contentDescription = "QR", modifier = Modifier.size(200.dp).clip(RoundedCornerShape(16.dp)))
             }
-
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Hiển thị Code chữ để nhập tay
             Text("MÃ TRUY CẬP", color = Color.Gray, fontSize = 14.sp)
-            Text(
-                text = shareCode!!,
-                fontSize = 40.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 8.sp,
-                color = PrimaryGreen
-            )
+            Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
         }

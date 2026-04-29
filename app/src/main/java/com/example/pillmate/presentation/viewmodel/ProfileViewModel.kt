@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.data.local.entity.ProfileEntity
+import com.example.pillmate.data.local.entity.SavedAccountEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -15,32 +16,48 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.map
 
 class ProfileViewModel(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val profileDao: ProfileDao
 ) : ViewModel() {
-
-    val localProfiles: StateFlow<List<ProfileEntity>> = profileDao.getAllProfiles()
+    val savedAccounts: StateFlow<List<SavedAccountEntity>> = profileDao.getSavedAccounts()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
+    // 1. Hồ sơ đang hoạt động (Dùng để hiển thị tên, lấy ID để tải thuốc/lịch hẹn...)
     val currentLocalProfile: StateFlow<ProfileEntity?> = profileDao.getCurrentProfileFlow()
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    // 2. Danh sách các tài khoản đã đăng nhập (Dùng cho SwitchProfileScreen)
+    // Lọc bỏ những người chỉ được theo dõi (Caregiver_View)
+    val localProfiles: StateFlow<List<ProfileEntity>> = profileDao.getAllProfiles()
+        .map { list -> list.filter { it.role != "Caregiver_View" } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // 3. Danh sách những người đang theo dõi (Dùng cho FollowedListScreen)
+    // Chỉ lấy những hồ sơ có vai trò là Caregiver_View
+    val followedProfiles: StateFlow<List<ProfileEntity>> = profileDao.getAllProfiles()
+        .map { list -> list.filter { it.role == "Caregiver_View" } }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _shareCode = MutableStateFlow<String?>(null)
     val shareCode = _shareCode.asStateFlow()
 
+
     fun syncCurrentProfile() {
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Lấy người ĐANG ACTIVE trong máy (Ví dụ: A2)
+            val firebaseUser = auth.currentUser ?: return@launch
+            val firebaseUid = firebaseUser.uid // ID của tài khoản chính chủ đang đăng nhập
+
+            // 1. Đồng bộ danh sách người theo dõi trước
+            syncFollowedProfiles(firebaseUid)
+
+            // 2. Xác định người đang được chọn (Active)
             val activeProfile = profileDao.getActiveProfile()
+            val targetUid = activeProfile?.id ?: firebaseUid
 
-            // 2. Nếu đã có người Active (A2), dùng ID của A2.
-            // Nếu chưa có ai (app mới mở lần đầu), mới dùng ID của tài khoản gốc (A4)
-            val targetUid = activeProfile?.id ?: auth.currentUser?.uid ?: return@launch
-
-            // 3. Tải đúng người đó về và cập nhật
             db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     val name = doc.getString("fullName") ?: "Unknown User"
@@ -48,26 +65,29 @@ class ProfileViewModel(
                     val healthInfo = doc.getString("healthInformation") ?: ""
 
                     viewModelScope.launch(Dispatchers.IO) {
-                        val existing = profileDao.getProfileById(targetUid)
-                        if (existing == null) {
-                            // Nếu chưa có trong Room, tạo mới và đánh dấu Active
-                            profileDao.clearCurrentProfile()
-                            profileDao.insertProfile(
-                                ProfileEntity(targetUid, name, dobMillis, healthInfo, "Primary User", true)
+                        // TỰ ĐỘNG GHI NHỚ TÀI KHOẢN KHI ĐĂNG NHẬP THÀNH CÔNG
+                        profileDao.insertSavedAccount(
+                            SavedAccountEntity(
+                                id = firebaseUid,
+                                email = firebaseUser.email ?: "",
+                                name = name,
+                                loginMethod = if (firebaseUser.providerData.any { it.providerId == "google.com" }) "GOOGLE" else "EMAIL"
                             )
-                        } else {
-                            // Cập nhật dữ liệu và LUÔN GIỮ NGƯỜI NÀY LÀM ACTIVE
-                            profileDao.insertProfile(
-                                existing.copy(name = name, isCurrent = true, dateOfBirth = dobMillis, healthInformation = healthInfo)
-                            )
-                        }
+                        )
+
+                        // Chỉ lưu duy nhất 1 Primary User vào Room tại 1 thời điểm
+                        profileDao.clearAllProfiles()
+                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
+
+                        // Đồng bộ người theo dõi của tài khoản này
+                        syncFollowedProfiles(firebaseUid)
                     }
                 }
             }
         }
     }
 
-    private fun loadProfileDetails(profileId: String) {
+    private fun loadProfileDetails(profileId: String, roleIfNew: String = "Caregiver_View") {
         db.collection("profiles").document(profileId).get().addOnSuccessListener { doc ->
             if (doc.exists()) {
                 val name = doc.getString("fullName") ?: "Unknown User"
@@ -82,6 +102,17 @@ class ProfileViewModel(
                                 name = name,
                                 dateOfBirth = dobMillis,
                                 healthInformation = healthInfo
+                            )
+                        )
+                    } else {
+                        profileDao.insertProfile(
+                            ProfileEntity(
+                                id = profileId,
+                                name = name,
+                                dateOfBirth = dobMillis,
+                                healthInformation = healthInfo,
+                                role = roleIfNew,
+                                isCurrent = false
                             )
                         )
                     }
@@ -118,11 +149,14 @@ class ProfileViewModel(
 
     fun switchActiveProfile(profileId: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            profileDao.clearCurrentProfile()
+            val targetProfile = profileDao.getProfileById(profileId) ?: return@launch
 
-            val profile = profileDao.getProfileById(profileId)
-            if (profile != null) {
-                profileDao.insertProfile(profile.copy(isCurrent = true))
+            profileDao.clearCurrentProfile()
+            profileDao.insertProfile(targetProfile.copy(isCurrent = true))
+
+            // 🟢 Nếu chuyển sang tài khoản chính, hãy đồng bộ danh sách người theo dõi của người đó
+            if (targetProfile.role == "Primary User") {
+                syncFollowedProfiles(profileId)
             }
 
             loadProfileDetails(profileId)
@@ -164,43 +198,54 @@ class ProfileViewModel(
     fun linkCaregiverProfile(shareCode: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. Tìm kiếm trên Firestore bằng shareCode
+                // 1. Tìm Patient (User 1) qua mã code
                 val snapshot = db.collection("profiles").whereEqualTo("shareCode", shareCode).get().await()
-
                 if (snapshot.isEmpty) {
-                    launch(Dispatchers.Main) { onResult(false, "Mã không hợp lệ hoặc đã hết hạn.") }
+                    launch(Dispatchers.Main) { onResult(false, "Mã không hợp lệ.") }
                     return@launch
                 }
 
-                val doc = snapshot.documents.first()
-                val targetUid = doc.id
+                val patientDoc = snapshot.documents.first()
+                val patientId = patientDoc.id
+                val myUid = auth.currentUser?.uid ?: return@launch
 
-                // 2. Chặn việc tự nhập mã của chính mình
-                if (targetUid == auth.currentUser?.uid) {
-                    launch(Dispatchers.Main) { onResult(false, "Không thể tự theo dõi chính mình.") }
-                    return@launch
-                }
+                // 🟢 2. LƯU MỐI QUAN HỆ LÊN CLOUD (Dùng để đồng bộ sang máy khác/tài khoản khác)
+                val connectionData = mapOf(
+                    "caregiverId" to myUid,
+                    "patientId" to patientId
+                )
+                db.collection("connections").document("${myUid}_$patientId").set(connectionData).await()
 
-                val name = doc.getString("fullName") ?: "Unknown Patient"
-                val dobMillis = doc.getLong("dateOfBirth")
-                val healthInfo = doc.getString("healthInformation") ?: ""
+                // 3. Lưu vào Room để hiển thị ngay tại máy này
+                val name = patientDoc.getString("fullName") ?: "Unknown"
+                profileDao.insertProfile(
+                    ProfileEntity(patientId, name, patientDoc.getLong("dateOfBirth"),
+                        patientDoc.getString("healthInformation") ?: "", "Caregiver_View", false)
+                )
 
-                // 3. Lưu vào Room DB trên máy người chăm sóc với role = "Caregiver_View"
-                val existing = profileDao.getProfileById(targetUid)
-                if (existing == null) {
-                    profileDao.insertProfile(
-                        ProfileEntity(targetUid, name, dobMillis, healthInfo, "Caregiver_View", false)
-                    )
-                } else {
-                    profileDao.insertProfile(
-                        existing.copy(name = name, dateOfBirth = dobMillis, healthInformation = healthInfo, role = "Caregiver_View")
-                    )
-                }
-
-                launch(Dispatchers.Main) { onResult(true, "Đã liên kết thành công với $name!") }
+                launch(Dispatchers.Main) { onResult(true, "Liên kết thành công!") }
             } catch (e: Exception) {
-                launch(Dispatchers.Main) { onResult(false, "Lỗi kết nối: ${e.message}") }
+                launch(Dispatchers.Main) { onResult(false, "Lỗi: ${e.message}") }
             }
+        }
+    }
+
+    private fun syncFollowedProfiles(myUid: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 1. Xóa sạch người theo dõi cũ của User trước đó trong Room để tránh dính dữ liệu
+                profileDao.deleteProfilesByRole("Caregiver_View")
+
+                // 2. Lấy danh sách connections của TÔI từ Firestore
+                val connections = db.collection("connections")
+                    .whereEqualTo("caregiverId", myUid).get().await()
+
+                // 3. Tải thông tin chi tiết của từng người bệnh về máy
+                connections.documents.forEach { doc ->
+                    val patientId = doc.getString("patientId") ?: return@forEach
+                    loadProfileDetails(patientId) // Hàm này sẽ gọi Firestore và save vào Room
+                }
+            } catch (e: Exception) { /* Log lỗi sync */ }
         }
     }
 }
