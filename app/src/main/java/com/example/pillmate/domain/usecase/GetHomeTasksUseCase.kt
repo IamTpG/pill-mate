@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.util.Calendar
 import java.util.Date
+import android.util.Log
 
 data class HomeData(
     val tasks: List<HomeTask>,
@@ -21,8 +22,10 @@ class GetHomeTasksUseCase(
     private val logRepository: LogRepository
 ) {
     fun execute(profileId: String, date: Date): Flow<HomeData> {
+        Log.d("GetHomeTasks", "Executing for profileId: $profileId, date: $date")
         return scheduleRepository.getSchedulesFlow(profileId)
             .combine(logRepository.getLogsForDayFlow(profileId, date)) { schedules, logs ->
+                Log.d("GetHomeTasks", "Flow emitted. Schedules: ${schedules.size}, Logs: ${logs.size}")
                 val now = Date()
                 
                 val cal = Calendar.getInstance().apply {
@@ -38,15 +41,18 @@ class GetHomeTasksUseCase(
                 
                 val activeSchedules = schedules.filter { schedule ->
                     // Schedule must start on or before the end of the target day
-                    val startsBeforeOrOnTarget = schedule.createdAt.before(targetDateEnd)
+                    val startsBeforeOrOnTarget = (schedule.createdAt ?: Date(0)).before(targetDateEnd)
                     // Schedule must end on or after the start of the target day
                     val endsAfterOrOnTarget = schedule.endDate == null || schedule.endDate.after(targetDateStart)
                     
                     startsBeforeOrOnTarget && endsAfterOrOnTarget
                 }
+                Log.d("GetHomeTasks", "Active schedules count: ${activeSchedules.size}")
 
                 val homeTasks = activeSchedules.flatMap { schedule ->
+                    Log.d("GetHomeTasks", "Schedule ${schedule.id} has ${schedule.doseTimes.size} doseTimes")
                     schedule.doseTimes.map { doseTime ->
+
                         val displayTime: String
                         
                         // SimpleDateFormat for ISO parsing
@@ -54,24 +60,34 @@ class GetHomeTasksUseCase(
                         val displayFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                         
                         val scheduledTimeDate: Date? = try {
+                            val cal = Calendar.getInstance().apply {
+                                time = date // Use the target day
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }
+
                             if (doseTime.time.contains("T")) {
-                                isoFormat.parse(doseTime.time)
+                                // Extract HH:mm from ISO string but apply to 'date' (target day)
+                                val parsed = isoFormat.parse(doseTime.time)
+                                if (parsed != null) {
+                                    val parsedCal = Calendar.getInstance().apply { time = parsed }
+                                    cal.set(Calendar.HOUR_OF_DAY, parsedCal.get(Calendar.HOUR_OF_DAY))
+                                    cal.set(Calendar.MINUTE, parsedCal.get(Calendar.MINUTE))
+                                    cal.time
+                                } else null
                             } else {
                                 val timeParts = doseTime.time.split(":")
                                 if (timeParts.size >= 2) {
                                     val hrStr = timeParts[0]
-                                    val cleanMin = timeParts[1].filter { it.isDigit() }.toInt()
-                                    var hr = hrStr.filter { it.isDigit() }.toInt()
+                                    val minPart = timeParts[1]
+                                    val cleanMin = minPart.filter { it.isDigit() }.takeIf { it.isNotEmpty() }?.toInt() ?: 0
+                                    var hr = hrStr.filter { it.isDigit() }.takeIf { it.isNotEmpty() }?.toInt() ?: 0
+                                    
                                     if (doseTime.time.contains("PM", ignoreCase = true) && hr < 12) hr += 12
                                     if (doseTime.time.contains("AM", ignoreCase = true) && hr == 12) hr = 0
 
-                                    val cal = Calendar.getInstance().apply {
-                                        time = date
-                                        set(Calendar.HOUR_OF_DAY, hr)
-                                        set(Calendar.MINUTE, cleanMin)
-                                        set(Calendar.SECOND, 0)
-                                        set(Calendar.MILLISECOND, 0)
-                                    }
+                                    cal.set(Calendar.HOUR_OF_DAY, hr)
+                                    cal.set(Calendar.MINUTE, cleanMin)
                                     cal.time
                                 } else null
                             }

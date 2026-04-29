@@ -9,8 +9,10 @@ import com.example.pillmate.presentation.model.HomeTask
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.util.Date
 
 data class HomeUiState(
@@ -88,6 +90,10 @@ class HomeViewModel(
         _uiState.value = _uiState.value.copy(isLoading = true)
         loadDataJob = viewModelScope.launch {
             getHomeTasksUseCase.execute(profileId, date)
+                .catch { e ->
+                    Log.e("HomeViewModel", "Error in home tasks flow", e)
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
                 .collect { data ->
                     _uiState.value = _uiState.value.copy(
                         dateTasks = data.tasks,
