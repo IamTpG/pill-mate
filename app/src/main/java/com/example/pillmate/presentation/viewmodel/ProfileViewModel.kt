@@ -1,5 +1,7 @@
 package com.example.pillmate.presentation.viewmodel
 
+import com.example.pillmate.R
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.data.local.dao.ProfileDao
@@ -222,7 +224,7 @@ class ProfileViewModel(
                         patientDoc.getString("healthInformation") ?: "", "Caregiver_View", false)
                 )
 
-                launch(Dispatchers.Main) { onResult(true, "Liên kết thành công!") }
+                launch(Dispatchers.Main) { onResult(true, "Kết nối thành công!") }
             } catch (e: Exception) {
                 launch(Dispatchers.Main) { onResult(false, "Lỗi: ${e.message}") }
             }

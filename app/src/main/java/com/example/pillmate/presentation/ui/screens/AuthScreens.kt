@@ -70,7 +70,7 @@ fun SignUpOptionsScreen(
             val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
             viewModel.signInWithGoogle(credential)
         } catch (e: ApiException) {
-            Toast.makeText(context, "Lỗi đăng nhập Google: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Google: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -127,7 +127,7 @@ fun SignUpOptionsScreen(
             if (savedAccounts.isNotEmpty()) {
                 // GIAO DIỆN KHI ĐÃ CÓ TÀI KHOẢN LƯU
                 Text(
-                    text = "Đăng nhập gần đây",
+                    text = stringResource(id = R.string.recent_login),
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -170,7 +170,7 @@ fun SignUpOptionsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TextButton(onClick = { onNavigateToSignIn("", "") }) {
-                    Text("Sử dụng tài khoản khác", color = Color.White, fontSize = 16.sp)
+                    Text(stringResource(id = R.string.use_another_account), color = Color.White, fontSize = 16.sp)
                 }
             } else {
                 // GIAO DIỆN KHI CHƯA CÓ TÀI KHOẢN LƯU

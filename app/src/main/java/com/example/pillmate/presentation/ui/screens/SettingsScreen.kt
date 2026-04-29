@@ -221,7 +221,7 @@ fun ProfileOptionsScreen(
             )
         }
         SettingsButton(
-            text = "Trung tâm chăm sóc",
+            text = stringResource(id = R.string.caregiver_hub),
             icon = Icons.Default.Face,
             onClick = onCaregiverHubClick
         )
@@ -669,7 +669,7 @@ fun CaregiverHubScreen(
     onBack: () -> Unit
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Người đang theo dõi", "Trao quyền")
+    val tabs = listOf(stringResource(R.string.following), stringResource(R.string.grant_access))
 
     Column(
         modifier = Modifier
@@ -684,7 +684,7 @@ fun CaregiverHubScreen(
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
-            Text("Quản lý chăm sóc", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.care_management), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
 
         // --- TAB BAR ---
@@ -766,20 +766,20 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
             ) {
                 Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("QUAY LẠI HỒ SƠ CỦA BẠN", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.back_to_your_profile), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
         if (followedProfiles.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("Bạn chưa theo dõi ai.", color = Color.Gray)
+                Text(stringResource(id = R.string.no_one_followed), color = Color.Gray)
             }
         } else {
             LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(followedProfiles) { profile ->
                     ProfileSelectCard(
                         name = profile.name,
-                        role = "Đang theo dõi",
+                        role = stringResource(id = R.string.following),
                         isSelected = profile.id == currentProfile?.id,
                         onClick = { viewModel.switchActiveProfile(profile.id) }
                     )
@@ -792,7 +792,7 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
             modifier = Modifier.fillMaxWidth().height(60.dp),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
         ) {
-            Text("THEO DÕI NGƯỜI MỚI")
+            Text(stringResource(id = R.string.follow_new_person))
         }
     }
 
@@ -803,16 +803,16 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
                 showLinkDialog = false
                 linkMessage = ""
             },
-            title = { Text("Theo dõi người bệnh") },
+            title = { Text(stringResource(id = R.string.follow_patient_title)) },
             text = {
                 Column {
-                    Text("Nhập mã truy cập 6 ký tự hoặc quét mã QR trên máy người bệnh.")
+                    Text(stringResource(id = R.string.follow_patient_desc))
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = shareCodeInput,
                         onValueChange = { shareCodeInput = it.uppercase().take(6) },
-                        placeholder = { Text("VD: A8X2B9") },
+                        placeholder = { Text("XXXXXX") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -881,7 +881,7 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Cung cấp mã này cho người chăm sóc của bạn để họ có thể xem tủ thuốc và lịch uống.",
+            stringResource(id = R.string.grant_access_desc),
             color = Color.LightGray, textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(32.dp))
@@ -892,7 +892,7 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
                 Image(bitmap = it, contentDescription = "QR", modifier = Modifier.size(200.dp).clip(RoundedCornerShape(16.dp)))
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Text("MÃ TRUY CẬP", color = Color.Gray, fontSize = 14.sp)
+            Text(stringResource(id = R.string.access_code_label), color = Color.Gray, fontSize = 14.sp)
             Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
