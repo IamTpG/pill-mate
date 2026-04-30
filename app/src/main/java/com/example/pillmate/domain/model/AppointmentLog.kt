@@ -14,6 +14,7 @@ data class AppointmentLog(
 )
 
 data class Appointment(
+	val id: String = "",
 	val name: String = "",
 	val location: String = "",
 	val doctorName: String = "",
