@@ -4,7 +4,7 @@ import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.google.firebase.firestore.FirebaseFirestore
 
-class FirestoreScheduleRepository(private val firestore: FirebaseFirestore) :
+class FirestoreScheduleRepositoryImpl(private val firestore: FirebaseFirestore) :
     FirestoreRepositoryImpl<Schedule>(
         getCollectionReference = { profileId ->
             firestore.collection("profiles").document(profileId).collection("schedules")

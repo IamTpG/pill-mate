@@ -7,7 +7,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-class FirestoreMedicationRepository(
+class FirestoreMedicationRepositoryImpl(
     private val db: FirebaseFirestore,
     private val profileId: String
 ) : MedicationRepository {

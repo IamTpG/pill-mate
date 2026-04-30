@@ -1,9 +1,9 @@
 package com.example.pillmate.di
 
 import android.app.Application
-import com.example.pillmate.data.repository.FirestoreLogRepository
-import com.example.pillmate.data.repository.FirestoreMedicationRepository
-import com.example.pillmate.data.repository.FirestoreScheduleRepository
+import com.example.pillmate.data.repository.FirestoreLogRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreMedicationRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreScheduleRepositoryImpl
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
@@ -51,9 +51,9 @@ val appModule = module {
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
 
-    single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
-    single<LogRepository> { FirestoreLogRepository(get()) }
-    single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
+    single<MedicationRepository> { FirestoreMedicationRepositoryImpl(get(), get()) }
+    single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
+    single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }

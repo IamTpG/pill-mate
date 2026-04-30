@@ -10,7 +10,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import java.util.Date
 
-class FirestoreLogRepository(
+class FirestoreLogRepositoryImpl(
     private val db: FirebaseFirestore
 ) : LogRepository {
 
