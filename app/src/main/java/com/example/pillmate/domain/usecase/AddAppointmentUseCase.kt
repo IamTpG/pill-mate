@@ -5,5 +5,5 @@ import com.example.pillmate.domain.repository.AppointmentRepository
 
 class AddAppointmentUseCase(private val repository: AppointmentRepository) {
 	suspend operator fun invoke(profileId: String, appointment: Appointment) =
-		repository.addAppointment(profileId, appointment)
+		repository.add(profileId, appointment)
 }

@@ -7,5 +7,5 @@ class UpdateAppointmentUseCase(
 	private val repository: AppointmentRepository
 ) {
 	suspend operator fun invoke(profileId: String, appointmentId: String, appointment: Appointment) =
-		repository.updateApponitment(profileId, appointmentId, appointment)
+		repository.update(profileId, appointment)
 }

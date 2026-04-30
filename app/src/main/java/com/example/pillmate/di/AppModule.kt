@@ -69,7 +69,7 @@ val appModule = module {
     single { FcmTokenManager(get()) }
     single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get()) }
     factory { com.example.pillmate.domain.usecase.DeleteMedicationUseCase(get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
@@ -110,7 +110,7 @@ val viewModelModule = module {
     viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get()) }
     viewModel { AuthViewModel(get(), get(), get(), get()) }
