@@ -16,8 +16,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import com.example.pillmate.data.local.database.AppDatabase
-import com.example.pillmate.data.repository.CabinetRepositoryImpl
-import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.data.repository.HybridMedicationRepositoryImpl
+import com.example.pillmate.data.repository.RoomMedicationRepositoryImpl
 import com.example.pillmate.presentation.viewmodel.ScheduleBuilderViewModel
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 import org.koin.android.ext.koin.androidContext
@@ -51,7 +51,17 @@ val appModule = module {
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
 
-    single<MedicationRepository> { FirestoreMedicationRepositoryImpl(get(), get()) }
+    single<MedicationRepository> {
+        val roomRepo = RoomMedicationRepositoryImpl(get())
+        val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
+        HybridMedicationRepositoryImpl(
+            localRepo = roomRepo,
+            remoteRepo = firestoreRepo,
+            supplyLogDao = get(),
+            firestore = get(),
+            networkChecker = com.example.pillmate.util.NetworkChecker(androidContext())
+        )
+    }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
     
@@ -60,6 +70,7 @@ val appModule = module {
     single { com.example.pillmate.util.SyncManager(get()) }
 
     factory { LogTaskUseCase(get(), get(), get(), get()) }
+    factory { com.example.pillmate.domain.usecase.DeleteMedicationUseCase(get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
@@ -74,7 +85,6 @@ val appModule = module {
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
-    single<CabinetRepository> { CabinetRepositoryImpl(get(), get(), get(), get()) }
     single { get<AppDatabase>().profileDao() }
     single {
         Retrofit.Builder()
