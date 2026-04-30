@@ -2,6 +2,7 @@ package com.example.pillmate.data.remote.firebase
 
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +26,9 @@ class FirestoreScheduleRepository(
 
     override suspend fun saveSchedule(profileId: String, schedule: Schedule): Result<Unit> {
         return try {
-            val collection = db.collection("profiles").document(profileId).collection("schedules")
+            val profileRef = db.collection("profiles").document(profileId)
+            profileRef.set(mapOf("accountId" to profileId), SetOptions.merge()).await()
+            val collection = profileRef.collection("schedules")
             if (schedule.id.isNotBlank()) {
                 collection.document(schedule.id).set(schedule).await()
             } else {

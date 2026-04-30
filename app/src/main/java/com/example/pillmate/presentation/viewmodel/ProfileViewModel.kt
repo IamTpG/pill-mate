@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class ProfileViewModel(
     private val auth: FirebaseAuth,
@@ -27,48 +29,43 @@ class ProfileViewModel(
 
     fun syncCurrentProfile() {
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Lấy người ĐANG ACTIVE trong máy (Ví dụ: A2)
             val activeProfile = profileDao.getActiveProfile()
-
-            // 2. Nếu đã có người Active (A2), dùng ID của A2.
-            // Nếu chưa có ai (app mới mở lần đầu), mới dùng ID của tài khoản gốc (A4)
             val targetUid = activeProfile?.id ?: auth.currentUser?.uid ?: return@launch
 
-            // 3. Tải đúng người đó về và cập nhật
-            db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
+            try {
+                val doc = db.collection("profiles").document(targetUid).get().await()
                 if (doc.exists()) {
                     val name = doc.getString("fullName") ?: "Unknown User"
                     val dobMillis = doc.getLong("dateOfBirth")
                     val healthInfo = doc.getString("healthInformation") ?: ""
 
-                    viewModelScope.launch(Dispatchers.IO) {
-                        val existing = profileDao.getProfileById(targetUid)
-                        if (existing == null) {
-                            // Nếu chưa có trong Room, tạo mới và đánh dấu Active
-                            profileDao.clearCurrentProfile()
-                            profileDao.insertProfile(
-                                ProfileEntity(targetUid, name, dobMillis, healthInfo, "Primary User", true)
-                            )
-                        } else {
-                            // Cập nhật dữ liệu và LUÔN GIỮ NGƯỜI NÀY LÀM ACTIVE
-                            profileDao.insertProfile(
-                                existing.copy(name = name, isCurrent = true, dateOfBirth = dobMillis, healthInformation = healthInfo)
-                            )
-                        }
+                    val existing = profileDao.getProfileById(targetUid)
+                    if (existing == null) {
+                        profileDao.clearCurrentProfile()
+                        profileDao.insertProfile(
+                            ProfileEntity(targetUid, name, dobMillis, healthInfo, "Primary User", true)
+                        )
+                    } else {
+                        profileDao.insertProfile(
+                            existing.copy(name = name, isCurrent = true, dateOfBirth = dobMillis, healthInformation = healthInfo)
+                        )
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
     private fun loadProfileDetails(profileId: String) {
-        db.collection("profiles").document(profileId).get().addOnSuccessListener { doc ->
-            if (doc.exists()) {
-                val name = doc.getString("fullName") ?: "Unknown User"
-                val dobMillis = doc.getLong("dateOfBirth")
-                val healthInfo = doc.getString("healthInformation") ?: ""
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val doc = db.collection("profiles").document(profileId).get().await()
+                if (doc.exists()) {
+                    val name = doc.getString("fullName") ?: "Unknown User"
+                    val dobMillis = doc.getLong("dateOfBirth")
+                    val healthInfo = doc.getString("healthInformation") ?: ""
 
-                viewModelScope.launch(Dispatchers.IO) {
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
                         profileDao.insertProfile(
@@ -80,21 +77,24 @@ class ProfileViewModel(
                         )
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
     fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, onSuccess: () -> Unit) {
-        val activeId = currentLocalProfile.value?.id ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
 
-        val updates = mapOf(
-            "fullName" to name,
-            "dateOfBirth" to dobMillis,
-            "healthInformation" to healthInfo
-        )
+            val updates = mapOf(
+                "fullName" to name,
+                "dateOfBirth" to dobMillis,
+                "healthInformation" to healthInfo
+            )
 
-        db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).addOnSuccessListener {
-            viewModelScope.launch(Dispatchers.IO) {
+            try {
+                db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).await()
                 val currentEntity = profileDao.getProfileById(activeId)
                 if (currentEntity != null) {
                     profileDao.insertProfile(
@@ -105,7 +105,9 @@ class ProfileViewModel(
                         )
                     )
                 }
-                launch(Dispatchers.Main) { onSuccess() }
+                withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

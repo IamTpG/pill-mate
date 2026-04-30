@@ -2,16 +2,18 @@ package com.example.pillmate.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.repository.ScheduleRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.google.firebase.auth.FirebaseAuth
 import java.util.Date
 
 data class ReminderTime(val id: Int, val timeTitle: String, val doseContext: String, val dose: Float = 1.0f)
@@ -37,13 +39,25 @@ data class ScheduleBuilderUiState(
 )
 
 class ScheduleBuilderViewModel(
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
+    private val profileDao: ProfileDao,
+    private val auth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ScheduleBuilderUiState())
     val uiState: StateFlow<ScheduleBuilderUiState> = _uiState.asStateFlow()
     
     private var reminderIdCounter = 0
+    
+    private suspend fun getEffectiveProfileId(): String? {
+        val active = profileDao.getActiveProfile()?.id?.takeIf { it.isNotBlank() }
+        if (active != null) return active
+
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id?.takeIf { it.isNotBlank() }
+        if (anyLocal != null) return anyLocal
+
+        return auth.currentUser?.uid?.takeIf { it.isNotBlank() }
+    }
 
     fun setSelectedMedication(medication: Medication) {
         _uiState.update { state -> 
@@ -61,7 +75,7 @@ class ScheduleBuilderViewModel(
             )
         }
         viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            val userId = getEffectiveProfileId() ?: return@launch
             val result = scheduleRepository.getSchedules(userId)
             val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == medication.id } ?: emptyList()
             _uiState.update { it.copy(existingSchedules = existing) }
@@ -158,9 +172,9 @@ class ScheduleBuilderViewModel(
         _uiState.update { it.copy(isSaving = true, error = null) }
         
         viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            val userId = getEffectiveProfileId()
             if (userId == null) {
-                _uiState.update { it.copy(isSaving = false, error = "User not logged in") }
+                _uiState.update { it.copy(isSaving = false, error = "No valid profile id. Please sign in again.") }
                 return@launch
             }
 
@@ -183,10 +197,10 @@ class ScheduleBuilderViewModel(
                     )
                 )
                 
-                scheduleRepository.saveSchedule(userId, schedule)
+                scheduleRepository.saveSchedule(userId, schedule).getOrThrow()
                 
                 // Refresh existing schedules to align with updated DB state
-                val refreshedList = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
+                val refreshedList = scheduleRepository.getSchedules(userId).getOrThrow().filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id }
                 val refreshedDoc = refreshedList.find { it.id == schedule.id || (state.existingScheduleId.isNullOrBlank() && it.createdAt == schedule.createdAt) }
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshedList, existingScheduleId = refreshedDoc?.id, readOnly = true) }
             } catch (ex: Exception) {
@@ -201,11 +215,11 @@ class ScheduleBuilderViewModel(
         
         _uiState.update { it.copy(isSaving = true, error = null) }
         viewModelScope.launch {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+            val userId = getEffectiveProfileId() ?: return@launch
             try {
-                scheduleRepository.deleteSchedule(userId, idToDelete)
+                scheduleRepository.deleteSchedule(userId, idToDelete).getOrThrow()
                 // Refresh existing schedules to align with updated DB state
-                val refreshedList = scheduleRepository.getSchedules(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication?.id } ?: emptyList()
+                val refreshedList = scheduleRepository.getSchedules(userId).getOrThrow().filter { it.eventSnapshot.sourceId == state.selectedMedication?.id }
                 _uiState.update { it.copy(
                     isSaving = false,
                     saveSuccess = true,

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.firstOrNull
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.example.pillmate.domain.model.Medication
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,8 @@ data class CabinetUiState(
 
 class CabinetViewModel(
     private val cabinetRepository: CabinetRepository,
-    private val profileDao: ProfileDao, // 🟢 Injected ProfileDao
+    private val profileDao: ProfileDao,
+    private val auth: FirebaseAuth, // 🟢 Injected Auth
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -45,15 +47,26 @@ class CabinetViewModel(
         observeCabinet()
     }
 
+    private suspend fun getEffectiveProfileId(): String? {
+        val active = profileDao.getActiveProfile()?.id
+        if (active != null) return active
+        
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id
+        if (anyLocal != null) return anyLocal
+        
+        return auth.currentUser?.uid
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeCabinet() {
         viewModelScope.launch {
-// 🟢 Observe the current profile first
             profileDao.getCurrentProfileFlow().flatMapLatest { profile ->
-                if (profile != null) {
-                    // 🟢 Fetch medications for the active profile
+                val effectiveId = profile?.id ?: getEffectiveProfileId()
+                
+                if (effectiveId != null) {
+                    // 🟢 Fetch medications for the active profile or UID
                     combine(
-                        cabinetRepository.getCabinetMedications(profile.id),
+                        cabinetRepository.getCabinetMedications(effectiveId),
                         _searchQuery
                     ) { allMedications, query ->
 
@@ -88,7 +101,7 @@ class CabinetViewModel(
                         )
                     }
                 } else {
-                    // Fallback empty state if no profile is active
+                    // Fallback empty state
                     flowOf(CabinetUiState(isLoading = false))
                 }
             }.collect { finalState ->
@@ -123,8 +136,7 @@ class CabinetViewModel(
 
     fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            // 🟢 Get the active profile ID before inserting
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
 
             val photoUrl = saveImageToInternalStorage(imageUriStr)
             val newId = UUID.randomUUID().toString()
@@ -159,7 +171,7 @@ class CabinetViewModel(
 
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
             
             // Find current stock to enforce floor of 0
             val currentStock = _uiState.value.activeMedications
@@ -192,8 +204,7 @@ class CabinetViewModel(
         imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            // 🟢 Get the active profile ID before updating
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
 
             val photoUrl = saveImageToInternalStorage(imageUriStr) ?: existingMedication.photoUrl
             val updatedMedication = existingMedication.copy(
@@ -227,7 +238,7 @@ class CabinetViewModel(
 
     fun deleteMedication(medication: Medication) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
             cabinetRepository.deleteMedication(activeProfileId, medication)
         }
     }
