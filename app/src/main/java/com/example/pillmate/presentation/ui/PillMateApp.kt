@@ -140,6 +140,11 @@ fun PillMateApp(
                     })
                 }
             }
+            composable(Screen.AIChat.route) {
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    AIChatScreen(paddingValues = innerPadding)
+                }
+            }
             composable(Screen.DebugMenu.route) {
                 val viewModel: DebugViewModel = koinViewModel()
                 DebugMenuScreen(

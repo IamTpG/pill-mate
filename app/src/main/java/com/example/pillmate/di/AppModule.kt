@@ -35,10 +35,14 @@ import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
+import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
     single { FirebaseFirestore.getInstance() }
+    single { FirebaseFunctions.getInstance() }
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
@@ -77,6 +81,8 @@ val appModule = module {
     }
     
     single<DrugLibraryRepository> { DrugLibraryRepositoryImpl(get()) }
+    single { get<AppDatabase>().chatDao() }
+    single { AIChatRepository(get(), get(), get()) }
 }
 
 val viewModelModule = module {
@@ -84,9 +90,10 @@ val viewModelModule = module {
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
-    viewModel { ScheduleBuilderViewModel(get()) }
+    viewModel { ScheduleBuilderViewModel(get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
+    viewModel { AIChatViewModel(get(), get(), get()) }
 }
