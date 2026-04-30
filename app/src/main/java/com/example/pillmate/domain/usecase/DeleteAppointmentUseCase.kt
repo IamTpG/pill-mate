@@ -6,5 +6,5 @@ class DeleteAppointmentUseCase(
 	private val repository: AppointmentRepository
 ) {
 	suspend operator fun invoke(profileId: String, appointmentId: String) =
-		repository.deleteAppointment(profileId, appointmentId)
+		repository.remove(profileId, appointmentId)
 }

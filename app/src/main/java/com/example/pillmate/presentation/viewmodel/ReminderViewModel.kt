@@ -32,7 +32,7 @@ class ReminderViewModel(
     private fun loadSchedules() {
         _uiState.value = _uiState.value.copy(isLoading = true)
         viewModelScope.launch {
-            scheduleRepository.getSchedulesFlow(profileId).collect {
+            scheduleRepository.getAll(profileId).collect {
                 _uiState.value = _uiState.value.copy(schedules = it, isLoading = false)
             }
         }
@@ -74,4 +74,4 @@ class ReminderViewModel(
             manageReminderUseCase(profileId, updatedSchedule)
         }
     }
-}
+}

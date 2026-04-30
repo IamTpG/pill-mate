@@ -30,7 +30,7 @@ class TaskLogViewModel(
 
     fun fetchSupplies(medId: String) {
         viewModelScope.launch {
-            medicationRepository.getMedicationSupplies(medId).onSuccess {
+            medicationRepository.getMedicationSupplies(profileId, medId).onSuccess {
                 _availableSupplies.value = it
             }
         }

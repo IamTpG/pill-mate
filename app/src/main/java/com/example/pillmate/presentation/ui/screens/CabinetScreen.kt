@@ -38,7 +38,7 @@ import com.example.pillmate.presentation.ui.screens.MedicationDetailScreen
 import com.example.pillmate.domain.model.Medication
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.domain.model.InventoryLog
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import com.example.pillmate.presentation.ui.screens.DrugLibrarySearchScreen
 import com.example.pillmate.presentation.ui.screens.DrugInfoScreen
@@ -102,7 +102,7 @@ fun CabinetScreen(
             val logsFlow = remember(selectedMedication!!.id) {
                 viewModel.getLogsForMedication(selectedMedication!!.id)
             }
-            val logs by logsFlow.collectAsState(initial = emptyList<SupplyLogEntity>())
+            val logs by logsFlow.collectAsState(initial = emptyList<InventoryLog>())
             
             MedicationDetailScreen(
                 medication = selectedMedication!!,

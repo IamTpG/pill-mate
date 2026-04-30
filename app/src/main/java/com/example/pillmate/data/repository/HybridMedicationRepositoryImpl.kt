@@ -1,0 +1,132 @@
+package com.example.pillmate.data.repository
+
+import com.example.pillmate.data.local.dao.SupplyLogDao
+import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.domain.model.InventoryLog
+import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.domain.model.MedicationSupply
+import com.example.pillmate.domain.repository.LocalRepository
+import com.example.pillmate.domain.repository.MedicationRepository
+import com.example.pillmate.domain.repository.RemoteRepository
+import com.example.pillmate.util.NetworkChecker
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import java.util.Date
+import java.util.UUID
+
+class HybridMedicationRepositoryImpl(
+    localRepo: LocalRepository<Medication>,
+    remoteRepo: RemoteRepository<Medication>,
+    private val supplyLogDao: SupplyLogDao,
+    private val firestore: FirebaseFirestore,
+    networkChecker: NetworkChecker
+) : HybridRepositoryImpl<Medication>(
+    localRepo = localRepo,
+    remoteRepo = remoteRepo,
+    networkChecker = { networkChecker.isOnline() },
+    getId = { it.id },
+    getUpdatedAt = { it.updatedAt },
+    getDeletedAt = { null }, // Medications use hard delete for now
+    copyWithUpdated = { item, date -> item.copy(updatedAt = date) },
+    copyWithDeleted = { item, _ -> item } // No soft delete
+), MedicationRepository {
+
+    override suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?> = runCatching {
+        val med = getById(profileId, id).getOrThrow()
+        if (med != null) {
+            val supplies = getMedicationSupplies(profileId, id).getOrNull() ?: emptyList()
+            val totalQty = supplies.sumOf { it.quantity.toDouble() }.toFloat()
+            val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
+                ?: supplies.firstOrNull()
+            med.copy(supply = activeSupply?.copy(quantity = totalQty))
+        } else null
+    }
+
+    override suspend fun getMedicationSupplies(profileId: String, medId: String): Result<List<MedicationSupply>> = runCatching {
+        val supplyDocs = firestore.collection("profiles").document(profileId)
+            .collection("medications").document(medId)
+            .collection("supply").get().await()
+
+        supplyDocs.documents.map { doc ->
+            val inventoryLogs = doc.reference.collection("logs").get().await()
+            val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
+
+            doc.toObject(MedicationSupply::class.java)!!.copy(
+                id = doc.id,
+                quantity = totalQty
+            )
+        }
+    }
+
+    override suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float, supplyId: String?): Result<Unit> = runCatching {
+        val targetSupplyRef = if (supplyId != null) {
+            firestore.collection("profiles").document(profileId)
+                .collection("medications").document(medId)
+                .collection("supply").document(supplyId)
+        } else {
+            val supplies = getMedicationSupplies(profileId, medId).getOrNull() ?: emptyList()
+            val target = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
+                ?: supplies.firstOrNull()
+            if (target != null) {
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medId)
+                    .collection("supply").document(target.id)
+            } else null
+        }
+
+        if (targetSupplyRef != null) {
+            val inventoryLog = hashMapOf(
+                "changeAmount" to changeAmount,
+                "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
+                "timestamp" to Timestamp.now()
+            )
+            targetSupplyRef.collection("logs").add(inventoryLog).await()
+        } else {
+            throw Exception("No supply record found for medication")
+        }
+    }
+
+    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
+        val newLog = SupplyLogEntity(
+            id = UUID.randomUUID().toString(),
+            medicationId = medicationId,
+            changeAmount = amount,
+            reason = reason,
+            timestamp = System.currentTimeMillis()
+        )
+        supplyLogDao.insertSupplyLog(newLog)
+
+        // Sync to Firestore
+        try {
+            val logData = hashMapOf(
+                "id" to newLog.id,
+                "changeAmount" to newLog.changeAmount,
+                "reason" to newLog.reason,
+                "timestamp" to newLog.timestamp
+            )
+            firestore.collection("profiles").document(profileId)
+                .collection("medications").document(medicationId)
+                .collection("logs").document(newLog.id)
+                .set(logData).await()
+        } catch (_: Exception) {
+            // Silently fail remote sync — local is source of truth for inventory
+        }
+    }
+
+    override fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>> {
+        return supplyLogDao.getLogsForMedication(medicationId).map { entities ->
+            entities.map { entity ->
+                InventoryLog(
+                    id = entity.id,
+                    medId = entity.medicationId,
+                    changeAmount = entity.changeAmount.toFloat(),
+                    reason = entity.reason,
+                    timestamp = Date(entity.timestamp)
+                )
+            }
+        }
+    }
+}
