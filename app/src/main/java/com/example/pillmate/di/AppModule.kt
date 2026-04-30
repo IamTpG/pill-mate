@@ -1,9 +1,9 @@
 package com.example.pillmate.di
 
 import android.app.Application
-import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
-import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
-import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
+import com.example.pillmate.data.repository.FirestoreLogRepository
+import com.example.pillmate.data.repository.FirestoreMedicationRepository
+import com.example.pillmate.data.repository.FirestoreScheduleRepository
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.repository.ScheduleRepository

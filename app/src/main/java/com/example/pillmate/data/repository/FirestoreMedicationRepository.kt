@@ -1,8 +1,9 @@
-package com.example.pillmate.data.remote.firebase
+package com.example.pillmate.data.repository
 
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.model.MedicationSupply
 import com.example.pillmate.domain.repository.MedicationRepository
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -64,7 +65,7 @@ class FirestoreMedicationRepository(
                 val inventoryLog = hashMapOf(
                     "changeAmount" to changeAmount,
                     "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
-                    "timestamp" to com.google.firebase.Timestamp.now()
+                    "timestamp" to Timestamp.now()
                 )
                 targetSupplyRef.collection("logs").add(inventoryLog).await()
                 Result.success(Unit)

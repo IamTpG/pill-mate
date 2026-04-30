@@ -4,16 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
-import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.domain.model.LogStatus
-import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import com.example.pillmate.domain.usecase.ManageReminderUseCase
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +19,6 @@ import java.util.Date
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.GlobalContext
-import java.util.Locale.getDefault
 
 class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
 

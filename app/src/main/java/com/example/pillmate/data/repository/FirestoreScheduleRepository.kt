@@ -1,4 +1,4 @@
-package com.example.pillmate.data.remote.firebase
+package com.example.pillmate.data.repository
 
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
