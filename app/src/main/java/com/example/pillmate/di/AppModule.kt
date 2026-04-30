@@ -57,6 +57,7 @@ val appModule = module {
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
+    single { com.example.pillmate.util.SyncManager(get()) }
 
     factory { LogTaskUseCase(get(), get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
