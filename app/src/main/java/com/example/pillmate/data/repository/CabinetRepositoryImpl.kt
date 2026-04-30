@@ -2,6 +2,7 @@ package com.example.pillmate.data.repository
 
 import com.example.pillmate.data.local.dao.MedicationDao
 import com.example.pillmate.data.local.dao.SupplyLogDao
+import com.example.pillmate.data.local.entity.MedicationEntity
 import com.example.pillmate.data.local.entity.SupplyLogEntity
 import com.example.pillmate.data.mapper.toDomainModel
 import com.example.pillmate.data.mapper.toEntity
@@ -34,6 +35,8 @@ class CabinetRepositoryImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getCabinetMedications(profileId: String): Flow<List<Medication>> {
+        // Keep Room in sync with Firestore so cabinet still loads after local DB resets.
+        syncScope.launch { syncMedicationsFromRemote(profileId) }
         return medicationDao.getMedicationsForProfile(profileId).flatMapLatest { entities ->
             if (entities.isEmpty()) return@flatMapLatest flowOf(emptyList())
 
@@ -124,5 +127,39 @@ class CabinetRepositoryImpl(
 
     override fun getLogsForMedication(medicationId: String): Flow<List<SupplyLogEntity>> {
         return supplyLogDao.getLogsForMedication(medicationId)
+    }
+
+    private suspend fun syncMedicationsFromRemote(profileId: String) {
+        try {
+            val snapshot = firestore.collection("profiles").document(profileId)
+                .collection("medications")
+                .get()
+                .await()
+
+            snapshot.documents.forEach { doc ->
+                val data = doc.data ?: return@forEach
+                val expirationRaw = (data["supply"] as? Map<*, *>)?.get("expirationDate")
+                val expirationMillis = when (expirationRaw) {
+                    is com.google.firebase.Timestamp -> expirationRaw.toDate().time
+                    is java.util.Date -> expirationRaw.time
+                    is Long -> expirationRaw
+                    else -> 0L
+                }
+
+                medicationDao.insertMedication(
+                    MedicationEntity(
+                        id = doc.id,
+                        profileId = profileId,
+                        name = data["name"] as? String ?: "",
+                        description = data["description"] as? String ?: "",
+                        unit = data["unit"] as? String ?: "tablet",
+                        photoUrl = data["photoUrl"] as? String,
+                        expirationDate = expirationMillis
+                    )
+                )
+            }
+        } catch (_: Exception) {
+            // Ignore sync errors; UI still shows local cache.
+        }
     }
 }
