@@ -8,108 +8,84 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class FirestoreMedicationRepositoryImpl(
-    private val db: FirebaseFirestore,
+    private val firestore: FirebaseFirestore,
     private val profileId: String
-) : MedicationRepository {
+) :
+    FirestoreRepositoryImpl<Medication>(
+        getCollectionReference = { pid ->
+            firestore.collection("profiles").document(pid).collection("medications")
+        },
+        modelClass = Medication::class.java,
+        setId = { med, id -> med.copy(id = id) }
+    ),
+    MedicationRepository {
 
-    override suspend fun getMedication(id: String): Result<Medication?> {
-        return try {
-            val doc = db.collection("profiles").document(profileId)
-                .collection("medications").document(id).get().await()
-            
-            if (doc.exists()) {
-                val med = doc.toObject(Medication::class.java)?.copy(id = doc.id)
-                
-                // Fetch all supplies and calculate combined total
-                val suppliesResult = getMedicationSupplies(id)
-                val supplies = suppliesResult.getOrNull() ?: emptyList()
-                val totalQty = supplies.sumOf { it.quantity.toDouble() }.toFloat()
+    override fun getId(item: Medication): String {
+        return item.id.ifEmpty { firestore.collection("tmp").document().id }
+    }
 
-                // For the "primary" supply displayed on the main med object,
-                // we'll pick the one with lowest stock > 0 as the "active" one,
-                // or just the first if all 0.
-                val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
-                    ?: supplies.firstOrNull()
-                
-                Result.success(med?.copy(supply = activeSupply?.copy(quantity = totalQty)))
-            } else {
-                Result.success(null)
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+    override suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?> = runCatching {
+        val doc = firestore.collection("profiles").document(profileId)
+            .collection("medications").document(id).get().await()
+
+        if (doc.exists()) {
+            val med = doc.toObject(Medication::class.java)?.copy(id = doc.id)
+
+            val suppliesResult = getMedicationSupplies(profileId, id)
+            val supplies = suppliesResult.getOrNull() ?: emptyList()
+            val totalQty = supplies.sumOf { it.quantity.toDouble() }.toFloat()
+
+            val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
+                ?: supplies.firstOrNull()
+
+            med?.copy(supply = activeSupply?.copy(quantity = totalQty))
+        } else {
+            null
         }
     }
 
-    override suspend fun updateMedicationSupply(medId: String, changeAmount: Float, supplyId: String?): Result<Unit> {
-        return try {
-            val targetSupplyRef = if (supplyId != null) {
-                // Use specific supply provided (User manual choice)
-                db.collection("profiles").document(profileId)
-                    .collection("medications").document(medId)
-                    .collection("supply").document(supplyId)
-            } else {
-                // SMART AUTO-SELECTION: Use supply with lowest stock > 0
-                val supplies = getMedicationSupplies(medId).getOrNull() ?: emptyList()
-                val target = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
-                    ?: supplies.firstOrNull() // Fallback to first if all empty
+    override suspend fun getMedicationSupplies(profileId: String, medId: String): Result<List<MedicationSupply>> = runCatching {
+        val supplyDocs = firestore.collection("profiles").document(profileId)
+            .collection("medications").document(medId)
+            .collection("supply").get().await()
 
-                if (target != null) {
-                    db.collection("profiles").document(profileId)
-                        .collection("medications").document(medId)
-                        .collection("supply").document(target.id)
-                } else null
-            }
-            
-            if (targetSupplyRef != null) {
-                // Add inventory log
-                val inventoryLog = hashMapOf(
-                    "changeAmount" to changeAmount,
-                    "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
-                    "timestamp" to Timestamp.now()
-                )
-                targetSupplyRef.collection("logs").add(inventoryLog).await()
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("No supply record found for medication"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+        supplyDocs.documents.map { doc ->
+            val inventoryLogs = doc.reference.collection("logs").get().await()
+            val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
+
+            doc.toObject(MedicationSupply::class.java)!!.copy(
+                id = doc.id,
+                quantity = totalQty
+            )
         }
     }
 
-    override suspend fun getMedicationSupplies(medId: String): Result<List<MedicationSupply>> {
-        return try {
-            val supplyDocs = db.collection("profiles").document(profileId)
+    override suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float, supplyId: String?): Result<Unit> = runCatching {
+        val targetSupplyRef = if (supplyId != null) {
+            firestore.collection("profiles").document(profileId)
                 .collection("medications").document(medId)
-                .collection("supply").get().await()
+                .collection("supply").document(supplyId)
+        } else {
+            val supplies = getMedicationSupplies(profileId, medId).getOrNull() ?: emptyList()
+            val target = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
+                ?: supplies.firstOrNull()
 
-            val supplies = supplyDocs.documents.map { doc ->
-                val inventoryLogs = doc.reference.collection("logs").get().await()
-                val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
-
-                doc.toObject(MedicationSupply::class.java)!!.copy(
-                    id = doc.id,
-                    quantity = totalQty
-                )
-            }
-            Result.success(supplies)
-        } catch (e: Exception) {
-            Result.failure(e)
+            if (target != null) {
+                firestore.collection("profiles").document(profileId)
+                    .collection("medications").document(medId)
+                    .collection("supply").document(target.id)
+            } else null
         }
-    }
 
-    override suspend fun getAllMedications(profileId: String): Result<List<Medication>> {
-        // Implementation for listing
-        return Result.success(emptyList()) // Placeholder
-    }
-
-    override suspend fun saveMedication(profileId: String, medication: Medication): Result<String> {
-        return try {
-            val docRef = db.collection("profiles").document(profileId)
-                .collection("medications").add(medication).await()
-            Result.success(docRef.id)
-        } catch (e: Exception) {
-            Result.failure(e)
+        if (targetSupplyRef != null) {
+            val inventoryLog = hashMapOf(
+                "changeAmount" to changeAmount,
+                "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
+                "timestamp" to Timestamp.now()
+            )
+            targetSupplyRef.collection("logs").add(inventoryLog).await()
+        } else {
+            throw Exception("No supply record found for medication")
         }
     }
 }

@@ -6,22 +6,21 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import java.util.Date
 
-class FirestoreLogRepositoryImpl(
-    private val db: FirebaseFirestore
-) : LogRepository {
+class FirestoreLogRepositoryImpl(private val firestore: FirebaseFirestore) :
+    FirestoreRepositoryImpl<TaskLog>(
+        getCollectionReference = { profileId ->
+            firestore.collection("profiles").document(profileId).collection("logs")
+        },
+        modelClass = TaskLog::class.java,
+        setId = { log, id -> log.copy(id = id) }
+    ),
+    LogRepository {
 
-    override suspend fun saveLog(profileId: String, log: TaskLog): Result<Unit> {
-        return try {
-            db.collection("profiles").document(profileId)
-                .collection("logs").add(log).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    override fun getId(item: TaskLog): String {
+        return item.id.ifEmpty { firestore.collection("tmp").document().id }
     }
 
     override fun getLogsForDayFlow(profileId: String, date: Date): Flow<List<TaskLog>> = callbackFlow {
@@ -31,13 +30,13 @@ class FirestoreLogRepositoryImpl(
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         val start = cal.time
-        
+
         cal.set(Calendar.HOUR_OF_DAY, 23)
         cal.set(Calendar.MINUTE, 59)
         cal.set(Calendar.SECOND, 59)
         val end = cal.time
 
-        val registration = db.collection("profiles").document(profileId)
+        val registration = firestore.collection("profiles").document(profileId)
             .collection("logs")
             .whereGreaterThanOrEqualTo("scheduledTime", start)
             .whereLessThanOrEqualTo("scheduledTime", end)
@@ -51,7 +50,7 @@ class FirestoreLogRepositoryImpl(
                     trySend(logs)
                 }
             }
-        
+
         awaitClose { registration.remove() }
     }
 }
