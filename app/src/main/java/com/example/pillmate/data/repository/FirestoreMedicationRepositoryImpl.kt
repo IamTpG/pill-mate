@@ -1,11 +1,17 @@
 package com.example.pillmate.data.repository
 
+import com.example.pillmate.domain.model.InventoryLog
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.model.MedicationSupply
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.Date
+import java.util.UUID
 
 class FirestoreMedicationRepositoryImpl(
     private val firestore: FirebaseFirestore,
@@ -88,4 +94,44 @@ class FirestoreMedicationRepositoryImpl(
             throw Exception("No supply record found for medication")
         }
     }
+
+    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
+        val logId = UUID.randomUUID().toString()
+        val logData = hashMapOf(
+            "id" to logId,
+            "changeAmount" to amount,
+            "reason" to reason,
+            "timestamp" to Timestamp.now()
+        )
+        firestore.collection("profiles").document(profileId)
+            .collection("medications").document(medicationId)
+            .collection("logs").document(logId)
+            .set(logData).await()
+    }
+
+    override fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>> = callbackFlow {
+        val listener = firestore.collection("profiles").document(profileId)
+            .collection("medications").document(medicationId)
+            .collection("logs")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val logs = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        InventoryLog(
+                            id = doc.id,
+                            medId = medicationId,
+                            changeAmount = (doc.getDouble("changeAmount") ?: 0.0).toFloat(),
+                            reason = doc.getString("reason") ?: "",
+                            timestamp = doc.getTimestamp("timestamp")?.toDate() ?: Date()
+                        )
+                    } catch (_: Exception) { null }
+                } ?: emptyList()
+                trySend(logs)
+            }
+        awaitClose { listener.remove() }
+    }
 }
+
