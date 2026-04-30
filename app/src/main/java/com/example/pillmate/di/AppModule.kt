@@ -70,7 +70,7 @@ val appModule = module {
     single { com.example.pillmate.util.SyncManager(get()) }
 
     factory { LogTaskUseCase(get(), get(), get()) }
-    factory { com.example.pillmate.domain.usecase.DeleteMedicationUseCase(get(), get()) }
+    factory { DeleteMedicationUseCase(get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
