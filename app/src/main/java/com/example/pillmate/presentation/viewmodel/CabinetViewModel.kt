@@ -22,6 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.UUID
 
 import com.example.pillmate.domain.usecase.DeleteMedicationUseCase
+import kotlin.math.abs
 
 data class CabinetUiState(
     val isLoading: Boolean = true,
@@ -118,7 +119,7 @@ class CabinetViewModel(
         return photoUrl
     }
 
-    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
+    fun addMedication(name: String, unit: String, initialCount: Float, description: String, expirationDate: Long, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
 
@@ -150,16 +151,16 @@ class CabinetViewModel(
         }
     }
 
-    fun logDose(medicationId: String, amountTaken: Int, reason: String) {
+    fun logDose(medicationId: String, amountTaken: Float, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
 
             val currentStock = _uiState.value.activeMedications
-                .find { it.id == medicationId }?.supply?.quantity?.toInt()
+                .find { it.id == medicationId }?.supply?.quantity
                 ?: _uiState.value.expiredMedications
-                    .find { it.id == medicationId }?.supply?.quantity?.toInt()
-                ?: 0
-            val clampedAmount = amountTaken.coerceAtMost(currentStock.coerceAtLeast(0))
+                    .find { it.id == medicationId }?.supply?.quantity
+                ?: 0f
+            val clampedAmount = amountTaken.coerceAtMost(currentStock)
             if (clampedAmount <= 0) return@launch
             medicationRepository.logInventoryChange(
                 profileId = activeProfileId,
@@ -178,7 +179,7 @@ class CabinetViewModel(
         existingMedication: Medication,
         newName: String,
         newUnit: String,
-        newCount: Int,
+        newCount: Float,
         newDescription: String,
         newExpirationDate: Long,
         imageUriStr: String?
@@ -202,8 +203,8 @@ class CabinetViewModel(
 
             medicationRepository.update(activeProfileId, updatedMedication)
 
-            val currentQuantity = (existingMedication.supply?.quantity ?: 0f).toInt()
-            if (newCount != currentQuantity) {
+            val currentQuantity = existingMedication.supply?.quantity ?: 0f
+            if (abs(newCount - currentQuantity) > 0.001f) {
                 val difference = newCount - currentQuantity
                 medicationRepository.logInventoryChange(
                     profileId = activeProfileId,

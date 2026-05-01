@@ -242,7 +242,7 @@ fun CabinetScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = amountText,
-                            onValueChange = { newVal -> amountText = newVal.filter { it.isDigit() } },
+                            onValueChange = { newVal -> amountText = newVal.filter { it.isDigit() || it == '.' } },
                             label = { Text("Amount Taken") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
@@ -259,7 +259,7 @@ fun CabinetScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            val amount = amountText.toIntOrNull() ?: 1
+                            val amount = amountText.toFloatOrNull() ?: 1f
                             viewModel.logDose(selectedMedication!!.id, amount, reasonText)
                             showLogDoseDialog = false
                         },

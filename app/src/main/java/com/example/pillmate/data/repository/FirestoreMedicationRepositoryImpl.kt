@@ -95,7 +95,7 @@ class FirestoreMedicationRepositoryImpl(
         }
     }
 
-    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
+    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Float, reason: String): Result<Unit> = runCatching {
         val logId = UUID.randomUUID().toString()
         val logData = hashMapOf(
             "id" to logId,

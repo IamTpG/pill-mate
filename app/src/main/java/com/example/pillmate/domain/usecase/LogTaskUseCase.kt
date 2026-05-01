@@ -45,7 +45,7 @@ class LogTaskUseCase(
                 medicationRepository.logInventoryChange(
                     profileId = profileId,
                     medicationId = sourceId,
-                    amount = -dose.toInt(),
+                    amount = -dose,
                     reason = "Taken"
                 )
             }

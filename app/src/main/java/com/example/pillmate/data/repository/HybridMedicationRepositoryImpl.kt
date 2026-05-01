@@ -89,7 +89,7 @@ class HybridMedicationRepositoryImpl(
         }
     }
 
-    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
+    override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Float, reason: String): Result<Unit> = runCatching {
         val newLog = SupplyLogEntity(
             id = UUID.randomUUID().toString(),
             medicationId = medicationId,

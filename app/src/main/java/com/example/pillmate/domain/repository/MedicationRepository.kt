@@ -9,6 +9,6 @@ interface MedicationRepository : Repository<Medication> {
     suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?>
     suspend fun getMedicationSupplies(profileId: String, medId: String): Result<List<MedicationSupply>>
     suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float, supplyId: String? = null): Result<Unit>
-    suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit>
+    suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Float, reason: String): Result<Unit>
     fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>>
 }

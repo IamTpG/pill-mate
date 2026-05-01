@@ -12,7 +12,7 @@ import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.data.local.entity.ProfileEntity
 import com.example.pillmate.data.local.entity.SavedAccountEntity
 
-@Database(entities = [MedicationEntity::class, SupplyLogEntity::class, ProfileEntity::class, SavedAccountEntity::class], version = 4, exportSchema = false)
+@Database(entities = [MedicationEntity::class, SupplyLogEntity::class, ProfileEntity::class, SavedAccountEntity::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun medicationDao(): MedicationDao

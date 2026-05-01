@@ -33,11 +33,11 @@ import com.example.pillmate.domain.model.Medication
 fun AddMedicationDialog(
     medicationToEdit: Medication? = null,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, unit: String, count: Int, description: String, expirationDate: Long, imageUri: Uri?) -> Unit
+    onConfirm: (name: String, unit: String, count: Float, description: String, expirationDate: Long, imageUri: Uri?) -> Unit
 ) {
     var name by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.name ?: "") }
     var unit by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.unit ?: "") }
-    var countText by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.quantity?.toInt()?.let { if (it > 0) it.toString() else "" } ?: "") }
+    var countText by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.quantity?.let { if (it > 0) it.toString() else "" } ?: "") }
     var description by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.description ?: "") }
     
     var showDatePicker by remember { mutableStateOf(false) }
@@ -155,7 +155,7 @@ fun AddMedicationDialog(
                 )
                 OutlinedTextField(
                     value = countText,
-                    onValueChange = { newVal -> countText = newVal.filter { it.isDigit() }; countError = null },
+                    onValueChange = { newVal -> countText = newVal.filter { it.isDigit() || it == '.' }; countError = null },
                     label = { Text("Current Inventory Count") },
                     isError = countError != null,
                     supportingText = countError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
@@ -181,11 +181,11 @@ fun AddMedicationDialog(
                     var hasError = false
                     if (name.isBlank()) { nameError = "Name is required"; hasError = true }
                     if (unit.isBlank()) { unitError = "Unit is required"; hasError = true }
-                    if (countText.isBlank() || countText.toIntOrNull() == null) { countError = "Enter a valid number"; hasError = true }
+                    if (countText.isBlank() || countText.toFloatOrNull() == null) { countError = "Enter a valid number"; hasError = true }
                     if (!hasPickedDate || datePickerState.selectedDateMillis == null) { dateError = "Expiration date is required"; hasError = true }
                     if (hasError) return@Button
 
-                    val count = countText.toIntOrNull() ?: 0
+                    val count = countText.toFloatOrNull() ?: 0f
                     val expDateLong = datePickerState.selectedDateMillis!!
 
                     onConfirm(name, unit, count, description, expDateLong, imageUri)
