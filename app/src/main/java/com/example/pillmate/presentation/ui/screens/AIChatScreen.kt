@@ -86,36 +86,47 @@ fun AIChatScreen(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Chats",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1E6C54)
+                )
 
                 sessions.forEach { chatSession ->
-                    Row(
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.List, contentDescription = null) },
+                        label = {
+                            Text(
+                                text = chatSession.title,
+                                modifier = Modifier.padding(end = 8.dp),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        },
+                        selected = chatSession.id == uiState.currentSessionId,
+                        onClick = {
+                            viewModel.selectSession(chatSession.id)
+                            scope.launch { drawerState.close() }
+                        },
+                        badge = {
+                            IconButton(onClick = { pendingDeleteSessionId = chatSession.id }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete chat",
+                                    tint = Color(0xFF1E6C54)
+                                )
+                            }
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedContainerColor = Color(0xFFC5E4D2),
+                            selectedContainerColor = Color(0xFF96CEB2)
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        NavigationDrawerItem(
-                            icon = { Icon(Icons.Default.List, contentDescription = null) },
-                            label = { Text(chatSession.title) },
-                            selected = chatSession.id == uiState.currentSessionId,
-                            onClick = {
-                                viewModel.selectSession(chatSession.id)
-                                scope.launch { drawerState.close() }
-                            },
-                            colors = NavigationDrawerItemDefaults.colors(
-                                unselectedContainerColor = Color(0xFFC5E4D2),
-                                selectedContainerColor = Color(0xFF96CEB2)
-                            ),
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = { pendingDeleteSessionId = chatSession.id }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete chat",
-                                tint = Color(0xFF1E6C54)
-                            )
-                        }
-                    }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
                 }
             }
         }
