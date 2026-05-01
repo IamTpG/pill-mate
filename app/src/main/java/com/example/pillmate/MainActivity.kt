@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
+import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
 import com.example.pillmate.presentation.ui.PillMateApp
@@ -18,6 +19,9 @@ class MainActivity : AppCompatActivity() {
 
     private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
+    private val syncManager: com.example.pillmate.util.SyncManager by inject()
+    private val medicationRepository: MedicationRepository by inject()
+    
     private val profileId: String by inject()
     private val db: FirebaseFirestore by inject()
     private var scheduleListener: ListenerRegistration? = null
@@ -37,6 +41,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // Initialize SyncManager with Hybrid Repositories
+        if (medicationRepository is com.example.pillmate.data.repository.HybridMedicationRepositoryImpl) {
+            syncManager.register(medicationRepository as com.example.pillmate.data.repository.HybridMedicationRepositoryImpl)
+        }
+        syncManager.startMonitoring(this)
 
         // Setup Real-time Sync (with debounce to avoid clobbering ManageReminderUseCase)
         if (profileId.isNotBlank()) {
