@@ -4,9 +4,9 @@ import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
+import com.example.pillmate.util.RecurrenceEvaluator
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 class ManageReminderUseCase(
     private val scheduleRepository: ScheduleRepository,
@@ -21,32 +21,17 @@ class ManageReminderUseCase(
                 schedule.reminders.forEach { reminder ->
                     val requestCode = "${schedule.id}_${doseTime.time}_${reminder.minutesBefore}_${reminder.type.name}".hashCode()
                     
-                    // ROBUST TIME PARSING (Matches SyncAlarmsUseCase)
-                    val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                    val displayFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    val fallbackFormat = SimpleDateFormat("H:m", java.util.Locale.getDefault())
+                    val nextOccurrence = RecurrenceEvaluator.getNextOccurrence(
+                        fromDate = Date(),
+                        rrule = schedule.recurrenceRule,
+                        startTimeIso = schedule.startTime,
+                        endDate = schedule.endDate,
+                        doseTime = doseTime.time
+                    )
 
-                    val parsedStart: java.util.Date? = try {
-                        when {
-                            doseTime.time.contains("T") -> isoFormat.parse(doseTime.time)
-                            doseTime.time.isNotBlank() -> {
-                                try { displayFormat.parse(doseTime.time) } 
-                                catch (e: Exception) { fallbackFormat.parse(doseTime.time) }
-                            }
-                            else -> null
-                        }
-                    } catch (e: Exception) { null }
-
-                    if (parsedStart != null) {
+                    if (nextOccurrence != null) {
                         val target = Calendar.getInstance().apply {
-                            time = parsedStart
-                            // If it was just HH:mm, the date part might be 1970. 
-                            // We need to set it to today if so.
-                            val now = Calendar.getInstance()
-                            if (get(Calendar.YEAR) < 2000) {
-                                set(Calendar.YEAR, now.get(Calendar.YEAR))
-                                set(Calendar.DAY_OF_YEAR, now.get(Calendar.DAY_OF_YEAR))
-                            }
+                            time = nextOccurrence
                             add(Calendar.MINUTE, -reminder.minutesBefore)
                         }
                         

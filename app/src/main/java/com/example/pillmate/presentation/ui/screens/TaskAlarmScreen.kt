@@ -22,6 +22,7 @@ import com.example.pillmate.R
 import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
+import com.example.pillmate.util.RecurrenceEvaluator
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -92,11 +93,17 @@ fun TaskAlarmScreen(
 
     val formattedTime = if (parsedStart != null) "Scheduled: ${displayFormat.format(parsedStart)}" else "Scheduled: $startTimeStr"
     var nextTimeStr = ""
-    if (rrule.isNotBlank() && parsedStart != null) {
-        val cal = Calendar.getInstance()
-        cal.time = parsedStart
-        cal.add(Calendar.DAY_OF_YEAR, 1)
-        nextTimeStr = "Next: ${displayFormat.format(cal.time)}"
+    if (parsedStart != null) {
+        val nextOccurrence = RecurrenceEvaluator.getNextOccurrence(
+            fromDate = Date(),
+            rrule = rrule,
+            startTimeIso = startTimeStr, // Note: TaskAlarmScreen should ideally receive the original duration/anchor, but we'll use current for now
+            endDate = null, // endDate not passed to screen yet, can be added if needed
+            doseTime = startTimeStr
+        )
+        if (nextOccurrence != null) {
+            nextTimeStr = "Next: ${displayFormat.format(nextOccurrence)}"
+        }
     }
 
     val actionButtonText = when (taskType) {

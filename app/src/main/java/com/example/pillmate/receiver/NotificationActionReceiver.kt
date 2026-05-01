@@ -64,35 +64,8 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 scheduledTime = Date(),
                 dose = 1.0f
             )
-            // Advance RRULE next occurrence
-            try {
-                val scheduleDoc = db.collection("profiles").document(profileId)
-                    .collection("schedules").document(scheduleId).get().await()
-                val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
-                if (scheduleObj != null) {
-                    // CANCELLATION: Cancel other pending reminders AND snoozes
-                    TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders, sourceId)
-
-                    val rrule = scheduleDoc.getString("recurrenceRule")
-                    if (rrule != null && rrule.contains("FREQ=DAILY")) {
-                        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                        val nextSchedule = scheduleObj.copy(
-                            doseTimes = scheduleObj.doseTimes.map { dt ->
-                                val dtStart = try { format.parse(dt.time) } catch (e: Exception) { null }
-                                if (dtStart != null) {
-                                    val nextStart = Date(dtStart.time + 24 * 60 * 60 * 1000)
-                                    dt.copy(time = format.format(nextStart))
-                                } else {
-                                    dt
-                                }
-                            }
-                        )
-                        manageReminderUseCase(profileId, nextSchedule)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            // Cancellation handled local only for immediate effect
+            TaskNotificationManager(context).dismissNotification(scheduleId)
         }
     }
 }
