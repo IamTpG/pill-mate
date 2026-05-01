@@ -3,7 +3,6 @@ package com.example.pillmate.domain.usecase
 import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.model.TaskLog
 import com.example.pillmate.domain.model.TaskType
-import com.example.pillmate.domain.repository.CabinetRepository
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +13,6 @@ import java.util.Date
 class LogTaskUseCase(
     private val medicationRepository: MedicationRepository,
     private val logRepository: LogRepository,
-    private val cabinetRepository: CabinetRepository,
     private val notificationManager: TaskNotificationManager
 ) {
     suspend fun execute(
@@ -38,13 +36,13 @@ class LogTaskUseCase(
         )
 
         // 1. Save the log
-        val logResult = logRepository.saveLog(profileId, log)
+        val logResult = logRepository.add(profileId, log)
         if (logResult.isFailure) return logResult
 
         // 2. If completed medication, deduct from inventory (Room + Firestore via CabinetRepository)
         if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
             withContext(Dispatchers.IO) {
-                cabinetRepository.logInventoryChange(
+                medicationRepository.logInventoryChange(
                     profileId = profileId,
                     medicationId = sourceId,
                     amount = -dose.toInt(),
@@ -54,8 +52,7 @@ class LogTaskUseCase(
 
             // 3. IMMEDIATE LOW STOCK ALERT
             try {
-                // Fetch supplies directly to check stock levels
-                val supplies = medicationRepository.getMedicationSupplies(sourceId).getOrNull() ?: emptyList()
+                val supplies = medicationRepository.getMedicationSupplies(profileId, sourceId).getOrNull() ?: emptyList()
                 val currentStock = if (supplyId != null) {
                     supplies.find { it.id == supplyId }?.quantity ?: 0f
                 } else {

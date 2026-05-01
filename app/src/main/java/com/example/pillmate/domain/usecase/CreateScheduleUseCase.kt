@@ -7,6 +7,6 @@ class CreateScheduleUseCase(
     private val scheduleRepository: ScheduleRepository
 ) {
     suspend fun execute(profileId: String, schedule: Schedule): Result<Unit> {
-        return scheduleRepository.saveSchedule(profileId, schedule)
+        return scheduleRepository.add(profileId, schedule)
     }
 }

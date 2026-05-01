@@ -20,6 +20,7 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
+import androidx.navigation.navArgument
 
 @Composable
 fun PillMateApp(
@@ -42,7 +43,9 @@ fun PillMateApp(
                 val viewModel: AuthViewModel = koinViewModel()
                 SignUpOptionsScreen(
                     viewModel = viewModel,
-                    onNavigateToSignIn = { navController.navigate(Screen.SignIn.route) },
+                    onNavigateToSignIn = { email, password ->
+                        navController.navigate("signin?email=$email&password=$password")
+                    },
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                     onAuthSuccess = {
                         navController.navigate("main_graph") {
@@ -51,10 +54,24 @@ fun PillMateApp(
                     }
                 )
             }
-            composable(Screen.SignIn.route) {
+            composable(
+                // Định nghĩa route chấp nhận tham số tùy chọn
+                route = "signin?email={email}&password={password}",
+                arguments = listOf(
+                    navArgument("email") { defaultValue = "" },
+                    navArgument("password") { defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                // Lấy dữ liệu từ URL truyền sang
+                val email = backStackEntry.arguments?.getString("email") ?: ""
+                val password = backStackEntry.arguments?.getString("password") ?: ""
+
                 val viewModel: AuthViewModel = koinViewModel()
+
                 SignInScreen(
                     viewModel = viewModel,
+                    initialEmail = email,
+                    initialPassword = password,
                     onAuthSuccess = {
                         navController.navigate("main_graph") {
                             popUpTo("auth_graph") { inclusive = true }
@@ -151,6 +168,21 @@ fun PillMateApp(
                     navController = navController,
                     viewModel = viewModel
                 )
+            }
+            
+           composable(route = Screen.Appointment.route) {
+                // Dynamically get the current user ID for the profileId
+                val currentUserId = auth.currentUser?.uid ?: ""
+                
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    val appointmentViewModel: AppointmentViewModel = koinViewModel()
+                    
+                    AppointmentScreen(
+                        viewModel = appointmentViewModel,
+                        profileId = currentUserId,
+                        paddingValues = innerPadding // Pass the scaffold padding here
+                    )
+                }
             }
             composable(Screen.ScheduleBuilder.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->

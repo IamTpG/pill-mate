@@ -13,12 +13,14 @@ import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.data.local.entity.ChatMessageEntity
 import com.example.pillmate.data.local.entity.ChatSessionEntity
 import com.example.pillmate.data.local.entity.ProfileEntity
+import com.example.pillmate.data.local.entity.SavedAccountEntity
 
 @Database(
     entities = [
         MedicationEntity::class,
         SupplyLogEntity::class,
         ProfileEntity::class,
+        SavedAccountEntity::class,
         ChatSessionEntity::class,
         ChatMessageEntity::class
     ],

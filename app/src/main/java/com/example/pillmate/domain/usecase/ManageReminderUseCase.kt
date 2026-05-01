@@ -14,7 +14,7 @@ class ManageReminderUseCase(
     private val alarmTracker: AlarmTracker
 ) {
     suspend operator fun invoke(profileId: String, schedule: Schedule): Result<Unit> {
-        val result = scheduleRepository.saveSchedule(profileId, schedule)
+        val result = scheduleRepository.add(profileId, schedule)
         
         if (result.isSuccess) {
             schedule.doseTimes.forEach { doseTime ->

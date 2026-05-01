@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 import com.example.pillmate.presentation.ui.components.CabinetHeader
-
+import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.ui.components.MedicationCard
 import com.example.pillmate.presentation.ui.components.SearchBar
 import com.example.pillmate.presentation.ui.components.AddMedicationDialog
@@ -38,7 +38,7 @@ import com.example.pillmate.presentation.ui.screens.MedicationDetailScreen
 import com.example.pillmate.domain.model.Medication
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.domain.model.InventoryLog
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import com.example.pillmate.presentation.ui.screens.DrugLibrarySearchScreen
 import com.example.pillmate.presentation.ui.screens.DrugInfoScreen
@@ -48,7 +48,7 @@ fun CabinetScreen(
     viewModel: CabinetViewModel,
     libraryViewModel: DrugLibraryViewModel,
     paddingValues: PaddingValues,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // 1. Observe ViewModel
     val uiState by viewModel.uiState.collectAsState()
@@ -73,6 +73,12 @@ fun CabinetScreen(
         return
     }
 
+    val profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
+    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+
+    // Nếu role là "Caregiver_View" thì biến này = true
+    val isReadOnly = currentProfile?.role == "Caregiver_View"
+
     // State to track if the popup is visible
     var showAddDialog by remember { mutableStateOf(false) }
     var showActiveTab by remember { mutableStateOf(true) }
@@ -96,112 +102,114 @@ fun CabinetScreen(
             val logsFlow = remember(selectedMedication!!.id) {
                 viewModel.getLogsForMedication(selectedMedication!!.id)
             }
-            val logs by logsFlow.collectAsState(initial = emptyList<SupplyLogEntity>())
+            val logs by logsFlow.collectAsState(initial = emptyList<InventoryLog>())
             
             MedicationDetailScreen(
                 medication = selectedMedication!!,
                 logs = logs,
                 onBack = { selectedMedication = null },
-                onEditClick = { medicationToEdit = selectedMedication },
-                onLogDoseClick = { showLogDoseDialog = true },
+                onEditClick = { if (!isReadOnly) medicationToEdit = selectedMedication },
+                onLogDoseClick = { if (!isReadOnly) showLogDoseDialog = true },
                 onDeleteClick = {
-                    viewModel.deleteMedication(selectedMedication!!)
-                    selectedMedication = null
+                    if (!isReadOnly) {
+                        viewModel.deleteMedication(selectedMedication!!)
+                        selectedMedication = null
+                    }
                 }
             )
         } else {
-        Image(
-            painter = painterResource(id = R.drawable.background),
-            contentDescription = "Forest Background",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
-        )
-
-        // 3. Scrollable Content
-        LazyColumn(
-            contentPadding = PaddingValues(
-                start = 16.dp, 
-                end = 16.dp, 
-                top = paddingValues.calculateTopPadding() + 48.dp, 
-                bottom = paddingValues.calculateBottomPadding() + 20.dp 
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            
-            // --- HEADER ---
-            item {
-                CabinetHeader(
-                    healthScore = uiState.healthScore,
-                    activeCount = uiState.activeMedsCount,
-                    lowStockCount = uiState.lowStockCount,
-                    onSearchClick = { showLibrarySearch = true }
-                )
-            }
-
-            // --- SEARCH BAR ---
-            item {
-                SearchBar(
-                    query = uiState.searchQuery,
-                    onQueryChange = { viewModel.onSearchQueryChanged(it) }
-                )
-            }
-
-            // --- YOUR MEDICATIONS SECTION ---
-            item {
-                SectionTitle(
-                    title = "Your Medications",
-                    showActiveTab = showActiveTab,
-                    onToggle = { showActiveTab = it }
-                )
-            }
-
-            val currentMeds = if (showActiveTab) uiState.activeMedications else uiState.expiredMedications
-            if (currentMeds.isEmpty()) {
-                item {
-                    Text(
-                        text = if (showActiveTab) "No active medications" else "No expired medications",
-                        color = Color.Gray,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
-            } else {
-                items(currentMeds) { medication ->
-                    MedicationCard(
-                        medication = medication,
-                        onClick = { selectedMedication = medication }
-                    )
-                }
-            }
-        }
-
-
-
-        FloatingActionButton(
-            onClick = { showAddDialog = true },
-            containerColor = Color.White,
-            contentColor = Color(0xFF1c5f55), // Your brand green
-            shape = CircleShape,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = 24.dp, 
-                    bottom = paddingValues.calculateBottomPadding() + 24.dp
-                )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Log Medicine",
-                modifier = Modifier.size(32.dp)
+            Image(
+                painter = painterResource(id = R.drawable.background),
+                contentDescription = "Forest Background",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+            )
+
+            // 3. Scrollable Content
+            LazyColumn(
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = paddingValues.calculateTopPadding() + 48.dp,
+                    bottom = paddingValues.calculateBottomPadding() + 20.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+                // --- HEADER ---
+                item {
+                    CabinetHeader(
+                        healthScore = uiState.healthScore,
+                        activeCount = uiState.activeMedsCount,
+                        lowStockCount = uiState.lowStockCount,
+                        onSearchClick = { showLibrarySearch = true }
+                    )
+                }
+
+                // --- SEARCH BAR ---
+                item {
+                    SearchBar(
+                        query = uiState.searchQuery,
+                        onQueryChange = { viewModel.onSearchQueryChanged(it) }
+                    )
+                }
+
+                // --- YOUR MEDICATIONS SECTION ---
+                item {
+                    SectionTitle(
+                        title = "Your Medications",
+                        showActiveTab = showActiveTab,
+                        onToggle = { showActiveTab = it }
+                    )
+                }
+
+                val currentMeds = if (showActiveTab) uiState.activeMedications else uiState.expiredMedications
+                if (currentMeds.isEmpty()) {
+                    item {
+                        Text(
+                            text = if (showActiveTab) "No active medications" else "No expired medications",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                } else {
+                    items(currentMeds) { medication ->
+                        MedicationCard(
+                            medication = medication,
+                            onClick = { selectedMedication = medication }
+                        )
+                    }
+                }
+            }
+
+            if (!isReadOnly) {
+                FloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    containerColor = Color.White,
+                    contentColor = Color(0xFF1c5f55), // Your brand green
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(
+                            end = 24.dp,
+                            bottom = paddingValues.calculateBottomPadding() + 24.dp
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Log Medicine",
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
         }
-        } // End of else block for main screen content
 
         if (showAddDialog || medicationToEdit != null) {
             

@@ -9,6 +9,9 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object Reminders : Screen("reminders", "Reminders", R.drawable.ic_reminder)
     object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
     
+    object Appointment : Screen("appointment_detail/{apptId}", "Appointment", R.drawable.ic_calendar) {
+        fun createRoute(apptId: String) = "appointment_detail/$apptId"
+    }
     // Auth screens
     object AuthOptions : Screen("auth_options", "Auth", 0)
     object SignIn : Screen("sign_in", "Sign In", 0)
@@ -50,5 +53,6 @@ val bottomNavItems = listOf(
     Screen.ScheduleBuilder,
     Screen.Reminders,
     Screen.AIChat,
+    Screen.Appointment,
     Screen.Settings
 )

@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pillmate.data.local.dao.ProfileDao
-import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.domain.model.InventoryLog
+import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.domain.repository.MedicationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,11 +16,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.firstOrNull
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import com.example.pillmate.domain.model.Medication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.UUID
+
+import com.example.pillmate.domain.usecase.DeleteMedicationUseCase
 
 data class CabinetUiState(
     val isLoading: Boolean = true,
@@ -31,13 +35,13 @@ data class CabinetUiState(
 )
 
 class CabinetViewModel(
-    private val cabinetRepository: CabinetRepository,
+    private val medicationRepository: MedicationRepository,
+    private val deleteMedicationUseCase: DeleteMedicationUseCase,
     private val profileDao: ProfileDao,
-    private val auth: FirebaseAuth, // 🟢 Injected Auth
+    private val auth: FirebaseAuth,
     application: Application
 ) : AndroidViewModel(application) {
 
-    // The single source of truth for the UI
     private val _uiState = MutableStateFlow(CabinetUiState())
     val uiState: StateFlow<CabinetUiState> = _uiState.asStateFlow()
 
@@ -64,20 +68,17 @@ class CabinetViewModel(
                 val effectiveId = profile?.id ?: getEffectiveProfileId()
                 
                 if (effectiveId != null) {
-                    // 🟢 Fetch medications for the active profile or UID
                     combine(
-                        cabinetRepository.getCabinetMedications(effectiveId),
+                        medicationRepository.getAll(effectiveId),
                         _searchQuery
                     ) { allMedications, query ->
 
-                        // 1. Handle the Search Bar
                         val filteredMeds = if (query.isBlank()) {
                             allMedications
                         } else {
                             allMedications.filter { it.name.contains(query, ignoreCase = true) }
                         }
 
-                        // 2. Split into Expired vs Active
                         val expired = filteredMeds.filter {
                             it.supply?.expirationDate?.before(java.util.Date()) == true
                         }
@@ -85,11 +86,9 @@ class CabinetViewModel(
                             !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
                         }
 
-                        // 3. Calculate Health Score
                         val penalty = expired.size * 5
                         val score = (100 - penalty).coerceIn(0, 100)
 
-                        // 4. Output state
                         CabinetUiState(
                             isLoading = false,
                             healthScore = score,
@@ -141,7 +140,6 @@ class CabinetViewModel(
             val photoUrl = saveImageToInternalStorage(imageUriStr)
             val newId = UUID.randomUUID().toString()
 
-            // 1. Create base Medication
             val newMedication = Medication(
                 id = newId,
                 name = name,
@@ -154,12 +152,10 @@ class CabinetViewModel(
                 )
             )
 
-            // 🟢 Pass activeProfileId to repository
-            cabinetRepository.insertMedication(activeProfileId, newMedication)
+            medicationRepository.add(activeProfileId, newMedication)
 
-            // 2. Log initial stock
             if (initialCount > 0) {
-                cabinetRepository.logInventoryChange(
+                medicationRepository.logInventoryChange(
                     profileId = activeProfileId,
                     medicationId = newId,
                     amount = initialCount,
@@ -172,8 +168,7 @@ class CabinetViewModel(
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = getEffectiveProfileId() ?: return@launch
-            
-            // Find current stock to enforce floor of 0
+
             val currentStock = _uiState.value.activeMedications
                 .find { it.id == medicationId }?.supply?.quantity?.toInt()
                 ?: _uiState.value.expiredMedications
@@ -181,7 +176,7 @@ class CabinetViewModel(
                 ?: 0
             val clampedAmount = amountTaken.coerceAtMost(currentStock.coerceAtLeast(0))
             if (clampedAmount <= 0) return@launch
-            cabinetRepository.logInventoryChange(
+            medicationRepository.logInventoryChange(
                 profileId = activeProfileId,
                 medicationId = medicationId,
                 amount = -clampedAmount,
@@ -190,8 +185,8 @@ class CabinetViewModel(
         }
     }
 
-    fun getLogsForMedication(medicationId: String): Flow<List<com.example.pillmate.data.local.entity.SupplyLogEntity>> {
-        return cabinetRepository.getLogsForMedication(medicationId)
+    fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>> {
+        return medicationRepository.getLogsForMedication(medicationId)
     }
 
     fun updateMedication(
@@ -220,13 +215,12 @@ class CabinetViewModel(
                 )
             )
 
-            // 🟢 Pass activeProfileId to repository
-            cabinetRepository.updateMedication(activeProfileId, updatedMedication)
+            medicationRepository.update(activeProfileId, updatedMedication)
 
             val currentQuantity = (existingMedication.supply?.quantity ?: 0f).toInt()
             if (newCount != currentQuantity) {
                 val difference = newCount - currentQuantity
-                cabinetRepository.logInventoryChange(
+                medicationRepository.logInventoryChange(
                     profileId = activeProfileId,
                     medicationId = existingMedication.id,
                     amount = difference,
@@ -239,7 +233,7 @@ class CabinetViewModel(
     fun deleteMedication(medication: Medication) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = getEffectiveProfileId() ?: return@launch
-            cabinetRepository.deleteMedication(activeProfileId, medication)
+            deleteMedicationUseCase(activeProfileId, medication.id)
         }
     }
 }

@@ -21,7 +21,7 @@ class GetHomeTasksUseCase(
     private val logRepository: LogRepository
 ) {
     fun execute(profileId: String, date: Date): Flow<HomeData> {
-        return scheduleRepository.getSchedulesFlow(profileId)
+        return scheduleRepository.getAll(profileId)
             .combine(logRepository.getLogsForDayFlow(profileId, date)) { schedules, logs ->
                 val now = Date()
                 

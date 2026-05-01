@@ -7,6 +7,6 @@ class UpdateScheduleUseCase(
     private val scheduleRepository: ScheduleRepository
 ) {
     suspend operator fun invoke(profileId: String, schedule: Schedule): Result<Unit> {
-        return scheduleRepository.saveSchedule(profileId, schedule)
+        return scheduleRepository.add(profileId, schedule)
     }
 }

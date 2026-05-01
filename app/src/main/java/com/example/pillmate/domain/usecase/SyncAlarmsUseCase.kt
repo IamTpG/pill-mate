@@ -27,7 +27,7 @@ class SyncAlarmsUseCase(
 
     suspend operator fun invoke(profileId: String) {
         Log.d("SyncAlarmsUseCase", "Starting sync for $profileId")
-        val result = scheduleRepository.getSchedules(profileId)
+        val result = scheduleRepository.getAllOnce(profileId)
         val schedules = result.getOrNull() ?: return
 
         // Fetch logs for today to avoid scheduling already completed tasks

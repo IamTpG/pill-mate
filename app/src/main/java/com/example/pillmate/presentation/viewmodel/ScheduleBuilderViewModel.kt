@@ -81,7 +81,7 @@ class ScheduleBuilderViewModel(
         }
         viewModelScope.launch {
             val userId = getEffectiveProfileId() ?: return@launch
-            val result = scheduleRepository.getSchedules(userId)
+            val result = scheduleRepository.getAllOnce(userId)
             val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == medication.id } ?: emptyList()
             _uiState.update { it.copy(existingSchedules = existing) }
         }
@@ -316,10 +316,10 @@ class ScheduleBuilderViewModel(
                     )
                 )
                 
-                scheduleRepository.saveSchedule(userId, schedule).getOrThrow()
+                scheduleRepository.add(userId, schedule)
                 
                 // Refresh existing schedules to align with updated DB state
-                val refreshedList = scheduleRepository.getSchedules(userId).getOrThrow().filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id }
+                val refreshedList = scheduleRepository.getAllOnce(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
                 val refreshedDoc = refreshedList.find { it.id == schedule.id || (state.existingScheduleId.isNullOrBlank() && it.createdAt == schedule.createdAt) }
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshedList, existingScheduleId = refreshedDoc?.id, readOnly = true) }
             } catch (ex: Exception) {
@@ -336,9 +336,9 @@ class ScheduleBuilderViewModel(
         viewModelScope.launch {
             val userId = getEffectiveProfileId() ?: return@launch
             try {
-                scheduleRepository.deleteSchedule(userId, idToDelete).getOrThrow()
+                scheduleRepository.remove(userId, idToDelete)
                 // Refresh existing schedules to align with updated DB state
-                val refreshedList = scheduleRepository.getSchedules(userId).getOrThrow().filter { it.eventSnapshot.sourceId == state.selectedMedication?.id }
+                val refreshedList = scheduleRepository.getAllOnce(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication?.id } ?: emptyList()
                 _uiState.update { it.copy(
                     isSaving = false,
                     saveSuccess = true,
