@@ -13,7 +13,8 @@ import java.util.Date
 class LogTaskUseCase(
     private val medicationRepository: MedicationRepository,
     private val logRepository: LogRepository,
-    private val notificationManager: TaskNotificationManager
+    private val notificationManager: TaskNotificationManager,
+    private val checkLowStockUseCase: CheckLowStockUseCase
 ) {
     suspend fun execute(
         profileId: String,
@@ -50,18 +51,11 @@ class LogTaskUseCase(
                 )
             }
 
-            // 3. IMMEDIATE LOW STOCK ALERT
+            // 3. DYNAMIC LOW STOCK ALERT
             try {
-                val supplies = medicationRepository.getMedicationSupplies(profileId, sourceId).getOrNull() ?: emptyList()
-                val currentStock = if (supplyId != null) {
-                    supplies.find { it.id == supplyId }?.quantity ?: 0f
-                } else {
-                    // If no specific supply, check the lowest remaining batch
-                    supplies.filter { it.quantity > 0 }.minOfOrNull { it.quantity } ?: 0f
-                }
-
-                if (currentStock < 5.0f) {
-                    notificationManager.showLowStockNotification(sourceId, currentStock)
+                val lowStockResult = checkLowStockUseCase.execute(profileId, sourceId)
+                if (lowStockResult.isLow) {
+                    notificationManager.showLowStockNotification(sourceId, lowStockResult.remainingStock)
                 }
             } catch (e: Exception) {
                 // Non-fatal

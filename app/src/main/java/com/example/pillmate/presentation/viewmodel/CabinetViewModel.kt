@@ -7,6 +7,7 @@ import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.model.InventoryLog
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.repository.MedicationRepository
+import com.example.pillmate.domain.usecase.CheckLowStockUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,7 @@ class CabinetViewModel(
     private val medicationRepository: MedicationRepository,
     private val deleteMedicationUseCase: DeleteMedicationUseCase,
     private val profileDao: ProfileDao,
+    private val checkLowStockUseCase: CheckLowStockUseCase,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -76,11 +78,15 @@ class CabinetViewModel(
                         val penalty = expired.size * 5
                         val score = (100 - penalty).coerceIn(0, 100)
 
+                        val lowStockResults = filteredMeds.map { med ->
+                            checkLowStockUseCase.execute(profile.id, med.id)
+                        }
+
                         CabinetUiState(
                             isLoading = false,
                             healthScore = score,
                             activeMedsCount = active.size,
-                            lowStockCount = filteredMeds.count { (it.supply?.quantity ?: 0f) < 10f },
+                            lowStockCount = lowStockResults.count { it.isLow },
                             searchQuery = query,
                             activeMedications = active,
                             expiredMedications = expired
