@@ -10,7 +10,8 @@ data class Medication(
     val photoUrl: String? = null,
     val supply: MedicationSupply? = null,
     val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
+    val updatedAt: Date = Date(),
+    val deletedAt: Date? = null
 )
 
 data class MedicationSupply(

@@ -18,4 +18,10 @@ interface SupplyLogDao {
 
     @Query("SELECT SUM(changeAmount) FROM supply_logs WHERE medicationId = :medicationId")
     fun getCurrentInventoryCount(medicationId: String): Flow<Int?>
+
+    @Query("SELECT * FROM supply_logs ORDER BY timestamp DESC")
+    fun observeAllLogs(): Flow<List<SupplyLogEntity>>
+
+    @Query("DELETE FROM supply_logs WHERE medicationId = :medicationId")
+    suspend fun deleteLogsForMedication(medicationId: String)
 }

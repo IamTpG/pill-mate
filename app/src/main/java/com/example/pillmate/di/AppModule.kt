@@ -56,7 +56,7 @@ val appModule = module {
     single<DataGenerator> { DataGenerator(get()) }
 
     single<MedicationRepository> {
-        val roomRepo = RoomMedicationRepositoryImpl(get())
+        val roomRepo = RoomMedicationRepositoryImpl(get(), get())
         val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
         HybridMedicationRepositoryImpl(
             localRepo = roomRepo,
@@ -74,7 +74,7 @@ val appModule = module {
     single { com.example.pillmate.util.SyncManager(get()) }
 
     factory { LogTaskUseCase(get(), get(), get()) }
-    factory { DeleteMedicationUseCase(get(), get()) }
+    factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
