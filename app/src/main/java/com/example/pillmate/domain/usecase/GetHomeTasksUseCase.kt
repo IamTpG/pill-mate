@@ -114,7 +114,8 @@ class GetHomeTasksUseCase(
                             dose = fallbackDose,
                             taskType = schedule.type,
                             status = status,
-                            frequency = schedule.frequency
+                            frequency = schedule.frequency,
+                            recurrenceRule = schedule.recurrenceRule
                         )
                     }
                 }.sortedBy { it.time }
