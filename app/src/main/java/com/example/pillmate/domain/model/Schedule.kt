@@ -20,7 +20,8 @@ data class Schedule(
     val eventSnapshot: ScheduleEvent = ScheduleEvent(),
     val endDate: Date? = null,
     val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
+    val updatedAt: Date = Date(),
+    val deletedAt: Date? = null
 )
 
 enum class ReminderType {

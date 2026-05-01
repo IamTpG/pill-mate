@@ -12,5 +12,6 @@ data class MedicationEntity(
     val description: String,
     val unit: String,
     val photoUrl: String? = null,
-    val expirationDate: Long
+    val expirationDate: Long,
+    val deletedAt: Long? = null
 )

@@ -29,9 +29,9 @@ class HybridMedicationRepositoryImpl(
     networkChecker = { networkChecker.isOnline() },
     getId = { it.id },
     getUpdatedAt = { it.updatedAt },
-    getDeletedAt = { null }, // Medications use hard delete for now
+    getDeletedAt = { it.deletedAt },
     copyWithUpdated = { item, date -> item.copy(updatedAt = date) },
-    copyWithDeleted = { item, _ -> item } // No soft delete
+    copyWithDeleted = { item, date -> item.copy(deletedAt = date) }
 ), MedicationRepository {
 
     override suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?> = runCatching {

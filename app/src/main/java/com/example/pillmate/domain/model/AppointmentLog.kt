@@ -18,5 +18,7 @@ data class Appointment(
 	val name: String = "",
 	val location: String = "",
 	val doctorName: String = "",
-	val description: String = ""
+	val description: String = "",
+	val updatedAt: Date = Date(),
+	val deletedAt: Date? = null
 )
