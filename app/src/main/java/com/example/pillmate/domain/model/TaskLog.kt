@@ -19,5 +19,7 @@ data class TaskLog(
     val actualTime: Date? = null,
     val eventSnapshot: Map<String, Any> = emptyMap(),
     val notes: String? = null,
-    val createdAt: Date = Date()
+    val createdAt: Date = Date(),
+    val updatedAt: Date = Date(),
+    val deletedAt: Date? = null
 )
