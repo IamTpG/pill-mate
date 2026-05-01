@@ -28,6 +28,11 @@ data class ScheduleBuilderUiState(
     val repeatFrequency: String = "Daily",
     val availableFrequencies: List<String> = listOf("Daily", "Weekly", "Interval", "As Needed"),
     
+    val selectedDaysOfWeek: Set<Int> = emptySet(), // 1=Mon, ..., 7=Sun
+    val intervalValue: String = "1",
+    val intervalUnit: String = "Days",
+    val intervalUnits: List<String> = listOf("Hours", "Days", "Weeks", "Months"),
+    
     val reminderTimes: List<ReminderTime> = emptyList(),
     
     val startDate: Date? = null,
@@ -138,6 +143,28 @@ class ScheduleBuilderViewModel(
         _uiState.update { it.copy(repeatFrequency = freq) }
     }
 
+    fun toggleDayOfWeek(day: Int) {
+        _uiState.update { state ->
+            val current = state.selectedDaysOfWeek.toMutableSet()
+            if (current.contains(day)) {
+                current.remove(day)
+            } else {
+                if (current.size < 6) { // Cannot select 7 days
+                    current.add(day)
+                }
+            }
+            state.copy(selectedDaysOfWeek = current)
+        }
+    }
+
+    fun setIntervalValue(value: String) {
+        _uiState.update { it.copy(intervalValue = value) }
+    }
+
+    fun setIntervalUnit(unit: String) {
+        _uiState.update { it.copy(intervalUnit = unit) }
+    }
+
     fun addReminderTime(timeTitle: String, doseContext: String, dose: Float = 1.0f) {
         _uiState.update { state ->
             val updated = state.reminderTimes + ReminderTime(reminderIdCounter++, timeTitle, doseContext, dose)
@@ -148,6 +175,40 @@ class ScheduleBuilderViewModel(
     fun removeReminderTime(id: Int) {
         _uiState.update { state ->
             state.copy(reminderTimes = state.reminderTimes.filter { it.id != id }, saveSuccess = false)
+        }
+    }
+
+    private fun extract24Hour(timeStr: String): Int {
+        val parts = timeStr.split(":")
+        if (parts.isEmpty()) return 8
+        var hr = parts[0].filter { it.isDigit() }.toIntOrNull() ?: 8
+        if (timeStr.contains("PM", ignoreCase = true) && hr < 12) hr += 12
+        if (timeStr.contains("AM", ignoreCase = true) && hr == 12) hr = 0
+        return hr
+    }
+
+    private fun extractMinute(timeStr: String): Int {
+        val parts = timeStr.split(":")
+        if (parts.size < 2) return 0
+        return parts[1].filter { it.isDigit() }.toIntOrNull() ?: 0
+    }
+
+    private fun formatToIsoString(date: Date, timeStr: String): String {
+        return try {
+            val dateCal = java.util.Calendar.getInstance().apply { time = date }
+            val timeParts = timeStr.split(":")
+            val cleanMin = if (timeParts.size > 1) timeParts[1].filter { it.isDigit() }.toIntOrNull() ?: 0 else 0
+            val hr = extract24Hour(timeStr)
+
+            dateCal.set(java.util.Calendar.HOUR_OF_DAY, hr)
+            dateCal.set(java.util.Calendar.MINUTE, cleanMin)
+            dateCal.set(java.util.Calendar.SECOND, 0)
+            
+            val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+            isoFormat.format(dateCal.time)
+        } catch (e: Exception) {
+            val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+            isoFormat.format(date)
         }
     }
 
@@ -168,6 +229,19 @@ class ScheduleBuilderViewModel(
             _uiState.update { it.copy(error = "Please select a start date.") }
             return
         }
+
+        if (state.repeatFrequency == "Weekly" && state.selectedDaysOfWeek.isEmpty()) {
+            _uiState.update { it.copy(error = "Please select at least one day for weekly frequency.") }
+            return
+        }
+
+        if (state.repeatFrequency == "Interval") {
+            val num = state.intervalValue.toIntOrNull()
+            if (num == null || num <= 0) {
+                _uiState.update { it.copy(error = "Please enter a valid interval number.") }
+                return
+            }
+        }
         
         _uiState.update { it.copy(isSaving = true, error = null) }
         
@@ -179,6 +253,43 @@ class ScheduleBuilderViewModel(
             }
 
             try {
+                // 1. Format his Start Time (The Anchor)
+                val firstTime = state.reminderTimes.firstOrNull()?.timeTitle ?: "08:00"
+                val startTimeIso = formatToIsoString(state.startDate ?: Date(), firstTime) 
+
+                // 2. Build his RRULE String
+                val hours = state.reminderTimes.joinToString(",") { extract24Hour(it.timeTitle).toString() }
+                val minutes = state.reminderTimes.joinToString(",") { extractMinute(it.timeTitle).toString() }
+                
+                val rruleString = when (state.repeatFrequency) {
+                    "Daily" -> {
+                        "FREQ=DAILY;BYHOUR=$hours;BYMINUTE=$minutes"
+                    }
+                    "Weekly" -> {
+                        val daysMap = mapOf(1 to "MO", 2 to "TU", 3 to "WE", 4 to "TH", 5 to "FR", 6 to "SA", 7 to "SU")
+                        val byDay = state.selectedDaysOfWeek.mapNotNull { daysMap[it] }.joinToString(",")
+                        if (byDay.isNotEmpty()) {
+                            "FREQ=WEEKLY;BYDAY=$byDay;BYHOUR=$hours;BYMINUTE=$minutes"
+                        } else null
+                    }
+                    "Interval" -> {
+                        val intervalNum = state.intervalValue.toIntOrNull() ?: 1
+                        val freq = when (state.intervalUnit) {
+                            "Hours" -> "HOURLY"
+                            "Days" -> "DAILY"
+                            "Weeks" -> "WEEKLY"
+                            "Months" -> "MONTHLY"
+                            else -> "DAILY"
+                        }
+                        if (freq == "HOURLY") {
+                            "FREQ=HOURLY;INTERVAL=$intervalNum"
+                        } else {
+                            "FREQ=$freq;INTERVAL=$intervalNum;BYHOUR=$hours;BYMINUTE=$minutes"
+                        }
+                    }
+                    else -> null
+                }
+
                 val schedule = Schedule(
                     id = state.existingScheduleId ?: "",
                     name = state.scheduleName,
@@ -187,6 +298,14 @@ class ScheduleBuilderViewModel(
                         com.example.pillmate.domain.model.DoseTime(time = it.timeTitle, doseContext = it.doseContext, dose = it.dose) 
                     },
                     frequency = state.repeatFrequency,
+                    startTime = startTimeIso,
+                    recurrenceRule = rruleString,
+                    reminders = listOf(
+                        com.example.pillmate.domain.model.Reminder(
+                            type = com.example.pillmate.domain.model.ReminderType.ALARM, 
+                            minutesBefore = 0
+                        )
+                    ),
                     endDate = state.endDate,
                     createdAt = state.startDate ?: Date(),
                     eventSnapshot = ScheduleEvent(
