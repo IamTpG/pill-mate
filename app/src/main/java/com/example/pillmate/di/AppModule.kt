@@ -42,17 +42,21 @@ import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
+import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
     single { FirebaseFirestore.getInstance() }
+    single { FirebaseFunctions.getInstance() }
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
 
     single<MedicationRepository> {
-        val roomRepo = RoomMedicationRepositoryImpl(get())
+        val roomRepo = RoomMedicationRepositoryImpl(get(), get())
         val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
         HybridMedicationRepositoryImpl(
             localRepo = roomRepo,
@@ -70,7 +74,7 @@ val appModule = module {
     single { com.example.pillmate.util.SyncManager(get()) }
 
     factory { LogTaskUseCase(get(), get(), get()) }
-    factory { DeleteMedicationUseCase(get(), get()) }
+    factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
@@ -95,7 +99,8 @@ val appModule = module {
     }
     
     single<DrugLibraryRepository> { DrugLibraryRepositoryImpl(get()) }
-    
+    single { get<AppDatabase>().chatDao() }
+    single { AIChatRepository(get(), get(), get()) }
     
     single<AppointmentRepository> { FirestoreAppointmentRepositoryImpl(get()) }
     factory { GetAppointmentsUseCase(get()) }
@@ -110,9 +115,10 @@ val viewModelModule = module {
     viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
-    viewModel { ScheduleBuilderViewModel(get()) }
+    viewModel { ScheduleBuilderViewModel(get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
+    viewModel { AIChatViewModel(get(), get(), get()) }
 }

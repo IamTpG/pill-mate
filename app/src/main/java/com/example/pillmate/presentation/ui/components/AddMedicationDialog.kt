@@ -46,7 +46,14 @@ fun AddMedicationDialog(
         initialSelectedDateMillis = medicationToEdit?.supply?.expirationDate?.time,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= System.currentTimeMillis() - 86400000
+                // Earliest selectable date is tomorrow
+                val calendar = java.util.Calendar.getInstance()
+                calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                calendar.set(java.util.Calendar.MINUTE, 0)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                return utcTimeMillis >= calendar.timeInMillis
             }
             override fun isSelectableYear(year: Int): Boolean {
                 return true

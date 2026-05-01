@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.firstOrNull
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class CabinetViewModel(
     private val medicationRepository: MedicationRepository,
     private val deleteMedicationUseCase: DeleteMedicationUseCase,
     private val profileDao: ProfileDao,
+    private val auth: FirebaseAuth,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -49,13 +51,25 @@ class CabinetViewModel(
         observeCabinet()
     }
 
+    private suspend fun getEffectiveProfileId(): String? {
+        val active = profileDao.getActiveProfile()?.id
+        if (active != null) return active
+        
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id
+        if (anyLocal != null) return anyLocal
+        
+        return auth.currentUser?.uid
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeCabinet() {
         viewModelScope.launch {
             profileDao.getCurrentProfileFlow().flatMapLatest { profile ->
-                if (profile != null) {
+                val effectiveId = profile?.id ?: getEffectiveProfileId()
+                
+                if (effectiveId != null) {
                     combine(
-                        medicationRepository.getAll(profile.id),
+                        medicationRepository.getAll(effectiveId),
                         _searchQuery
                     ) { allMedications, query ->
 
@@ -86,6 +100,7 @@ class CabinetViewModel(
                         )
                     }
                 } else {
+                    // Fallback empty state
                     flowOf(CabinetUiState(isLoading = false))
                 }
             }.collect { finalState ->
@@ -120,7 +135,7 @@ class CabinetViewModel(
 
     fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
 
             val photoUrl = saveImageToInternalStorage(imageUriStr)
             val newId = UUID.randomUUID().toString()
@@ -152,7 +167,7 @@ class CabinetViewModel(
 
     fun logDose(medicationId: String, amountTaken: Int, reason: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
 
             val currentStock = _uiState.value.activeMedications
                 .find { it.id == medicationId }?.supply?.quantity?.toInt()
@@ -184,7 +199,7 @@ class CabinetViewModel(
         imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
 
             val photoUrl = saveImageToInternalStorage(imageUriStr) ?: existingMedication.photoUrl
             val updatedMedication = existingMedication.copy(
@@ -217,7 +232,7 @@ class CabinetViewModel(
 
     fun deleteMedication(medication: Medication) {
         viewModelScope.launch(Dispatchers.IO) {
-            val activeProfileId = profileDao.getCurrentProfileFlow().firstOrNull()?.id ?: return@launch
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
             deleteMedicationUseCase(activeProfileId, medication.id)
         }
     }

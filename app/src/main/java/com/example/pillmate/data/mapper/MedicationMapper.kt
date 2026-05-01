@@ -16,7 +16,7 @@ fun MedicationEntity.toDomainModel(inventory: Int = 0): Medication {
             quantity = inventory.toFloat(),
             expirationDate = if (expirationDate > 0) Date(expirationDate) else null
         ),
-        deletedAt = if (deletedAt != null) Date(deletedAt) else null
+        deletedAt = deletedAt?.let { Date(it) }
     )
 }
 

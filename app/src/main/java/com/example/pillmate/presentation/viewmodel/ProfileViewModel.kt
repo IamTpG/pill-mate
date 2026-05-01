@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.map
 
 class ProfileViewModel(
@@ -51,51 +52,49 @@ class ProfileViewModel(
     fun syncCurrentProfile() {
         viewModelScope.launch(Dispatchers.IO) {
             val firebaseUser = auth.currentUser ?: return@launch
-            val firebaseUid = firebaseUser.uid // ID của tài khoản chính chủ đang đăng nhập
+            val firebaseUid = firebaseUser.uid
 
-            // Xác định người đang được chọn (Active)
             val activeProfile = profileDao.getActiveProfile()
             val targetUid = activeProfile?.id ?: firebaseUid
 
-            if (targetUid == firebaseUid) {
-                db.collection("profiles").document(targetUid).get().addOnSuccessListener { doc ->
+            try {
+                if (targetUid == firebaseUid) {
+                    val doc = db.collection("profiles").document(targetUid).get().await()
                     if (doc.exists()) {
                         val name = doc.getString("fullName") ?: "Unknown User"
                         val dobMillis = doc.getLong("dateOfBirth")
                         val healthInfo = doc.getString("healthInformation") ?: ""
 
-                        viewModelScope.launch(Dispatchers.IO) {
-                            // TỰ ĐỘNG GHI NHỚ TÀI KHOẢN KHI ĐĂNG NHẬP THÀNH CÔNG
-                            profileDao.insertSavedAccount(
-                                SavedAccountEntity(
-                                    id = firebaseUid,
-                                    email = firebaseUser.email ?: "",
-                                    name = name,
-                                    loginMethod = if (firebaseUser.providerData.any { it.providerId == "google.com" }) "GOOGLE" else "EMAIL"
-                                )
+                        profileDao.insertSavedAccount(
+                            SavedAccountEntity(
+                                id = firebaseUid,
+                                email = firebaseUser.email ?: "",
+                                name = name,
+                                loginMethod = if (firebaseUser.providerData.any { it.providerId == "google.com" }) "GOOGLE" else "EMAIL"
                             )
+                        )
 
-                            // Chỉ lưu duy nhất 1 Primary User vào Room tại 1 thời điểm
-                            profileDao.clearAllProfiles()
-                            profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
+                        profileDao.clearAllProfiles()
+                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
 
-                            // Đồng bộ người theo dõi của tài khoản này
-                            syncFollowedProfiles(firebaseUid)
-                        }
+                        syncFollowedProfiles(firebaseUid)
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
     private fun loadProfileDetails(profileId: String, roleIfNew: String = "Caregiver_View") {
-        db.collection("profiles").document(profileId).get().addOnSuccessListener { doc ->
-            if (doc.exists()) {
-                val name = doc.getString("fullName") ?: "Unknown User"
-                val dobMillis = doc.getLong("dateOfBirth")
-                val healthInfo = doc.getString("healthInformation") ?: ""
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val doc = db.collection("profiles").document(profileId).get().await()
+                if (doc.exists()) {
+                    val name = doc.getString("fullName") ?: "Unknown User"
+                    val dobMillis = doc.getLong("dateOfBirth")
+                    val healthInfo = doc.getString("healthInformation") ?: ""
 
-                viewModelScope.launch(Dispatchers.IO) {
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
                         profileDao.insertProfile(
@@ -118,21 +117,24 @@ class ProfileViewModel(
                         )
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
     fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, onSuccess: () -> Unit) {
-        val activeId = currentLocalProfile.value?.id ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
 
-        val updates = mapOf(
-            "fullName" to name,
-            "dateOfBirth" to dobMillis,
-            "healthInformation" to healthInfo
-        )
+            val updates = mapOf(
+                "fullName" to name,
+                "dateOfBirth" to dobMillis,
+                "healthInformation" to healthInfo
+            )
 
-        db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).addOnSuccessListener {
-            viewModelScope.launch(Dispatchers.IO) {
+            try {
+                db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).await()
                 val currentEntity = profileDao.getProfileById(activeId)
                 if (currentEntity != null) {
                     profileDao.insertProfile(
@@ -143,7 +145,9 @@ class ProfileViewModel(
                         )
                     )
                 }
-                launch(Dispatchers.Main) { onSuccess() }
+                withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

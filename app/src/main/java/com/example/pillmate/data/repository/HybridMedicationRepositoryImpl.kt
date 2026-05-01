@@ -29,11 +29,10 @@ class HybridMedicationRepositoryImpl(
     networkChecker = { networkChecker.isOnline() },
     getId = { it.id },
     getUpdatedAt = { it.updatedAt },
-    getDeletedAt = { it.deletedAt },
+    getDeletedAt = { it.deletedAt }, // Use soft delete for background sync worker
     copyWithUpdated = { item, date -> item.copy(updatedAt = date) },
-    copyWithDeleted = { item, date -> item.copy(deletedAt = date) }
+    copyWithDeleted = { item, date -> item.copy(deletedAt = date) } // Enable soft delete
 ), MedicationRepository {
-
     override suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?> = runCatching {
         val med = getById(profileId, id).getOrThrow()
         if (med != null) {

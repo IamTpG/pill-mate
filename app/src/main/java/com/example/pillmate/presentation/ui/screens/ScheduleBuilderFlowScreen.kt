@@ -67,7 +67,7 @@ fun ScheduleBuilderFlowScreen(
                     paddingValues = paddingValues,
                     viewModel = scheduleViewModel,
                     onBack = {
-                        scheduleViewModel.setSelectedMedication(uiState.selectedMedication!!)
+                        uiState.selectedMedication?.let { scheduleViewModel.setSelectedMedication(it) }
                         currentScreen = "LIST"
                     }
                 )

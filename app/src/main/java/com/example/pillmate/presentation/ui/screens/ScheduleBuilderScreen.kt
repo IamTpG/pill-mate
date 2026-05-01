@@ -120,14 +120,8 @@ fun ScheduleBuilderScreen(
                         }
                     }
                 } else {
-                    // New schedule: just tick to save
-                    IconButton(onClick = { viewModel.saveSchedule() }) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Check, contentDescription = "Save", tint = Color(0xFF81C784))
-                        }
-                    }
+                    // New schedule: just spacing, save button is at bottom
+                    Spacer(modifier = Modifier.width(48.dp))
                 }
             }
             HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
@@ -217,6 +211,75 @@ fun ScheduleBuilderScreen(
                             }
                         }
                     }
+
+                    if (uiState.repeatFrequency == "Weekly") {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("SELECT DAYS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            val days = listOf("Mo" to 1, "Tu" to 2, "We" to 3, "Th" to 4, "Fr" to 5, "Sa" to 6, "Su" to 7)
+                            days.forEach { (label, dayValue) ->
+                                val isSelected = uiState.selectedDaysOfWeek.contains(dayValue)
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) Color(0xFF2E7D32) else Color.White)
+                                        .clickable { if (!uiState.readOnly) viewModel.toggleDayOfWeek(dayValue) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(label, color = if (isSelected) Color.White else Color.DarkGray, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                }
+                            }
+                        }
+                    } else if (uiState.repeatFrequency == "Interval") {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("EVERY", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = uiState.intervalValue,
+                                onValueChange = { 
+                                    if (!uiState.readOnly) {
+                                        val formatted = it.filter { char -> char.isDigit() }
+                                        viewModel.setIntervalValue(formatted)
+                                    } 
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedBorderColor = Color.Transparent,
+                                    disabledBorderColor = Color.Transparent,
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            Box(modifier = Modifier.weight(1f).height(IntrinsicSize.Min)) {
+                                var expanded by remember { mutableStateOf(false) }
+                                OutlinedButton(
+                                    onClick = { if (!uiState.readOnly) expanded = true },
+                                    modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                                ) {
+                                    Text(uiState.intervalUnit, color = Color.Black)
+                                }
+                                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.background(Color.White)) {
+                                    uiState.intervalUnits.forEach { unit ->
+                                        DropdownMenuItem(
+                                            text = { Text(unit, color = Color.Black) },
+                                            onClick = {
+                                                viewModel.setIntervalUnit(unit)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Section 3: Reminder Times
@@ -294,13 +357,29 @@ fun ScheduleBuilderScreen(
                     }
                 }
             }
+
+            if (uiState.existingScheduleId == null && !uiState.readOnly) {
+                Button(
+                    onClick = { viewModel.saveSchedule() },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                ) {
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("Save", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                }
+            }
         }
 
         // --- Dialogs ---
 
         // Add reminder dialog
         if (showReminderDialog) {
-            var selectedTimeText by remember { mutableStateOf("08:00 AM") }
+            var selectedTimeText by remember { mutableStateOf<String?>(null) }
+            var timeError by remember { mutableStateOf(false) }
             var doseText by remember { mutableStateOf("") }
             var doseError by remember { mutableStateOf(false) }
             val unit = uiState.selectedMedication?.unit ?: "units"
@@ -321,8 +400,19 @@ fun ScheduleBuilderScreen(
                 title = { Text("Add Reminder", color = Color.Black) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        OutlinedButton(onClick = { pickTime() }, modifier = Modifier.fillMaxWidth()) {
-                            Text("Select Time: $selectedTimeText", color = Color.Black)
+                        Column {
+                            OutlinedButton(
+                                onClick = { 
+                                    timeError = false
+                                    pickTime() 
+                                }, 
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(selectedTimeText?.let { "Select Time: $it" } ?: "Select Time", color = Color.Black)
+                            }
+                            if (timeError) {
+                                Text("Time is mandatory", color = Color(0xFFB3261E), fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+                            }
                         }
                         OutlinedTextField(
                             value = doseText,
@@ -347,19 +437,26 @@ fun ScheduleBuilderScreen(
                 },
                 confirmButton = {
                     Button(onClick = {
+                        var hasError = false
+                        if (selectedTimeText == null) {
+                            timeError = true
+                            hasError = true
+                        }
                         val parsedDose = doseText.toIntOrNull()
                         if (parsedDose == null || parsedDose <= 0) {
                             doseError = true
-                            return@Button
+                            hasError = true
                         }
-                        val finalDose = parsedDose.toString()
+                        if (hasError) return@Button
+
+                        val finalDose = parsedDose!!.toString()
                         val amount = parsedDose
                         val finalUnit = if (amount == 1 && (unit.equals("capsules", ignoreCase = true) || unit.equals("tablets", ignoreCase = true) || unit.equals("pills", ignoreCase = true))) {
                             unit.dropLast(1)
                         } else {
                             unit
                         }
-                        viewModel.addReminderTime(selectedTimeText, "$finalDose $finalUnit", finalDose.toFloat())
+                        viewModel.addReminderTime(selectedTimeText!!, "$finalDose $finalUnit", finalDose.toFloat())
                         showReminderDialog = false
                     }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))) {
                         Text("Add")
