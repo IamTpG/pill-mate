@@ -53,12 +53,25 @@ class VitalsViewModel(
                     state.copy(
                         hydrationMl = hydration,
                         latestBloodPressure = latestBP?.let { "${it.valuePrimary.toInt()}/${it.valueSecondary?.toInt() ?: "--"}" } ?: "--/--",
+                        bloodPressureStatus = latestBP?.let { getBpStatus(it.valuePrimary.toInt(), it.valueSecondary?.toInt() ?: 0) } ?: "No data",
                         latestWeight = latestWeight?.let { String.format("%.1f", it.valuePrimary) } ?: "--",
+                        weightStatus = "", // Removed "0kg today"
                         recentActivity = metrics,
                         isLoading = false
                     )
                 }
             }
+        }
+    }
+
+    private fun getBpStatus(sys: Int, dia: Int): String {
+        return when {
+            sys >= 180 || dia >= 120 -> "Crisis"
+            sys >= 140 || dia >= 90 -> "Stage 2"
+            sys >= 130 || dia >= 80 -> "Stage 1"
+            sys >= 120 && dia < 80 -> "Elevated"
+            sys > 0 && dia > 0 -> "Normal"
+            else -> "Unknown"
         }
     }
 

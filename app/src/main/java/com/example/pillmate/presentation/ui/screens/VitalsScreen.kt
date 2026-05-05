@@ -159,13 +159,6 @@ fun HydrationCard(current: Int, target: Int) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Hydration Goal", color = Color(0xFF2ECC71), fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.weight(1f))
-                Box(
-                    modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFF0F0FF)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF5D5DFF), modifier = Modifier.size(16.dp))
-                }
             }
             
             Text(
@@ -205,15 +198,7 @@ fun MetricCard(
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Icon(painterResource(icon), contentDescription = null, tint = Color(0xFFFF708D), modifier = Modifier.size(20.dp))
-                Box(
-                    modifier = Modifier.size(24.dp).clip(CircleShape).background(Color(0xFFF5F5F5)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                }
-            }
+            Icon(painterResource(icon), contentDescription = null, tint = Color(0xFFFF708D), modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.height(12.dp))
             Text(title, fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.Bottom) {
@@ -221,10 +206,7 @@ fun MetricCard(
                 Text(unit, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(status, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(1f))
-                Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-            }
+            Text(status, fontSize = 11.sp, color = Color.Gray)
         }
     }
 }
