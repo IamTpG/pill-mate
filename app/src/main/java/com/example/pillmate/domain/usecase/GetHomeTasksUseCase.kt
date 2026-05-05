@@ -38,6 +38,9 @@ class GetHomeTasksUseCase(
                 val targetDateEnd = cal.time
                 
                 val activeSchedules = schedules.filter { schedule ->
+                    // Skip "As Needed" medications from the daily to-do list
+                    if (schedule.frequency == "As Needed" || schedule.recurrenceRule == null) return@filter false
+                    
                     RecurrenceEvaluator.isOccurringOn(
                         targetDate = date,
                         rrule = schedule.recurrenceRule,
