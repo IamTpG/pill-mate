@@ -243,10 +243,41 @@ private fun formatScheduleTime(startTimeStr: String): String {
 }
 
 private fun formatRRULE(rrule: String?): String {
-    return when {
-        rrule?.contains("FREQ=DAILY") == true -> "Daily"
-        rrule?.contains("FREQ=WEEKLY") == true -> "Weekly"
-        !rrule.isNullOrBlank() -> rrule
-        else -> ""
+    if (rrule.isNullOrBlank()) return ""
+    
+    val parts = rrule.split(";").associate { 
+        val pair = it.split("=")
+        pair[0].trim().uppercase() to (pair.getOrNull(1)?.trim()?.uppercase() ?: "")
+    }
+    
+    val freq = parts["FREQ"] ?: return rrule
+    val interval = parts["INTERVAL"]?.toIntOrNull() ?: 1
+    
+    return when (freq) {
+        "DAILY" -> if (interval > 1) "Every $interval days" else "Daily"
+        "WEEKLY" -> {
+            val byDay = parts["BYDAY"] ?: ""
+            if (byDay.isNotEmpty()) {
+                val days = byDay.split(",")
+                val prefix = if (interval > 1) "Every $interval weeks on " else ""
+                prefix + days.joinToString(", ") { day ->
+                    when (day) {
+                        "MO" -> "Mon"
+                        "TU" -> "Tue"
+                        "WE" -> "Wed"
+                        "TH" -> "Thu"
+                        "FR" -> "Fri"
+                        "SA" -> "Sat"
+                        "SU" -> "Sun"
+                        else -> day
+                    }
+                }
+            } else {
+                if (interval > 1) "Every $interval weeks" else "Weekly"
+            }
+        }
+        "MONTHLY" -> if (interval > 1) "Every $interval months" else "Monthly"
+        "HOURLY" -> "Hourly"
+        else -> rrule
     }
 }
