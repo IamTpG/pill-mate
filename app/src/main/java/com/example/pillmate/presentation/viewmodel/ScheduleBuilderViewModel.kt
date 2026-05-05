@@ -321,6 +321,14 @@ class ScheduleBuilderViewModel(
                 // Refresh existing schedules to align with updated DB state
                 val refreshedList = scheduleRepository.getAllOnce(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()
                 val refreshedDoc = refreshedList.find { it.id == schedule.id || (state.existingScheduleId.isNullOrBlank() && it.createdAt == schedule.createdAt) }
+                // Update home screen widget
+                try {
+                    val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+                    val context = org.koin.core.context.GlobalContext.get().get<android.content.Context>()
+                    widgetIntent.setPackage(context.packageName)
+                    context.sendBroadcast(widgetIntent)
+                } catch (e: Exception) {}
+
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true, existingSchedules = refreshedList, existingScheduleId = refreshedDoc?.id, readOnly = true) }
             } catch (ex: Exception) {
                 _uiState.update { it.copy(isSaving = false, error = ex.message) }
@@ -339,6 +347,14 @@ class ScheduleBuilderViewModel(
                 scheduleRepository.remove(userId, idToDelete)
                 // Refresh existing schedules to align with updated DB state
                 val refreshedList = scheduleRepository.getAllOnce(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication?.id } ?: emptyList()
+                // Update home screen widget
+                try {
+                    val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+                    val context = org.koin.core.context.GlobalContext.get().get<android.content.Context>()
+                    widgetIntent.setPackage(context.packageName)
+                    context.sendBroadcast(widgetIntent)
+                } catch (e: Exception) {}
+
                 _uiState.update { it.copy(
                     isSaving = false,
                     saveSuccess = true,

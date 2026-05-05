@@ -68,6 +68,17 @@ class LogTaskUseCase(
             }
         }
 
+        // 4. Update widget
+        try {
+            val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+            // Note: This needs Context. Since LogTaskUseCase is in domain, I should probably 
+            // trigger it from a listener or pass context.
+            // But this is a simple project, I'll pass Context or use GlobalContext's androidContext.
+            val context = org.koin.core.context.GlobalContext.get().get<android.content.Context>()
+            widgetIntent.setPackage(context.packageName)
+            context.sendBroadcast(widgetIntent)
+        } catch (e: Exception) {}
+
         return Result.success(Unit)
     }
 }

@@ -81,6 +81,7 @@ val appModule = module {
     factory { ManageReminderUseCase(get(), get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
+    factory { GetNextTaskUseCase(get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
 
