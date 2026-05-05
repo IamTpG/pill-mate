@@ -20,6 +20,8 @@ class TaskNotificationManager(private val context: Context) {
         const val ALARM_CHANNEL_NAME = "Critical Task Alarms"
         const val LOW_STOCK_CHANNEL_ID = "low_stock_alerts"
         const val LOW_STOCK_CHANNEL_NAME = "Low Stock Alerts"
+        const val HEALTH_REMINDERS_CHANNEL_ID = "health_reminders"
+        const val HEALTH_REMINDERS_CHANNEL_NAME = "Health Reminders"
     }
 
     init {
@@ -54,6 +56,12 @@ class TaskNotificationManager(private val context: Context) {
                 description = "Alerts when medication stock is low"
             }
             notificationManager.createNotificationChannel(lowStockChannel)
+
+            // Health Reminders Channel
+            val healthChannel = NotificationChannel(HEALTH_REMINDERS_CHANNEL_ID, HEALTH_REMINDERS_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Reminders for hydration, blood pressure, and weight"
+            }
+            notificationManager.createNotificationChannel(healthChannel)
         }
     }
 
@@ -256,6 +264,47 @@ class TaskNotificationManager(private val context: Context) {
         sourceId?.let {
             cancelNotification(it.hashCode())
         }
+    }
+
+    fun showHealthNotification(type: String) {
+        val title = when (type) {
+            "HYDRATION" -> "Time to Hydrate!"
+            "BLOOD_PRESSURE" -> "Blood Pressure Check"
+            "WEIGHT" -> "Daily Weight Log"
+            else -> "Health Reminder"
+        }
+        val message = when (type) {
+            "HYDRATION" -> "Stay hydrated. Tap to log your water intake."
+            "BLOOD_PRESSURE" -> "Keep track of your heart health. Tap to record now."
+            "WEIGHT" -> "Consistency is key. Tap to log your weight today."
+            else -> "Time for your health check-up."
+        }
+        val icon = when (type) {
+            "HYDRATION" -> android.R.drawable.ic_menu_edit // Reused icons or we could find better ones
+            "BLOOD_PRESSURE" -> android.R.drawable.ic_dialog_info
+            "WEIGHT" -> android.R.drawable.ic_menu_save
+            else -> android.R.drawable.ic_menu_agenda
+        }
+
+        val intent = Intent(context, com.example.pillmate.MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            data = android.net.Uri.parse("pillmate://vitals")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, type.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, HEALTH_REMINDERS_CHANNEL_ID)
+            .setSmallIcon(icon)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(type.hashCode(), builder.build())
     }
 
     fun showLowStockNotification(medName: String, remaining: Float) {

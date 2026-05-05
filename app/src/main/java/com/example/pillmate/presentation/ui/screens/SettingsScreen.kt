@@ -45,6 +45,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
+import com.example.pillmate.notification.HealthReminderManager
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
@@ -225,6 +226,22 @@ fun ProfileOptionsScreen(
             icon = Icons.Default.Face,
             onClick = onCaregiverHubClick
         )
+        
+        var showHealthRemindersSheet by remember { mutableStateOf(false) }
+        val healthReminderManager: HealthReminderManager = koinInject()
+
+        SettingsButton(
+            text = "Health Notifications",
+            icon = Icons.Default.Notifications,
+            onClick = { showHealthRemindersSheet = true }
+        )
+
+        if (showHealthRemindersSheet) {
+            HealthRemindersBottomSheet(
+                manager = healthReminderManager,
+                onDismiss = { showHealthRemindersSheet = false }
+            )
+        }
 
         // Language Button with Dropdown Menu
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -668,7 +685,7 @@ fun CaregiverHubScreen(
     paddingValues: PaddingValues,
     onBack: () -> Unit
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf(stringResource(R.string.following), stringResource(R.string.grant_access))
 
     Column(
@@ -897,5 +914,145 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HealthRemindersBottomSheet(
+    manager: HealthReminderManager,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color(0xFF1B1B1B),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.4f)) }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 40.dp, start = 24.dp, end = 24.dp)
+        ) {
+            Text(
+                text = "Health Notifications",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Text(
+                text = "Settings are local to this device.",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            HealthReminderItem(label = "Hydration", type = "HYDRATION", manager = manager)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+            HealthReminderItem(label = "Blood Pressure", type = "BLOOD_PRESSURE", manager = manager)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+            HealthReminderItem(label = "Body Weight", type = "WEIGHT", manager = manager)
+        }
+    }
+}
+
+@Composable
+fun HealthReminderItem(
+    label: String,
+    type: String,
+    manager: HealthReminderManager
+) {
+    var enabled by remember { mutableStateOf(manager.isEnabled(type)) }
+    var interval by remember { mutableIntStateOf(manager.getInterval(type)) }
+    var showIntervalDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Switch(
+                checked = enabled,
+                onCheckedChange = { 
+                    enabled = it
+                    manager.updateSetting(type, it, interval)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = PrimaryGreen,
+                    checkedTrackColor = PrimaryGreen.copy(alpha = 0.5f)
+                )
+            )
+        }
+        
+        if (enabled) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showIntervalDialog = true }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val intervalText = when (interval) {
+                    60 -> "Hourly"
+                    240 -> "Every 4 hours"
+                    480 -> "Every 8 hours"
+                    720 -> "Twice daily"
+                    1440 -> "Daily"
+                    else -> "Every $interval minutes"
+                }
+                Text(text = "Frequency: ", color = Color.Gray, fontSize = 14.sp)
+                Text(text = intervalText, color = PrimaryGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    if (showIntervalDialog) {
+        AlertDialog(
+            onDismissRequest = { showIntervalDialog = false },
+            containerColor = Color(0xFF2C2C2C),
+            title = { Text("Select Frequency", color = Color.White) },
+            text = {
+                val options = listOf(
+                    60 to "Hourly",
+                    240 to "Every 4 hours",
+                    480 to "Every 8 hours",
+                    720 to "Twice daily",
+                    1440 to "Daily"
+                )
+                Column {
+                    options.forEach { (mins, text) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    interval = mins
+                                    manager.updateSetting(type, enabled, mins)
+                                    showIntervalDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = interval == mins,
+                                onClick = null,
+                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryGreen)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = text, color = Color.White)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showIntervalDialog = false }) {
+                    Text("OK", color = PrimaryGreen)
+                }
+            }
+        )
     }
 }
