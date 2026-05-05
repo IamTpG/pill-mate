@@ -6,6 +6,7 @@ import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
+import com.example.pillmate.util.RecurrenceEvaluator
 import java.util.Calendar
 import kotlinx.coroutines.flow.first
 import com.example.pillmate.domain.model.TaskLog
@@ -27,7 +28,7 @@ class SyncAlarmsUseCase(
 
     suspend operator fun invoke(profileId: String) {
         Log.d("SyncAlarmsUseCase", "Starting sync for $profileId")
-        val result = scheduleRepository.getSchedules(profileId)
+        val result = scheduleRepository.getAllOnce(profileId)
         val schedules = result.getOrNull() ?: return
 
         // Fetch logs for today to avoid scheduling already completed tasks
@@ -52,63 +53,50 @@ class SyncAlarmsUseCase(
                     val displayFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                     val fallbackFormat = SimpleDateFormat("H:m", java.util.Locale.getDefault())
 
-                    val parsedStart: java.util.Date? = try {
-                        if (completedScheduleIds.contains(schedule.id)) {
-                            Log.d("SyncAlarmsUseCase", "Cancelling completed schedule: ${schedule.id}")
-                            // Cancel the pending alarm
-                            notificationManager.cancelNotification(requestCode)
-                            // Dismiss any visible notification for this schedule
-                            notificationManager.dismissNotification(schedule.id)
-                            null
-                        } else {
-                            when {
-                                doseTime.time.contains("T") -> isoFormat.parse(doseTime.time)
-                                doseTime.time.isNotBlank() -> {
-                                    try { displayFormat.parse(doseTime.time) }
-                                    catch (e: Exception) { fallbackFormat.parse(doseTime.time) }
-                                }
-                                else -> null
-                            }
-                        }
-                    } catch (e: Exception) { null }
-
-                    if (parsedStart != null) {
-                        val target = Calendar.getInstance().apply {
-                            time = parsedStart
-                            // If it was just HH:mm, the date part might be 1970. 
-                            // We need to set it to today if so.
-                            val now = Calendar.getInstance()
-                            if (get(Calendar.YEAR) < 2000) {
-                                set(Calendar.YEAR, now.get(Calendar.YEAR))
-                                set(Calendar.DAY_OF_YEAR, now.get(Calendar.DAY_OF_YEAR))
-                            }
-                            add(Calendar.MINUTE, -reminder.minutesBefore)
-                        }
-
-                        // Buffer of 2 seconds to account for parsing precision loss (milliseconds)
-                        while (target.timeInMillis < System.currentTimeMillis() - 2000) {
-                            target.add(Calendar.DAY_OF_YEAR, 1)
-                        }
-                        val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0L).toInt()
-
-                        val scheduled = notificationManager.scheduleTaskNotification(
-                            sourceId = schedule.eventSnapshot.sourceId,
-                            scheduleId = schedule.id,
-                            title = schedule.eventSnapshot.title,
-                            details = doseTime.doseContext.ifBlank { schedule.eventSnapshot.instructions ?: "" },
-                            delaySeconds = delaySeconds,
-                            requestCode = requestCode,
-                            profileId = profileId,
-                            taskType = schedule.type.name,
-                            reminderType = reminder.type.name,
+                    if (completedScheduleIds.contains(schedule.id)) {
+                        Log.d("SyncAlarmsUseCase", "Cancelling completed schedule: ${schedule.id}")
+                        notificationManager.cancelNotification(requestCode)
+                        notificationManager.dismissNotification(schedule.id)
+                    } else {
+                        val nextOccurrence = RecurrenceEvaluator.getNextOccurrence(
+                            fromDate = Date(),
                             rrule = schedule.recurrenceRule,
-                            startTime = doseTime.time,
-                            instructions = schedule.eventSnapshot.instructions
+                            startTimeIso = schedule.startTime,
+                            endDate = schedule.endDate,
+                            doseTime = doseTime.time
                         )
 
-                        // Track ANY successfully scheduled alarm (Exact or not)
-                        if (scheduled) {
-                            desiredScheduledIds.add(requestCode)
+                        if (nextOccurrence != null) {
+                            val target = Calendar.getInstance().apply {
+                                time = nextOccurrence
+                                add(Calendar.MINUTE, -reminder.minutesBefore)
+                            }
+
+                            // Buffer of 2 seconds to account for parsing precision loss
+                            while (target.timeInMillis < System.currentTimeMillis() - 2000) {
+                                target.add(Calendar.DAY_OF_YEAR, 1) // Should rarely happen with getNextOccurrence
+                            }
+
+                            val delaySeconds = ((target.timeInMillis - System.currentTimeMillis()) / 1000).coerceAtLeast(0L).toInt()
+
+                            val scheduled = notificationManager.scheduleTaskNotification(
+                                sourceId = schedule.eventSnapshot.sourceId,
+                                scheduleId = schedule.id,
+                                title = schedule.eventSnapshot.title,
+                                details = doseTime.doseContext.ifBlank { schedule.eventSnapshot.instructions ?: "" },
+                                delaySeconds = delaySeconds,
+                                requestCode = requestCode,
+                                profileId = profileId,
+                                taskType = schedule.type.name,
+                                reminderType = reminder.type.name,
+                                rrule = schedule.recurrenceRule,
+                                startTime = doseTime.time,
+                                instructions = schedule.eventSnapshot.instructions
+                            )
+
+                            if (scheduled) {
+                                desiredScheduledIds.add(requestCode)
+                            }
                         }
                     }
                 }

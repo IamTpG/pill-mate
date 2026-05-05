@@ -5,6 +5,7 @@ import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.presentation.model.HomeTask
+import com.example.pillmate.util.RecurrenceEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.util.Calendar
@@ -21,7 +22,7 @@ class GetHomeTasksUseCase(
     private val logRepository: LogRepository
 ) {
     fun execute(profileId: String, date: Date): Flow<HomeData> {
-        return scheduleRepository.getSchedulesFlow(profileId)
+        return scheduleRepository.getAll(profileId)
             .combine(logRepository.getLogsForDayFlow(profileId, date)) { schedules, logs ->
                 val now = Date()
                 
@@ -37,12 +38,15 @@ class GetHomeTasksUseCase(
                 val targetDateEnd = cal.time
                 
                 val activeSchedules = schedules.filter { schedule ->
-                    // Schedule must start on or before the end of the target day
-                    val startsBeforeOrOnTarget = schedule.createdAt.before(targetDateEnd)
-                    // Schedule must end on or after the start of the target day
-                    val endsAfterOrOnTarget = schedule.endDate == null || schedule.endDate.after(targetDateStart)
+                    // Skip "As Needed" medications from the daily to-do list
+                    if (schedule.frequency == "As Needed" || schedule.recurrenceRule == null) return@filter false
                     
-                    startsBeforeOrOnTarget && endsAfterOrOnTarget
+                    RecurrenceEvaluator.isOccurringOn(
+                        targetDate = date,
+                        rrule = schedule.recurrenceRule,
+                        startTimeIso = schedule.startTime,
+                        endDate = schedule.endDate
+                    )
                 }
 
                 val homeTasks = activeSchedules.flatMap { schedule ->
@@ -112,7 +116,9 @@ class GetHomeTasksUseCase(
                             doseDescription = details,
                             dose = fallbackDose,
                             taskType = schedule.type,
-                            status = status
+                            status = status,
+                            frequency = schedule.frequency,
+                            recurrenceRule = schedule.recurrenceRule
                         )
                     }
                 }.sortedBy { it.time }

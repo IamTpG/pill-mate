@@ -33,7 +33,7 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 import com.example.pillmate.domain.model.Medication
-import com.example.pillmate.data.local.entity.SupplyLogEntity
+import com.example.pillmate.domain.model.InventoryLog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,7 +41,7 @@ import java.util.Locale
 @Composable
 fun MedicationDetailScreen(
     medication: Medication,
-    logs: List<SupplyLogEntity>,
+    logs: List<InventoryLog>,
     onBack: () -> Unit,
     onEditClick: () -> Unit,
     onLogDoseClick: () -> Unit,
@@ -178,19 +178,18 @@ fun MedicationDetailScreen(
                     }
                 }
 
-                // History Items
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
                     if (logs.isEmpty()) {
                         Text("No logs yet", modifier = Modifier.padding(horizontal = 16.dp), color = Color.Gray)
                     } else {
-                        logs.filter { it.reason != "INITIAL_STOCK" }.forEach { log ->
+                        logs.sortedByDescending { it.timestamp }.forEach { log ->
                             val status = if (log.changeAmount <= 0) {
-                                val qty = kotlin.math.abs(log.changeAmount)
+                                val qty = kotlin.math.abs(log.changeAmount).toInt()
                                 val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                                 "Taken $qty $unitLabel"
                             } else "Refilled/Adjusted"
-                            val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(java.util.Date(log.timestamp))
+                            val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(log.timestamp)
                             HistoryCard(status, timestampStr, isSkipped = false, reason = log.reason)
                         }
                     }

@@ -21,7 +21,7 @@ class LowStockWorker(
     override suspend fun doWork(): Result {
         val profileId = auth.currentUser?.uid ?: return Result.success()
 
-        val medicationsResult = medicationRepository.getAllMedications(profileId)
+        val medicationsResult = medicationRepository.getAllOnce(profileId)
         val medications = medicationsResult.getOrNull() ?: return Result.retry()
 
         medications.forEach { medication ->

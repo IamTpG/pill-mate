@@ -8,9 +8,11 @@ data class Medication(
     val description: String? = null,
     val unit: String = "tablet",
     val photoUrl: String? = null,
+    @get:com.google.firebase.firestore.Exclude
     val supply: MedicationSupply? = null,
-    val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
+    val createdAt: java.util.Date = java.util.Date(),
+    val updatedAt: java.util.Date = java.util.Date(),
+    val deletedAt: java.util.Date? = null
 )
 
 data class MedicationSupply(

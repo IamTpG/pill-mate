@@ -18,9 +18,11 @@ data class Schedule(
     val enabled: Boolean = true,
     val reminders: List<Reminder> = emptyList(),
     val eventSnapshot: ScheduleEvent = ScheduleEvent(),
+    val startTime: String? = null,
     val endDate: Date? = null,
     val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
+    val updatedAt: Date = Date(),
+    val deletedAt: Date? = null
 )
 
 enum class ReminderType {

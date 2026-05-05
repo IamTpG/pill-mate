@@ -26,6 +26,9 @@
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
             android:exported="false">
+            <intent-filter>
+                <action android:name="androidx.appcompat.app.AppLocalesMetadataHolderService" />
+            </intent-filter>
             <meta-data
                 android:name="autoStoreLocales"
                 android:value="true" />
@@ -33,6 +36,16 @@
 
         <receiver android:name=".receiver.NotificationActionReceiver" android:exported="false" />
         <receiver android:name=".receiver.TaskAlarmReceiver" android:exported="false" />
+        <receiver android:name=".receiver.NextTaskWidgetProvider" android:exported="false"
+            android:label="Next Pill Widget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.pillmate.ACTION_UPDATE_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_task_widget_info" />
+        </receiver>
 
         <service
             android:name=".service.PillMateFcmService"

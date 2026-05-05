@@ -2,6 +2,8 @@ package com.example.pillmate.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pillmate.data.local.dao.ProfileDao
+import com.example.pillmate.data.local.entity.SavedAccountEntity
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
 import com.google.firebase.auth.AuthCredential
@@ -10,7 +12,10 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -25,11 +30,15 @@ class AuthViewModel(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase,
-    private val syncAlarmsUseCase: SyncAlarmsUseCase
+    private val syncAlarmsUseCase: SyncAlarmsUseCase,
+    private val profileDao: ProfileDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState = _uiState.asStateFlow()
+
+    val savedAccounts: StateFlow<List<SavedAccountEntity>> = profileDao.getSavedAccounts()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun signInWithGoogle(credential: AuthCredential) {
         _uiState.update { it.copy(isLoading = true, error = null) }

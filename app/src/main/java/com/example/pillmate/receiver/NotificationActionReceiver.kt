@@ -4,16 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
-import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
 import com.example.pillmate.domain.model.LogStatus
-import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import com.example.pillmate.domain.usecase.ManageReminderUseCase
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +19,6 @@ import java.util.Date
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.GlobalContext
-import java.util.Locale.getDefault
 
 class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
 
@@ -69,35 +64,8 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 scheduledTime = Date(),
                 dose = 1.0f
             )
-            // Advance RRULE next occurrence
-            try {
-                val scheduleDoc = db.collection("profiles").document(profileId)
-                    .collection("schedules").document(scheduleId).get().await()
-                val scheduleObj = scheduleDoc.toObject(com.example.pillmate.domain.model.Schedule::class.java)?.copy(id = scheduleId)
-                if (scheduleObj != null) {
-                    // CANCELLATION: Cancel other pending reminders AND snoozes
-                    TaskNotificationManager(context).cancelAllReminders(scheduleId, scheduleObj.reminders, sourceId)
-
-                    val rrule = scheduleDoc.getString("recurrenceRule")
-                    if (rrule != null && rrule.contains("FREQ=DAILY")) {
-                        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                        val nextSchedule = scheduleObj.copy(
-                            doseTimes = scheduleObj.doseTimes.map { dt ->
-                                val dtStart = try { format.parse(dt.time) } catch (e: Exception) { null }
-                                if (dtStart != null) {
-                                    val nextStart = Date(dtStart.time + 24 * 60 * 60 * 1000)
-                                    dt.copy(time = format.format(nextStart))
-                                } else {
-                                    dt
-                                }
-                            }
-                        )
-                        manageReminderUseCase(profileId, nextSchedule)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            // Cancellation handled local only for immediate effect
+            TaskNotificationManager(context).dismissNotification(scheduleId)
         }
     }
 }

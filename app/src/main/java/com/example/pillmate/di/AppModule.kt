@@ -1,9 +1,9 @@
 package com.example.pillmate.di
 
 import android.app.Application
-import com.example.pillmate.data.remote.firebase.FirestoreLogRepository
-import com.example.pillmate.data.remote.firebase.FirestoreMedicationRepository
-import com.example.pillmate.data.remote.firebase.FirestoreScheduleRepository
+import com.example.pillmate.data.repository.FirestoreLogRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreMedicationRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreScheduleRepositoryImpl
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
@@ -16,8 +16,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import com.example.pillmate.data.local.database.AppDatabase
-import com.example.pillmate.data.repository.CabinetRepositoryImpl
-import com.example.pillmate.domain.repository.CabinetRepository
+import com.example.pillmate.data.repository.HybridMedicationRepositoryImpl
+import com.example.pillmate.data.repository.RoomMedicationRepositoryImpl
 import com.example.pillmate.presentation.viewmodel.ScheduleBuilderViewModel
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 import org.koin.android.ext.koin.androidContext
@@ -27,7 +27,7 @@ import com.example.pillmate.domain.repository.DrugLibraryRepository
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.pillmate.data.repository.AppointmentRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreAppointmentRepositoryImpl
 import com.example.pillmate.domain.repository.AppointmentRepository
 import com.example.pillmate.domain.usecase.AddAppointmentUseCase
 import com.example.pillmate.domain.usecase.DeleteAppointmentUseCase
@@ -42,29 +42,46 @@ import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
+import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
     single { FirebaseFirestore.getInstance() }
+    single { FirebaseFunctions.getInstance() }
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
 
-    single<MedicationRepository> { FirestoreMedicationRepository(get(), get()) }
-    single<LogRepository> { FirestoreLogRepository(get()) }
-    single<ScheduleRepository> { FirestoreScheduleRepository(get()) }
+    single<MedicationRepository> {
+        val roomRepo = RoomMedicationRepositoryImpl(get(), get())
+        val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
+        HybridMedicationRepositoryImpl(
+            localRepo = roomRepo,
+            remoteRepo = firestoreRepo,
+            supplyLogDao = get(),
+            firestore = get(),
+            networkChecker = com.example.pillmate.util.NetworkChecker(androidContext())
+        )
+    }
+    single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
+    single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
+    single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get()) }
+    factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
     factory { UpdateScheduleUseCase(get()) }
     factory { ManageReminderUseCase(get(), get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
+    factory { GetNextTaskUseCase(get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
 
@@ -73,7 +90,6 @@ val appModule = module {
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
-    single<CabinetRepository> { CabinetRepositoryImpl(get(), get(), get(), get()) }
     single { get<AppDatabase>().profileDao() }
     single {
         Retrofit.Builder()
@@ -84,9 +100,10 @@ val appModule = module {
     }
     
     single<DrugLibraryRepository> { DrugLibraryRepositoryImpl(get()) }
+    single { get<AppDatabase>().chatDao() }
+    single { AIChatRepository(get(), get(), get()) }
     
-    
-    single<AppointmentRepository> { AppointmentRepositoryImpl(get()) }
+    single<AppointmentRepository> { FirestoreAppointmentRepositoryImpl(get()) }
     factory { GetAppointmentsUseCase(get()) }
     factory { AddAppointmentUseCase(get()) }
     factory { UpdateAppointmentUseCase(get()) }
@@ -97,15 +114,12 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { ReminderViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(),get()) }
-    viewModel { CabinetViewModel(get(), get(), androidContext() as android.app.Application) }
-    viewModel { DrugLibraryViewModel(get(), androidContext() as android.app.Application) }
-    viewModel { com.example.pillmate.presentation.viewmodel.AuthViewModel(get(), get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
-    viewModel { ScheduleBuilderViewModel(get()) }
-    viewModel { AuthViewModel(get(), get(), get(), get()) }
+    viewModel { ScheduleBuilderViewModel(get(), get(), get()) }
+    viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
+    viewModel { AIChatViewModel(get(), get(), get()) }
 }

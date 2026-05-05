@@ -2,9 +2,10 @@ package com.example.pillmate
 
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
+import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
 import com.example.pillmate.presentation.ui.PillMateApp
@@ -14,10 +15,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val syncAlarmsUseCase: SyncAlarmsUseCase by inject()
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
+    private val syncManager: com.example.pillmate.util.SyncManager by inject()
+    private val medicationRepository: MedicationRepository by inject()
+    
     private val profileId: String by inject()
     private val db: FirebaseFirestore by inject()
     private var scheduleListener: ListenerRegistration? = null
@@ -37,6 +41,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Initialize SyncManager with Hybrid Repositories
+        if (medicationRepository is com.example.pillmate.data.repository.HybridMedicationRepositoryImpl) {
+            syncManager.register(medicationRepository as com.example.pillmate.data.repository.HybridMedicationRepositoryImpl)
+        }
+        syncManager.startMonitoring(this)
 
         // Setup Real-time Sync (with debounce to avoid clobbering ManageReminderUseCase)
         if (profileId.isNotBlank()) {
@@ -58,9 +68,13 @@ class MainActivity : ComponentActivity() {
                             // Wait 3s so ManageReminderUseCase's alarm isn't immediately overwritten
                             kotlinx.coroutines.delay(3000)
                             Log.d("MainActivity", "Firestore listener: running debounced sync")
-                            try {
-                                syncAlarmsUseCase(profileId)
-                            } catch (e: Exception) {
+                                try {
+                                    syncAlarmsUseCase(profileId)
+                                    // Update home screen widget
+                                    val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+                                    widgetIntent.setPackage(packageName)
+                                    sendBroadcast(widgetIntent)
+                                } catch (e: Exception) {
                                 Log.e("MainActivity", "Sync from listener failed", e)
                             }
                         }

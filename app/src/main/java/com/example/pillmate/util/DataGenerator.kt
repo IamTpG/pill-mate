@@ -31,24 +31,20 @@ class DataGenerator(private val db: FirebaseFirestore) {
                 val itemRef = profileRef.collection(collectionPath).add(itemData).await()
 
                 if (collectionPath == "medications") {
-                    val batchNames = listOf("Main Bottle", "Travel Pack", "Medicine Cabinet")
-                    val numBatches = (2..3).random()
+                    val supplyData = mapOf(
+                        "batchName" to "Main Bottle",
+                        "updatedAt" to Timestamp.now()
+                    )
+                    // Explicitly use 'main' as the supply ID
+                    val supplyRef = itemRef.collection("supply").document("main")
+                    supplyRef.set(supplyData).await()
                     
-                    for (i in 0 until numBatches) {
-                        val supplyData = mapOf(
-                            "batchName" to batchNames[i],
-                            "updatedAt" to Timestamp.now()
-                        )
-                        val supplyRef = itemRef.collection("supply").add(supplyData).await()
-                        
-                        // Different stock levels to test smart selection
-                        val initialStock = if (i == 0) 20.0 else 5.0 * (i + 1)
-                        supplyRef.collection("logs").add(mapOf(
-                            "changeAmount" to initialStock,
-                            "reason" to "INITIAL",
-                            "timestamp" to Timestamp.now()
-                        )).await()
-                    }
+                    val initialStock = 20.0
+                    supplyRef.collection("logs").add(mapOf(
+                        "changeAmount" to initialStock,
+                        "reason" to "INITIAL",
+                        "timestamp" to Timestamp.now()
+                    )).await()
                 }
 
                 // Distribute times: 8am, 12pm, 4pm, 8pm across items
@@ -61,6 +57,7 @@ class DataGenerator(private val db: FirebaseFirestore) {
                 val schedule = Schedule(
                     type = type,
                     doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = isoStartTime)),
+                    startTime = isoStartTime,
                     recurrenceRule = "FREQ=DAILY",
                     reminders = listOf(
                         com.example.pillmate.domain.model.Reminder(0, com.example.pillmate.domain.model.ReminderType.ALARM),

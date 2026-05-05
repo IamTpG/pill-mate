@@ -13,22 +13,31 @@ import com.example.pillmate.data.local.entity.MedicationEntity
 interface MedicationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertMedication(medication: MedicationEntity): Long
+    suspend fun insertMedication(medication: MedicationEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertMedications(medications: List<MedicationEntity>): List<Long>
+    suspend fun insertMedications(medications: List<MedicationEntity>): List<Long>
 
     @Update
-    fun updateMedication(medication: MedicationEntity): Int
+    suspend fun updateMedication(medication: MedicationEntity): Int
 
     @Delete
-    fun deleteMedication(medication: MedicationEntity): Int
+    suspend fun deleteMedication(medication: MedicationEntity): Int
+
+    @Query("DELETE FROM medications WHERE id = :id AND profileId = :profileId")
+    suspend fun deleteById(profileId: String, id: String)
 
     @Query("SELECT * FROM medications ORDER BY name ASC")
     fun getAllMedications(): Flow<List<MedicationEntity>>
 
+    @Query("SELECT * FROM medications WHERE profileId = :profileId ORDER BY name ASC")
+    suspend fun getAllMedicationsOnce(profileId: String): List<MedicationEntity>
+
     @Query("SELECT * FROM medications WHERE id = :id LIMIT 1")
-    fun getMedicationById(id: String): MedicationEntity?
+    suspend fun getMedicationById(id: String): MedicationEntity?
+
+    @Query("SELECT * FROM medications WHERE id = :id AND profileId = :profileId LIMIT 1")
+    suspend fun getMedicationByIdAndProfile(profileId: String, id: String): MedicationEntity?
 
     @Query("SELECT * FROM medications WHERE profileId = :profileId ORDER BY name ASC")
     fun getMedicationsForProfile(profileId: String): Flow<List<MedicationEntity>>

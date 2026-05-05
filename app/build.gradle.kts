@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.functions)
 
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
@@ -92,7 +93,10 @@ dependencies {
     // Retrofit & Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
-    
+
+    implementation("com.google.zxing:core:3.5.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     debugImplementation("org.jetbrains.compose.ui:ui-tooling:1.10.0")
     
     implementation(libs.maplibre.compose)

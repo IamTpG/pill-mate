@@ -254,6 +254,14 @@ fun TaskItem(
                     color = colorResource(id = R.color.status_upcoming),
                     fontSize = 14.sp
                 )
+                if (!task.frequency.isNullOrBlank()) {
+                    Text(
+                        text = task.frequency,
+                        color = colorResource(id = R.color.primary_green).copy(alpha = 0.7f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

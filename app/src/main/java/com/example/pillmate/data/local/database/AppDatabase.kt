@@ -4,19 +4,35 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.pillmate.data.local.dao.ChatDao
 import com.example.pillmate.data.local.dao.MedicationDao
 import com.example.pillmate.data.local.entity.MedicationEntity
 import com.example.pillmate.data.local.dao.SupplyLogDao
 import com.example.pillmate.data.local.entity.SupplyLogEntity
 import com.example.pillmate.data.local.dao.ProfileDao
+import com.example.pillmate.data.local.entity.ChatMessageEntity
+import com.example.pillmate.data.local.entity.ChatSessionEntity
 import com.example.pillmate.data.local.entity.ProfileEntity
+import com.example.pillmate.data.local.entity.SavedAccountEntity
 
-@Database(entities = [MedicationEntity::class, SupplyLogEntity::class, ProfileEntity::class], version = 3, exportSchema = false)
+@Database(
+    entities = [
+        MedicationEntity::class,
+        SupplyLogEntity::class,
+        ProfileEntity::class,
+        SavedAccountEntity::class,
+        ChatSessionEntity::class,
+        ChatMessageEntity::class
+    ],
+    version = 6,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun medicationDao(): MedicationDao
     abstract fun supplyLogDao(): SupplyLogDao
     abstract fun profileDao(): ProfileDao
+    abstract fun chatDao(): ChatDao
 
     companion object {
         @Volatile

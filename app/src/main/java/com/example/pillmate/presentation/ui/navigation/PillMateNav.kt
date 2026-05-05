@@ -24,6 +24,9 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     // Schedule Builder screen
     object ScheduleBuilder : Screen("schedule_builder", "Schedule", android.R.drawable.ic_menu_today)
 
+    // AI Chat Screen
+    object AIChat : Screen("ai_chat", "AI", R.drawable.ic_chat)
+
     // Task Alarm Screen
     object TaskAlarm : Screen(
         "task_alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}",
@@ -50,6 +53,7 @@ val bottomNavItems = listOf(
     Screen.Cabinet,
     Screen.ScheduleBuilder,
     Screen.Reminders,
+    Screen.AIChat,
     Screen.Appointment,
     Screen.Settings
 )

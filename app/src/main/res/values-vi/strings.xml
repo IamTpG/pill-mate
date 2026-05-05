@@ -41,4 +41,26 @@
     <string name="full_name">Họ và tên</string>
     <string name="fullname_placeholder">Nguyễn Văn A</string>
     <string name="google_sign_in_failed">Đăng nhập Google thất bại: %1$s</string>
+
+    <string name="care_management">Quản lý chăm sóc</string>
+    <string name="following_tab">Người đang theo dõi</string>
+    <string name="grant_access_tab">Trao quyền</string>
+    <string name="back_to_your_profile">QUAY LẠI HỒ SƠ CỦA BẠN</string>
+    <string name="no_one_followed">Bạn chưa theo dõi ai.</string>
+    <string name="follow_new_person">THEO DÕI NGƯỜI MỚI</string>
+    <string name="follow_patient_title">Theo dõi người bệnh</string>
+    <string name="follow_patient_desc">Nhập mã truy cập 6 ký tự hoặc quét mã QR trên máy người bệnh.</string>
+    <string name="code_placeholder">VD: A8X2B9</string>
+    <string name="scan_qr">Quét mã QR</string>
+    <string name="link_button">Liên kết</string>
+    <string name="close">Đóng</string>
+    <string name="grant_access_desc">Cung cấp mã này cho người chăm sóc của bạn để họ có thể xem tủ thuốc và lịch uống.</string>
+    <string name="access_code_label">MÃ TRUY CẬP</string>
+    <string name="invalid_code">Mã không hợp lệ hoặc đã hết hạn.</string>
+    <string name="link_success">Liên kết thành công!</string>
+    <string name="caregiver_hub">Trung tâm theo dõi</string>
+    <string name="recent_login">Đăng nhập gần đây</string>
+    <string name="use_another_account">Đăng nhập với tài khoản khác</string>
+    <string name="following">Đang theo dõi</string>
+    <string name="grant_access">Cấp quền theo dõi</string>
 </resources>
