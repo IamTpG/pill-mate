@@ -93,24 +93,32 @@ fun SchedulesListScreen(
                         Text("SCHEDULES", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
                     }
                     items(uiState.existingSchedules) { schedule ->
-                        ScheduleListItem(
-                            schedule = schedule,
-                            onClick = { onScheduleClick(schedule.id) },
-                            onDelete = { scheduleToDelete = schedule.id },
-                            onAddReminder = {
-                                selectedScheduleId = schedule.id
-                                selectedReminder = null
-                                showReminderDialog = true
-                            },
-                            onEditReminder = { reminder ->
-                                selectedScheduleId = schedule.id
-                                selectedReminder = reminder
-                                showReminderDialog = true
-                            },
-                            onRemoveReminder = { reminder ->
-                                viewModel.removeReminderFromExistingSchedule(schedule.id, reminder)
-                            }
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            ScheduleInfoCard(
+                                schedule = schedule,
+                                onClick = { onScheduleClick(schedule.id) },
+                                onDelete = { scheduleToDelete = schedule.id }
+                            )
+                            RemindersCard(
+                                schedule = schedule,
+                                onAddReminder = {
+                                    selectedScheduleId = schedule.id
+                                    selectedReminder = null
+                                    showReminderDialog = true
+                                },
+                                onEditReminder = { reminder ->
+                                    selectedScheduleId = schedule.id
+                                    selectedReminder = reminder
+                                    showReminderDialog = true
+                                },
+                                onRemoveReminder = { reminder ->
+                                    viewModel.removeReminderFromExistingSchedule(schedule.id, reminder)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -177,13 +185,10 @@ fun SchedulesListScreen(
 }
 
 @Composable
-fun ScheduleListItem(
+fun ScheduleInfoCard(
     schedule: Schedule,
     onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onAddReminder: () -> Unit,
-    onEditReminder: (Reminder) -> Unit,
-    onRemoveReminder: (Reminder) -> Unit
+    onDelete: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -213,26 +218,48 @@ fun ScheduleListItem(
                     val format = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
                     Text(text = "Ends: ${format.format(schedule.endDate)}", fontSize = 12.sp, color = Color.Gray)
                 }
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete Schedule", tint = Color(0xFFD32F2F))
+            }
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Reminders section
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Reminders",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1c5f55)
-                    )
-                    IconButton(onClick = onAddReminder, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Reminder", tint = Color(0xFF1c5f55), modifier = Modifier.size(16.dp))
-                    }
+@Composable
+fun RemindersCard(
+    schedule: Schedule,
+    onAddReminder: () -> Unit,
+    onEditReminder: (Reminder) -> Unit,
+    onRemoveReminder: (Reminder) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)), // Light green tint
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp) // Indented
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Reminders",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1c5f55)
+                )
+                IconButton(onClick = onAddReminder, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Reminder", tint = Color(0xFF1c5f55), modifier = Modifier.size(16.dp))
                 }
-                
+            }
+            
+            if (schedule.reminders.isEmpty()) {
+                Text("No reminders set", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
+            } else {
                 schedule.reminders.forEach { reminder ->
                     ReminderRow(
                         reminder = reminder,
@@ -240,9 +267,6 @@ fun ScheduleListItem(
                         onRemoveClick = { onRemoveReminder(reminder) }
                     )
                 }
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete Schedule", tint = Color(0xFFD32F2F))
             }
         }
     }
