@@ -11,14 +11,20 @@ import java.util.Date
 
 open class HybridRepositoryImpl<T>(
     protected val localRepo: LocalRepository<T>,
-    private val remoteRepo: RemoteRepository<T>,
+    protected val remoteRepo: RemoteRepository<T>,
     private val networkChecker: () -> Boolean,
-    private val getId: (T) -> String,
-    private val getUpdatedAt: (T) -> Date,
-    private val getDeletedAt: (T) -> Date?,
-    private val copyWithUpdated: (T, Date) -> T,
-    private val copyWithDeleted: (T, Date?) -> T
+    protected val getId: (T) -> String,
+    protected val getUpdatedAt: (T) -> Date,
+    protected val getDeletedAt: (T) -> Date?,
+    protected val copyWithUpdated: (T, Date) -> T,
+    protected val copyWithDeleted: (T, Date?) -> T
 ) : Repository<T> {
+    
+    private val threshold = 1000L // 1 second threshold for sync stability
+    
+    private fun isSignificantlyDifferent(d1: Date, d2: Date): Boolean {
+        return Math.abs(d1.time - d2.time) > threshold
+    }
 
     override fun getAll(profileId: String): Flow<List<T>> =
         localRepo.getAll(profileId).map { list -> list.filter { getDeletedAt(it) == null } }
@@ -66,17 +72,19 @@ open class HybridRepositoryImpl<T>(
 
                 // If local deleted
                 if (localDel != null) {
-                    if (remoteDel == null || localDel.after(remoteDel)) {
+                    if (remoteDel == null || isSignificantlyDifferent(localDel, remoteDel)) {
                         remoteRepo.update(profileId, item) // propagate deletion
                     }
                 } else if (remoteDel != null) {
-                    if (remoteDel.after(localUpdated)) {
+                    if (isSignificantlyDifferent(remoteDel, localUpdated)) {
                         localRepo.update(profileId, remoteItem) // propagate remote deletion
                     }
                 } else {
                     // No deletions, pick latest updated
-                    if (!localUpdated.before(remoteUpdated)) remoteRepo.update(profileId, item)
-                    else localRepo.update(profileId, remoteItem)
+                    if (isSignificantlyDifferent(localUpdated, remoteUpdated)) {
+                        if (localUpdated.after(remoteUpdated)) remoteRepo.update(profileId, item)
+                        else localRepo.update(profileId, remoteItem)
+                    }
                 }
             }
         }
@@ -107,12 +115,14 @@ open class HybridRepositoryImpl<T>(
                     val remoteUpdated = getUpdatedAt(remote)
 
                     when {
-                        localDel != null && (remoteDel == null || localDel.after(remoteDel)) ->
+                        localDel != null && (remoteDel == null || isSignificantlyDifferent(localDel, remoteDel)) ->
                             remoteRepo.update(profileId, local)
-                        remoteDel != null && (localDel == null || remoteDel.after(localDel)) ->
+                        remoteDel != null && (localDel == null || isSignificantlyDifferent(remoteDel, localDel)) ->
                             localRepo.update(profileId, remote)
-                        localUpdated.after(remoteUpdated) -> remoteRepo.update(profileId, local)
-                        remoteUpdated.after(localUpdated) -> localRepo.update(profileId, remote)
+                        isSignificantlyDifferent(localUpdated, remoteUpdated) -> {
+                            if (localUpdated.after(remoteUpdated)) remoteRepo.update(profileId, local)
+                            else localRepo.update(profileId, remote)
+                        }
                     }
                 }
             }

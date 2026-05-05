@@ -147,6 +147,8 @@ class CabinetViewModel(
                 unit = unit,
                 photoUrl = photoUrl,
                 supply = com.example.pillmate.domain.model.MedicationSupply(
+                    id = "main",
+                    batchName = "Main Batch",
                     quantity = 0f,
                     expirationDate = if (expirationDate > 0) java.util.Date(expirationDate) else null
                 )
@@ -208,8 +210,10 @@ class CabinetViewModel(
                 description = newDescription,
                 photoUrl = photoUrl,
                 supply = existingMedication.supply?.copy(
+                    id = "main",
                     expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null
                 ) ?: com.example.pillmate.domain.model.MedicationSupply(
+                    id = "main",
                     expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null,
                     quantity = 0f
                 )

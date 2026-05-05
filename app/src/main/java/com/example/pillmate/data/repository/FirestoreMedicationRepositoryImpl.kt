@@ -26,6 +26,25 @@ class FirestoreMedicationRepositoryImpl(
     ),
     MedicationRepository {
 
+    override suspend fun getAllOnce(profileId: String): Result<List<Medication>> = runCatching {
+        val meds = super.getAllOnce(profileId).getOrThrow()
+        
+        // Fetch all 'main' supplies for these meds
+        // Note: Individual fetches are safer than collectionGroup if security rules are per-med
+        meds.map { med ->
+            val supply = getMedicationSupplies(profileId, med.id).getOrNull()?.find { it.id == "main" }
+            med.copy(supply = supply)
+        }
+    }
+
+    override suspend fun getById(profileId: String, id: String): Result<Medication?> = runCatching {
+        val med = super.getById(profileId, id).getOrThrow()
+        if (med != null) {
+            val supply = getMedicationSupplies(profileId, id).getOrNull()?.find { it.id == "main" }
+            med.copy(supply = supply)
+        } else null
+    }
+
     override fun getId(item: Medication): String {
         return item.id.ifEmpty { firestore.collection("tmp").document().id }
     }
@@ -36,15 +55,8 @@ class FirestoreMedicationRepositoryImpl(
 
         if (doc.exists()) {
             val med = doc.toObject(Medication::class.java)?.copy(id = doc.id)
-
-            val suppliesResult = getMedicationSupplies(profileId, id)
-            val supplies = suppliesResult.getOrNull() ?: emptyList()
-            val totalQty = supplies.sumOf { it.quantity.toDouble() }.toFloat()
-
-            val activeSupply = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
-                ?: supplies.firstOrNull()
-
-            med?.copy(supply = activeSupply?.copy(quantity = totalQty))
+            val mainSupply = getMedicationSupplies(profileId, id).getOrNull()?.find { it.id == "main" }
+            med?.copy(supply = mainSupply)
         } else {
             null
         }
@@ -57,7 +69,7 @@ class FirestoreMedicationRepositoryImpl(
 
         supplyDocs.documents.map { doc ->
             val inventoryLogs = doc.reference.collection("logs").get().await()
-            val totalQty = inventoryLogs.documents.sumOf { it.getDouble("changeAmount") ?: 0.0 }.toFloat()
+            val totalQty = inventoryLogs.documents.sumOf { (it.get("changeAmount") as? Number)?.toDouble() ?: 0.0 }.toFloat()
 
             doc.toObject(MedicationSupply::class.java)!!.copy(
                 id = doc.id,
@@ -67,32 +79,16 @@ class FirestoreMedicationRepositoryImpl(
     }
 
     override suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float, supplyId: String?): Result<Unit> = runCatching {
-        val targetSupplyRef = if (supplyId != null) {
-            firestore.collection("profiles").document(profileId)
-                .collection("medications").document(medId)
-                .collection("supply").document(supplyId)
-        } else {
-            val supplies = getMedicationSupplies(profileId, medId).getOrNull() ?: emptyList()
-            val target = supplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }
-                ?: supplies.firstOrNull()
+        val targetSupplyRef = firestore.collection("profiles").document(profileId)
+            .collection("medications").document(medId)
+            .collection("supply").document(supplyId ?: "main")
 
-            if (target != null) {
-                firestore.collection("profiles").document(profileId)
-                    .collection("medications").document(medId)
-                    .collection("supply").document(target.id)
-            } else null
-        }
-
-        if (targetSupplyRef != null) {
-            val inventoryLog = hashMapOf(
-                "changeAmount" to changeAmount,
-                "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
-                "timestamp" to Timestamp.now()
-            )
-            targetSupplyRef.collection("logs").add(inventoryLog).await()
-        } else {
-            throw Exception("No supply record found for medication")
-        }
+        val inventoryLog = hashMapOf(
+            "changeAmount" to changeAmount,
+            "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
+            "timestamp" to Timestamp.now()
+        )
+        targetSupplyRef.collection("logs").add(inventoryLog).await()
     }
 
     override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
@@ -105,6 +101,7 @@ class FirestoreMedicationRepositoryImpl(
         )
         firestore.collection("profiles").document(profileId)
             .collection("medications").document(medicationId)
+            .collection("supply").document("main")
             .collection("logs").document(logId)
             .set(logData).await()
     }
@@ -112,6 +109,7 @@ class FirestoreMedicationRepositoryImpl(
     override fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>> = callbackFlow {
         val listener = firestore.collection("profiles").document(profileId)
             .collection("medications").document(medicationId)
+            .collection("supply").document("main")
             .collection("logs")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
