@@ -22,6 +22,15 @@ class AlarmSyncWorker(
 
         return try {
             syncAlarmsUseCase(profileId)
+            
+            // Update home screen widget
+            try {
+                val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+                val context = org.koin.core.context.GlobalContext.get().get<android.content.Context>()
+                widgetIntent.setPackage(context.packageName)
+                context.sendBroadcast(widgetIntent)
+            } catch (e: Exception) {}
+
             Result.success()
         } catch (e: Exception) {
             Result.retry()
