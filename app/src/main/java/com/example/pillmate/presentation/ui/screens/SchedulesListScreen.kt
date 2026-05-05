@@ -24,12 +24,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
+import com.example.pillmate.domain.model.Reminder
+import com.example.pillmate.domain.model.ReminderType
 import com.example.pillmate.domain.model.Schedule
+import com.example.pillmate.presentation.ui.components.*
 import com.example.pillmate.presentation.viewmodel.ScheduleBuilderUiState
+import com.example.pillmate.presentation.viewmodel.ScheduleBuilderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchedulesListScreen(
+    viewModel: ScheduleBuilderViewModel,
     paddingValues: PaddingValues,
     uiState: ScheduleBuilderUiState,
     onAddClick: () -> Unit,
@@ -38,6 +43,10 @@ fun SchedulesListScreen(
     onBack: () -> Unit
 ) {
     var scheduleToDelete by remember { mutableStateOf<String?>(null) }
+    
+    var showReminderDialog by remember { mutableStateOf(false) }
+    var selectedScheduleId by remember { mutableStateOf<String?>(null) }
+    var selectedReminder by remember { mutableStateOf<Reminder?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Forest background
@@ -87,11 +96,43 @@ fun SchedulesListScreen(
                         ScheduleListItem(
                             schedule = schedule,
                             onClick = { onScheduleClick(schedule.id) },
-                            onDelete = { scheduleToDelete = schedule.id }
+                            onDelete = { scheduleToDelete = schedule.id },
+                            onAddReminder = {
+                                selectedScheduleId = schedule.id
+                                selectedReminder = null
+                                showReminderDialog = true
+                            },
+                            onEditReminder = { reminder ->
+                                selectedScheduleId = schedule.id
+                                selectedReminder = reminder
+                                showReminderDialog = true
+                            },
+                            onRemoveReminder = { reminder ->
+                                viewModel.removeReminderFromExistingSchedule(schedule.id, reminder)
+                            }
                         )
                     }
                 }
             }
+        }
+        
+        if (showReminderDialog) {
+            ReminderEditDialog(
+                reminder = selectedReminder,
+                onDismiss = { showReminderDialog = false },
+                onSave = { minutes, type ->
+                    val sId = selectedScheduleId ?: return@ReminderEditDialog
+                    val old = selectedReminder
+                    val new = Reminder(minutesBefore = minutes, type = type)
+                    
+                    if (old != null) {
+                        viewModel.updateReminderInExistingSchedule(sId, old, new)
+                    } else {
+                        viewModel.addReminderToExistingSchedule(sId, new)
+                    }
+                    showReminderDialog = false
+                }
+            )
         }
 
         // FAB
@@ -139,7 +180,10 @@ fun SchedulesListScreen(
 fun ScheduleListItem(
     schedule: Schedule,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onAddReminder: () -> Unit,
+    onEditReminder: (Reminder) -> Unit,
+    onRemoveReminder: (Reminder) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -168,6 +212,33 @@ fun ScheduleListItem(
                 if (schedule.endDate != null) {
                     val format = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
                     Text(text = "Ends: ${format.format(schedule.endDate)}", fontSize = 12.sp, color = Color.Gray)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Reminders section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Reminders",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1c5f55)
+                    )
+                    IconButton(onClick = onAddReminder, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Reminder", tint = Color(0xFF1c5f55), modifier = Modifier.size(16.dp))
+                    }
+                }
+                
+                schedule.reminders.forEach { reminder ->
+                    ReminderRow(
+                        reminder = reminder,
+                        onEditClick = { onEditReminder(reminder) },
+                        onRemoveClick = { onRemoveReminder(reminder) }
+                    )
                 }
             }
             IconButton(onClick = onDelete) {

@@ -136,15 +136,6 @@ fun PillMateApp(
                     )
                 }
             }
-            composable(Screen.Reminders.route) {
-                MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    val viewModel: ReminderViewModel = koinViewModel()
-                    ReminderScreen(
-                        viewModel = viewModel, 
-                        paddingValues = innerPadding
-                    )
-                }
-            }
             composable(Screen.Settings.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     SettingsScreen(paddingValues = innerPadding, onSignOutComplete = {

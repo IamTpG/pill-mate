@@ -6,7 +6,9 @@ import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.repository.ScheduleRepository
+import com.example.pillmate.domain.usecase.ManageReminderUseCase
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +47,7 @@ data class ScheduleBuilderUiState(
 
 class ScheduleBuilderViewModel(
     private val scheduleRepository: ScheduleRepository,
+    private val manageReminderUseCase: ManageReminderUseCase,
     private val profileDao: ProfileDao,
     private val auth: FirebaseAuth
 ) : ViewModel() {
@@ -366,5 +369,51 @@ class ScheduleBuilderViewModel(
                 _uiState.update { it.copy(isSaving = false, error = ex.message) }
             }
         }
+    }
+
+    fun addReminderToExistingSchedule(scheduleId: String, reminder: Reminder) {
+        viewModelScope.launch {
+            val profileId = getEffectiveProfileId() ?: return@launch
+            val state = _uiState.value
+            val schedule = state.existingSchedules.find { it.id == scheduleId } ?: return@launch
+            val updatedSchedule = schedule.copy(reminders = schedule.reminders + reminder)
+            
+            manageReminderUseCase(profileId, updatedSchedule)
+            refreshSchedules(profileId)
+        }
+    }
+
+    fun removeReminderFromExistingSchedule(scheduleId: String, reminder: Reminder) {
+        viewModelScope.launch {
+            val profileId = getEffectiveProfileId() ?: return@launch
+            val state = _uiState.value
+            val schedule = state.existingSchedules.find { it.id == scheduleId } ?: return@launch
+            val updatedSchedule = schedule.copy(reminders = schedule.reminders - reminder)
+            
+            manageReminderUseCase.cancelReminder(scheduleId, reminder.minutesBefore)
+            manageReminderUseCase(profileId, updatedSchedule)
+            refreshSchedules(profileId)
+        }
+    }
+
+    fun updateReminderInExistingSchedule(scheduleId: String, oldReminder: Reminder, newReminder: Reminder) {
+        viewModelScope.launch {
+            val profileId = getEffectiveProfileId() ?: return@launch
+            val state = _uiState.value
+            val schedule = state.existingSchedules.find { it.id == scheduleId } ?: return@launch
+            val updatedReminders = schedule.reminders.map { if (it == oldReminder) newReminder else it }
+            val updatedSchedule = schedule.copy(reminders = updatedReminders)
+            
+            manageReminderUseCase.cancelReminder(scheduleId, oldReminder.minutesBefore)
+            manageReminderUseCase(profileId, updatedSchedule)
+            refreshSchedules(profileId)
+        }
+    }
+
+    private suspend fun refreshSchedules(profileId: String) {
+        val medicationId = _uiState.value.selectedMedication?.id ?: return
+        val result = scheduleRepository.getAllOnce(profileId)
+        val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == medicationId } ?: emptyList()
+        _uiState.update { it.copy(existingSchedules = existing) }
     }
 }

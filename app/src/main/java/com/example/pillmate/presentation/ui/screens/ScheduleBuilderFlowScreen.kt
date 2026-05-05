@@ -46,6 +46,7 @@ fun ScheduleBuilderFlowScreen(
             }
             "LIST" -> {
                 SchedulesListScreen(
+                    viewModel = scheduleViewModel,
                     paddingValues = paddingValues,
                     uiState = uiState,
                     onAddClick = {
