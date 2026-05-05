@@ -26,6 +26,25 @@ class FirestoreMedicationRepositoryImpl(
     ),
     MedicationRepository {
 
+    override suspend fun getAllOnce(profileId: String): Result<List<Medication>> = runCatching {
+        val meds = super.getAllOnce(profileId).getOrThrow()
+        
+        // Fetch all 'main' supplies for these meds
+        // Note: Individual fetches are safer than collectionGroup if security rules are per-med
+        meds.map { med ->
+            val supply = getMedicationSupplies(profileId, med.id).getOrNull()?.find { it.id == "main" }
+            med.copy(supply = supply)
+        }
+    }
+
+    override suspend fun getById(profileId: String, id: String): Result<Medication?> = runCatching {
+        val med = super.getById(profileId, id).getOrThrow()
+        if (med != null) {
+            val supply = getMedicationSupplies(profileId, id).getOrNull()?.find { it.id == "main" }
+            med.copy(supply = supply)
+        } else null
+    }
+
     override fun getId(item: Medication): String {
         return item.id.ifEmpty { firestore.collection("tmp").document().id }
     }

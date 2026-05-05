@@ -40,7 +40,7 @@ class HybridMedicationRepositoryImpl(
         if (networkChecker.isOnline()) {
             remoteRepo.add(profileId, item).getOrThrow()
             
-            // Also ensure the 'main' supply doc exists if we have supply info
+            // Subcollection doc 'main' is source of truth for batch details
             item.supply?.let { s ->
                 val mainSupplyRef = firestore.collection("profiles").document(profileId)
                     .collection("medications").document(item.id)
@@ -52,14 +52,17 @@ class HybridMedicationRepositoryImpl(
     }
 
     override suspend fun update(profileId: String, item: Medication): Result<Unit> = runCatching {
-        val updatedItem = item.copy(updatedAt = Date())
+        // preserve external updatedAt if already set (e.g. from sync)
+        val updatedItem = if (getDeletedAt(item) == null) {
+            item.copy(updatedAt = Date())
+        } else item
         localRepo.update(profileId, updatedItem).getOrThrow()
         
         // Sync to Firestore
         if (networkChecker.isOnline()) {
             remoteRepo.update(profileId, updatedItem).getOrThrow()
             
-            // Also update the 'main' supply doc
+            // Subcollection 'main' source of truth
             updatedItem.supply?.let { s ->
                 val mainSupplyRef = firestore.collection("profiles").document(profileId)
                     .collection("medications").document(updatedItem.id)
