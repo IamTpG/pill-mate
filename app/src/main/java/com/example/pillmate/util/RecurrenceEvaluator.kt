@@ -49,7 +49,7 @@ object RecurrenceEvaluator {
         // 2. Parse RRULE
         val parts = rrule.split(";").associate { 
             val pair = it.split("=")
-            pair[0] to (pair.getOrNull(1) ?: "")
+            pair[0].trim().uppercase() to (pair.getOrNull(1)?.trim() ?: "")
         }
 
         val freq = parts["FREQ"] ?: "DAILY"
@@ -57,39 +57,49 @@ object RecurrenceEvaluator {
         
         return when (freq) {
             "DAILY" -> {
-                val diffDays = ((targetCal.timeInMillis - startCal.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
-                diffDays % interval == 0
+                val diffDays = getDaysDiff(startCal, targetCal)
+                diffDays >= 0 && diffDays % interval == 0L
             }
             "WEEKLY" -> {
                 val byDay = parts["BYDAY"] ?: ""
+                val targetDay = when (targetCal.get(Calendar.DAY_OF_WEEK)) {
+                    Calendar.MONDAY -> "MO"
+                    Calendar.TUESDAY -> "TU"
+                    Calendar.WEDNESDAY -> "WE"
+                    Calendar.THURSDAY -> "TH"
+                    Calendar.FRIDAY -> "FR"
+                    Calendar.SATURDAY -> "SA"
+                    Calendar.SUNDAY -> "SU"
+                    else -> ""
+                }
+                
                 if (byDay.isNotEmpty()) {
-                    val days = byDay.split(",")
-                    val targetDay = when (targetCal.get(Calendar.DAY_OF_WEEK)) {
-                        Calendar.MONDAY -> "MO"
-                        Calendar.TUESDAY -> "TU"
-                        Calendar.WEDNESDAY -> "WE"
-                        Calendar.THURSDAY -> "TH"
-                        Calendar.FRIDAY -> "FR"
-                        Calendar.SATURDAY -> "SA"
-                        Calendar.SUNDAY -> "SU"
-                        else -> ""
-                    }
+                    val days = byDay.split(",").map { it.trim().uppercase() }
                     val dayMatches = days.contains(targetDay)
                     
-                    // Interval for weekly means "Every X weeks"
                     if (dayMatches && interval > 1) {
-                        val diffWeeks = ((targetCal.timeInMillis - startCal.timeInMillis) / (1000 * 60 * 60 * 24 * 7)).toInt()
-                        diffWeeks % interval == 0
+                        val diffDays = getDaysDiff(startCal, targetCal)
+                        // Weekly interval means "Every X weeks"
+                        // Calculate weeks since the Monday of the start week
+                        val startWeekCal = startCal.clone() as Calendar
+                        startWeekCal.set(Calendar.HOUR_OF_DAY, 0)
+                        // Adjust to Monday
+                        while (startWeekCal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+                            startWeekCal.add(Calendar.DAY_OF_YEAR, -1)
+                        }
+                        
+                        val diffWeeks = getDaysDiff(startWeekCal, targetCal) / 7
+                        diffWeeks % interval == 0L
                     } else {
                         dayMatches
                     }
                 } else {
-                    val diffDays = ((targetCal.timeInMillis - startCal.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
-                    (diffDays / 7) % interval == 0
+                    // Fallback to "Every X days / 7" logic if no BYDAY provided
+                    val diffDays = getDaysDiff(startCal, targetCal)
+                    (diffDays / 7) % interval == 0L
                 }
             }
             "MONTHLY" -> {
-                // Simplified monthly: same day of month
                 val dayMatches = targetCal.get(Calendar.DAY_OF_MONTH) == startCal.get(Calendar.DAY_OF_MONTH)
                 if (dayMatches && interval > 1) {
                     val diffMonths = (targetCal.get(Calendar.YEAR) - startCal.get(Calendar.YEAR)) * 12 + 
@@ -99,9 +109,16 @@ object RecurrenceEvaluator {
                     dayMatches
                 }
             }
-            "HOURLY" -> true // Hourly doesn't care about day, always occurs on day if within start/end
-            else -> true
+            "HOURLY" -> true
+            else -> false // Changed from true to false for unknown frequencies
         }
+    }
+
+    private fun getDaysDiff(start: Calendar, end: Calendar): Long {
+        // More robust day difference calculation
+        val d1 = start.timeInMillis + start.timeZone.getOffset(start.timeInMillis)
+        val d2 = end.timeInMillis + end.timeZone.getOffset(end.timeInMillis)
+        return (d2 - d1) / (1000 * 60 * 60 * 24)
     }
     
     /**
