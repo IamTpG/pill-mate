@@ -46,4 +46,44 @@
         android:textSize="14sp"
         android:textStyle="bold" />
 
+    <ImageView
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/med_dose"
+        android:layout_marginTop="12.dp"
+        android:background="#33FFFFFF" />
+
+    <TextView
+        android:id="@+id/hydration_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/divider"
+        android:layout_marginTop="12.dp"
+        android:text="Hydration Progress"
+        android:textColor="@color/secondary_teal"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <ProgressBar
+        android:id="@+id/hydration_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_below="@id/hydration_label"
+        android:layout_marginTop="8.dp"
+        android:max="1000"
+        android:progress="0"
+        android:progressDrawable="@drawable/widget_progress_bar" />
+
+    <TextView
+        android:id="@+id/hydration_progress_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/hydration_label"
+        android:layout_alignParentEnd="true"
+        android:text="0/2500 ml"
+        android:textColor="@color/white"
+        android:textSize="12sp" />
+
 </RelativeLayout>

@@ -89,6 +89,7 @@ val appModule = module {
     factory { LogHealthMetricUseCase(get()) }
     factory { GetHealthMetricsUseCase(get()) }
     factory { UpdateHydrationGoalUseCase(get(), get()) }
+    factory { GetWidgetDataUseCase(get(), get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
     viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }

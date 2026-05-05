@@ -20,6 +20,16 @@ class UpdateHydrationGoalUseCase(
             if (current != null) {
                 profileDao.insertProfile(current.copy(hydrationGoal = goal))
             }
+            triggerWidgetUpdate()
         }
+    }
+
+    private fun triggerWidgetUpdate() {
+        try {
+            val context = org.koin.core.context.GlobalContext.get().get<android.content.Context>()
+            val intent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+            intent.setPackage(context.packageName)
+            context.sendBroadcast(intent)
+        } catch (e: Exception) {}
     }
 }
