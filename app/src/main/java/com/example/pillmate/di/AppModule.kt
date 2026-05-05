@@ -68,6 +68,7 @@ val appModule = module {
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
+    single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
@@ -82,8 +83,11 @@ val appModule = module {
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
     factory { GetNextTaskUseCase(get(), get()) }
+    factory { LogHealthMetricUseCase(get()) }
+    factory { GetHealthMetricsUseCase(get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
 

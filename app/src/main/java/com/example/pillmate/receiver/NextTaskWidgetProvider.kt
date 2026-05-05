@@ -48,9 +48,9 @@ class NextTaskWidgetProvider : AppWidgetProvider() {
                 val nextTask = getNextTaskUseCase.execute(profileId)
                 
                 if (nextTask != null) {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
                     views.setTextViewText(R.id.med_name, nextTask.title)
-                    views.setTextViewText(R.id.med_time, "At ${timeFormat.format(nextTask.time)}")
+                    views.setTextViewText(R.id.med_time, timeFormat.format(nextTask.time))
                     views.setTextViewText(R.id.med_dose, nextTask.details)
                 } else {
                     views.setTextViewText(R.id.med_name, "No tasks")

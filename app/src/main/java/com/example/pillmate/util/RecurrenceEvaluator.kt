@@ -131,7 +131,21 @@ object RecurrenceEvaluator {
 
         val parsedTime = try {
             if (doseTime.contains("T")) isoFormat.parse(doseTime)
-            else try { timeFormat.parse(doseTime) } catch (e: Exception) { fallbackFormat.parse(doseTime) }
+            else {
+                val parts = doseTime.split(":", " ")
+                var hr = parts.getOrNull(0)?.toIntOrNull() ?: 8
+                val min = parts.getOrNull(1)?.filter { it.isDigit() }?.toIntOrNull() ?: 0
+                
+                if (doseTime.contains("PM", ignoreCase = true) && hr < 12) hr += 12
+                if (doseTime.contains("AM", ignoreCase = true) && hr == 12) hr = 0
+                
+                Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, hr)
+                    set(Calendar.MINUTE, min)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.time
+            }
         } catch (e: Exception) { null } ?: return null
 
         val timeCal = Calendar.getInstance().apply { time = parsedTime }

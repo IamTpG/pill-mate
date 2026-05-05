@@ -170,7 +170,17 @@ fun PillMateApp(
                 )
             }
             
-           composable(route = Screen.Appointment.route) {
+            composable(Screen.Vitals.route) {
+                val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+                val currentUserId = auth.currentUser?.uid ?: ""
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
+                        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
+                    )
+                    VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
+                }
+            }
+            composable(route = Screen.Appointment.route) {
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
                 

@@ -33,17 +33,17 @@
         android:layout_marginTop="2dp"
         android:text=""
         android:textColor="@color/status_upcoming"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/med_dose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
+        android:layout_below="@id/med_time"
+        android:layout_marginTop="2dp"
         android:text=""
         android:textColor="@color/accent_teal"
-        android:textSize="18sp"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
 </RelativeLayout>
