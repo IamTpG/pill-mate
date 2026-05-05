@@ -68,9 +68,13 @@ class MainActivity : AppCompatActivity() {
                             // Wait 3s so ManageReminderUseCase's alarm isn't immediately overwritten
                             kotlinx.coroutines.delay(3000)
                             Log.d("MainActivity", "Firestore listener: running debounced sync")
-                            try {
-                                syncAlarmsUseCase(profileId)
-                            } catch (e: Exception) {
+                                try {
+                                    syncAlarmsUseCase(profileId)
+                                    // Update home screen widget
+                                    val widgetIntent = android.content.Intent("com.example.pillmate.ACTION_UPDATE_WIDGET")
+                                    widgetIntent.setPackage(packageName)
+                                    sendBroadcast(widgetIntent)
+                                } catch (e: Exception) {
                                 Log.e("MainActivity", "Sync from listener failed", e)
                             }
                         }
