@@ -43,7 +43,10 @@ import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
+import com.example.pillmate.domain.repository.HealthMetricRepository
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
