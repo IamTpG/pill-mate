@@ -20,8 +20,17 @@ data class VitalsUiState(
     val latestWeight: String = "--",
     val weightStatus: String = "0kg today",
     val recentActivity: List<HealthMetric> = emptyList(),
+    val weeklyStats: WeeklyStats = WeeklyStats(),
     val isLoading: Boolean = false,
-    val showLogPanel: Boolean = false
+    val showLogPanel: Boolean = false,
+    val showWeeklyReport: Boolean = false
+)
+
+data class WeeklyStats(
+    val avgBP: String = "--/--",
+    val totalWater: String = "0 ml",
+    val avgWeight: String = "0.0 kg",
+    val activityCounts: Map<MetricType, Int> = emptyMap()
 )
 
 class VitalsViewModel(
@@ -57,11 +66,38 @@ class VitalsViewModel(
                         latestWeight = latestWeight?.let { String.format("%.1f", it.valuePrimary) } ?: "--",
                         weightStatus = "", // Removed "0kg today"
                         recentActivity = metrics,
+                        weeklyStats = calculateWeeklyStats(metrics),
                         isLoading = false
                     )
                 }
             }
         }
+    }
+
+    private fun calculateWeeklyStats(metrics: List<HealthMetric>): WeeklyStats {
+        val last7Days = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -7) }.time
+        val weekMetrics = metrics.filter { it.recordedAt.after(last7Days) }
+        
+        val bpList = weekMetrics.filter { it.type == MetricType.BLOOD_PRESSURE }
+        val avgSys = if (bpList.isNotEmpty()) bpList.averageOf { it.valuePrimary } else 0.0
+        val avgDia = if (bpList.isNotEmpty()) bpList.averageOf { it.valueSecondary ?: 0.0 } else 0.0
+        
+        val weightList = weekMetrics.filter { it.type == MetricType.WEIGHT }
+        val avgWeight = if (weightList.isNotEmpty()) weightList.averageOf { it.valuePrimary } else 0.0
+        
+        val waterTotal = weekMetrics.filter { it.type == MetricType.WATER }.sumOf { it.valuePrimary }
+        
+        return WeeklyStats(
+            avgBP = if (avgSys > 0) "${avgSys.toInt()}/${avgDia.toInt()}" else "--/--",
+            totalWater = String.format("%,d ml", waterTotal.toInt()),
+            avgWeight = String.format("%.1f kg", avgWeight),
+            activityCounts = weekMetrics.groupBy { it.type }.mapValues { it.value.size }
+        )
+    }
+
+    private fun List<HealthMetric>.averageOf(selector: (HealthMetric) -> Double): Double {
+        if (this.isEmpty()) return 0.0
+        return this.sumOf(selector) / this.size
     }
 
     private fun getBpStatus(sys: Int, dia: Int): String {
@@ -91,6 +127,10 @@ class VitalsViewModel(
 
     fun toggleLogPanel(show: Boolean) {
         _uiState.update { it.copy(showLogPanel = show) }
+    }
+
+    fun toggleWeeklyReport(show: Boolean) {
+        _uiState.update { it.copy(showWeeklyReport = show) }
     }
 
     private fun isSameDay(d1: Date, d2: Date): Boolean {

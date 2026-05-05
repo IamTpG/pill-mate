@@ -27,6 +27,7 @@ import com.example.pillmate.domain.model.HealthMetric
 import com.example.pillmate.domain.model.MetricType
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
+import com.example.pillmate.presentation.viewmodel.WeeklyStats
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,7 +47,10 @@ fun VitalsScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            VitalsHeader(onAddClick = { viewModel.toggleLogPanel(true) })
+            VitalsHeader(
+                onAddClick = { viewModel.toggleLogPanel(true) },
+                onReportClick = { viewModel.toggleWeeklyReport(true) }
+            )
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -98,10 +102,6 @@ fun VitalsScreen(
                 items(uiState.recentActivity.take(5)) { metric ->
                     RecentActivityItem(metric)
                 }
-                
-                item {
-                    WeeklyReportCard()
-                }
             }
         }
     }
@@ -112,10 +112,17 @@ fun VitalsScreen(
             onSave = { type, v1, v2, unit -> viewModel.logMetric(type, v1, v2, unit) }
         )
     }
+
+    if (uiState.showWeeklyReport) {
+        WeeklyReportBottomSheet(
+            stats = uiState.weeklyStats,
+            onDismiss = { viewModel.toggleWeeklyReport(false) }
+        )
+    }
 }
 
 @Composable
-fun VitalsHeader(onAddClick: () -> Unit) {
+fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,15 +134,27 @@ fun VitalsHeader(onAddClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Daily Vitals", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable { onAddClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE0FAF6))
+                        .clickable { onReportClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C), modifier = Modifier.size(20.dp))
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable { onAddClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+                }
             }
         }
     }
@@ -241,23 +260,97 @@ fun RecentActivityItem(metric: HealthMetric) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeeklyReportCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+fun WeeklyReportBottomSheet(
+    stats: WeeklyStats,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
-        Row(modifier = Modifier.padding(20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(Color(0xFFE0FAF6)), contentAlignment = Alignment.Center) {
-                Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text("Weekly Insights", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("Summary for the last 7 days", color = Color.Gray, fontSize = 14.sp)
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Stats Row
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                WeeklyStatItem(Modifier.weight(1f), "Avg BP", stats.avgBP, Color(0xFFFF708D))
+                WeeklyStatItem(Modifier.weight(1f), "Total Water", stats.totalWater, Color(0xFF5D5DFF))
+                WeeklyStatItem(Modifier.weight(1f), "Avg Weight", stats.avgWeight, Color(0xFF2ECC71))
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Weekly Report", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Available to view now", color = Color.Gray, fontSize = 13.sp)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Text("Activity Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Mock Graph / Bars
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                listOf(MetricType.BLOOD_PRESSURE, MetricType.WATER, MetricType.WEIGHT).forEach { type ->
+                    val count = stats.activityCounts[type] ?: 0
+                    ActivityBar(
+                        label = type.name.replace("_", " "),
+                        count = count,
+                        max = 14, // Assuming 2 logs per day max
+                        color = when(type) {
+                            MetricType.BLOOD_PRESSURE -> Color(0xFFFF708D)
+                            MetricType.WATER -> Color(0xFF5D5DFF)
+                            else -> Color(0xFF2ECC71)
+                        }
+                    )
+                }
             }
-            Icon(Icons.Default.Add, contentDescription = null, tint = Color.Gray) // Proxy for arrow
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1ABC9C))
+            ) {
+                Text("Close Report", color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
+    }
+}
+
+@Composable
+fun WeeklyStatItem(modifier: Modifier, label: String, value: String, color: Color) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA))
+    ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(label, fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+            Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color)
+        }
+    }
+}
+
+@Composable
+fun ActivityBar(label: String, count: Int, max: Int, color: Color) {
+    val progress = (count.toFloat() / max.toFloat()).coerceIn(0.1f, 1f)
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, fontSize = 12.sp, color = Color.DarkGray)
+            Text("$count logs", fontSize = 12.sp, color = Color.Gray)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+            color = color,
+            trackColor = Color(0xFFF5F5F5)
+        )
     }
 }
