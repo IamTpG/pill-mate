@@ -5,6 +5,7 @@ import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.presentation.model.HomeTask
+import com.example.pillmate.util.RecurrenceEvaluator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.util.Calendar
@@ -37,12 +38,12 @@ class GetHomeTasksUseCase(
                 val targetDateEnd = cal.time
                 
                 val activeSchedules = schedules.filter { schedule ->
-                    // Schedule must start on or before the end of the target day
-                    val startsBeforeOrOnTarget = schedule.createdAt.before(targetDateEnd)
-                    // Schedule must end on or after the start of the target day
-                    val endsAfterOrOnTarget = schedule.endDate == null || schedule.endDate.after(targetDateStart)
-                    
-                    startsBeforeOrOnTarget && endsAfterOrOnTarget
+                    RecurrenceEvaluator.isOccurringOn(
+                        targetDate = date,
+                        rrule = schedule.recurrenceRule,
+                        startTimeIso = schedule.startTime,
+                        endDate = schedule.endDate
+                    )
                 }
 
                 val homeTasks = activeSchedules.flatMap { schedule ->
@@ -112,7 +113,9 @@ class GetHomeTasksUseCase(
                             doseDescription = details,
                             dose = fallbackDose,
                             taskType = schedule.type,
-                            status = status
+                            status = status,
+                            frequency = schedule.frequency,
+                            recurrenceRule = schedule.recurrenceRule
                         )
                     }
                 }.sortedBy { it.time }

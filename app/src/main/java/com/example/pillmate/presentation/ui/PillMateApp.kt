@@ -115,7 +115,7 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
-                                    rrule = "",
+                                    rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
                             )

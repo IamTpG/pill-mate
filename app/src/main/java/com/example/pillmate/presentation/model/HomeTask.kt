@@ -10,5 +10,7 @@ data class HomeTask(
     val doseDescription: String,
     val dose: Float = 1.0f,
     val taskType: com.example.pillmate.domain.model.TaskType,
-    val status: LogStatus? = null // null means upcoming
+    val status: LogStatus? = null, // null means upcoming
+    val frequency: String? = null,
+    val recurrenceRule: String? = null
 )

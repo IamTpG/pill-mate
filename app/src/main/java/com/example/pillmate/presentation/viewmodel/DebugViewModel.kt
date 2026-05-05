@@ -153,6 +153,7 @@ class DebugViewModel(
                 val newSchedule = Schedule(
                     id = "debug_test_1m_alarm",
                     doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = startTime)),
+                    startTime = startTime,
                     recurrenceRule = "FREQ=DAILY;COUNT=10",
                     reminders = listOf(
                         Reminder(minutesBefore = 0, type = ReminderType.ALARM)
