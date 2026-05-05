@@ -88,9 +88,10 @@ val appModule = module {
     factory { GetNextTaskUseCase(get(), get()) }
     factory { LogHealthMetricUseCase(get()) }
     factory { GetHealthMetricsUseCase(get()) }
+    factory { UpdateHydrationGoalUseCase(get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
-    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), profileId) }
+    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
 

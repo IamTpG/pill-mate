@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
+import com.example.pillmate.data.local.dao.ProfileDao
+import com.example.pillmate.domain.usecase.UpdateHydrationGoalUseCase
+import kotlinx.coroutines.flow.update
 
 data class VitalsUiState(
     val hydrationMl: Int = 0,
@@ -36,6 +39,8 @@ data class WeeklyStats(
 class VitalsViewModel(
     private val getHealthMetricsUseCase: GetHealthMetricsUseCase,
     private val logHealthMetricUseCase: LogHealthMetricUseCase,
+    private val updateHydrationGoalUseCase: UpdateHydrationGoalUseCase,
+    private val profileDao: ProfileDao,
     private val profileId: String
 ) : ViewModel() {
 
@@ -44,6 +49,17 @@ class VitalsViewModel(
 
     init {
         loadData()
+        watchProfile()
+    }
+
+    private fun watchProfile() {
+        viewModelScope.launch {
+            profileDao.getCurrentProfileFlow().collect { profile ->
+                profile?.let { p ->
+                    _uiState.update { it.copy(hydrationTarget = p.hydrationGoal) }
+                }
+            }
+        }
     }
 
     fun loadData() {
@@ -122,6 +138,12 @@ class VitalsViewModel(
             )
             logHealthMetricUseCase.execute(profileId, metric)
             toggleLogPanel(false)
+        }
+    }
+
+    fun updateHydrationTarget(target: Int) {
+        viewModelScope.launch {
+            updateHydrationGoalUseCase.execute(profileId, target)
         }
     }
 

@@ -11,4 +11,5 @@ data class ProfileEntity(
     val healthInformation: String = "",
     val role: String,
     val isCurrent: Boolean = false,
+    val hydrationGoal: Int = 2500
 )

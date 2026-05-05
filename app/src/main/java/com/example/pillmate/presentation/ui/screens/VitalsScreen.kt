@@ -27,6 +27,7 @@ import com.example.pillmate.domain.model.HealthMetric
 import com.example.pillmate.domain.model.MetricType
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
+import com.example.pillmate.presentation.ui.components.HydrationGoalDialog
 import com.example.pillmate.presentation.viewmodel.WeeklyStats
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,6 +38,7 @@ fun VitalsScreen(
     paddingValues: PaddingValues
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showHydrationDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -60,7 +62,8 @@ fun VitalsScreen(
                 item {
                     HydrationCard(
                         current = uiState.hydrationMl,
-                        target = uiState.hydrationTarget
+                        target = uiState.hydrationTarget,
+                        onClick = { showHydrationDialog = true }
                     )
                 }
 
@@ -113,6 +116,17 @@ fun VitalsScreen(
         )
     }
 
+    if (showHydrationDialog) {
+        HydrationGoalDialog(
+            currentGoal = uiState.hydrationTarget,
+            onDismiss = { showHydrationDialog = false },
+            onSave = { goal ->
+                viewModel.updateHydrationTarget(goal)
+                showHydrationDialog = false
+            }
+        )
+    }
+
     if (uiState.showWeeklyReport) {
         WeeklyReportBottomSheet(
             stats = uiState.weeklyStats,
@@ -161,10 +175,10 @@ fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
 }
 
 @Composable
-fun HydrationCard(current: Int, target: Int) {
+fun HydrationCard(current: Int, target: Int, onClick: () -> Unit) {
     val progress = (current.toFloat() / target.toFloat()).coerceIn(0f, 1f)
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {

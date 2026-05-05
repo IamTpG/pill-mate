@@ -64,6 +64,7 @@ class ProfileViewModel(
                         val name = doc.getString("fullName") ?: "Unknown User"
                         val dobMillis = doc.getLong("dateOfBirth")
                         val healthInfo = doc.getString("healthInformation") ?: ""
+                        val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
 
                         profileDao.insertSavedAccount(
                             SavedAccountEntity(
@@ -75,7 +76,7 @@ class ProfileViewModel(
                         )
 
                         profileDao.clearAllProfiles()
-                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
+                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true, hydrationGoal))
 
                         syncFollowedProfiles(firebaseUid)
                     }
@@ -94,6 +95,7 @@ class ProfileViewModel(
                     val name = doc.getString("fullName") ?: "Unknown User"
                     val dobMillis = doc.getLong("dateOfBirth")
                     val healthInfo = doc.getString("healthInformation") ?: ""
+                    val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
 
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
@@ -101,7 +103,8 @@ class ProfileViewModel(
                             existing.copy(
                                 name = name,
                                 dateOfBirth = dobMillis,
-                                healthInformation = healthInfo
+                                healthInformation = healthInfo,
+                                hydrationGoal = hydrationGoal
                             )
                         )
                     } else {
@@ -112,7 +115,8 @@ class ProfileViewModel(
                                 dateOfBirth = dobMillis,
                                 healthInformation = healthInfo,
                                 role = roleIfNew,
-                                isCurrent = false
+                                isCurrent = false,
+                                hydrationGoal = hydrationGoal
                             )
                         )
                     }
@@ -123,14 +127,15 @@ class ProfileViewModel(
         }
     }
 
-    fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, onSuccess: () -> Unit) {
+    fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, hydrationGoal: Int = 2500, onSuccess: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeId = currentLocalProfile.value?.id ?: return@launch
 
             val updates = mapOf(
                 "fullName" to name,
                 "dateOfBirth" to dobMillis,
-                "healthInformation" to healthInfo
+                "healthInformation" to healthInfo,
+                "hydrationGoal" to hydrationGoal
             )
 
             try {
@@ -141,11 +146,27 @@ class ProfileViewModel(
                         currentEntity.copy(
                             name = name,
                             dateOfBirth = dobMillis,
-                            healthInformation = healthInfo
+                            healthInformation = healthInfo,
+                            hydrationGoal = hydrationGoal
                         )
                     )
                 }
                 withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateHydrationGoal(goal: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
+            try {
+                db.collection("profiles").document(activeId).update("hydrationGoal", goal).await()
+                val currentEntity = profileDao.getProfileById(activeId)
+                if (currentEntity != null) {
+                    profileDao.insertProfile(currentEntity.copy(hydrationGoal = goal))
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
