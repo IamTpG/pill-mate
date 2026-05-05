@@ -8,6 +8,7 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.example.pillmate.R
 import com.example.pillmate.domain.usecase.GetNextTaskUseCase
+import com.example.pillmate.domain.usecase.GetWidgetDataUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,21 +43,32 @@ class NextTaskWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_next_task)
             
             try {
-                val getNextTaskUseCase = GlobalContext.get().get<GetNextTaskUseCase>()
+                val getWidgetDataUseCase = GlobalContext.get().get<GetWidgetDataUseCase>()
                 val profileId = GlobalContext.get().get<String>()
                 
-                val nextTask = getNextTaskUseCase.execute(profileId)
+                val widgetData = getWidgetDataUseCase.execute(profileId)
+                val nextTask = widgetData.nextTask
                 
+                // Update Next Task
                 if (nextTask != null) {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
                     views.setTextViewText(R.id.med_name, nextTask.title)
-                    views.setTextViewText(R.id.med_time, "At ${timeFormat.format(nextTask.time)}")
+                    views.setTextViewText(R.id.med_time, timeFormat.format(nextTask.time))
                     views.setTextViewText(R.id.med_dose, nextTask.details)
                 } else {
                     views.setTextViewText(R.id.med_name, "No tasks")
                     views.setTextViewText(R.id.med_time, "All done for now!")
                     views.setTextViewText(R.id.med_dose, "")
                 }
+
+                // Update Hydration
+                val hydrationText = "${widgetData.hydrationMl}/${widgetData.hydrationGoal} ml"
+                views.setTextViewText(R.id.hydration_progress_text, hydrationText)
+                val progress = if (widgetData.hydrationGoal > 0) {
+                    (widgetData.hydrationMl * 1000 / widgetData.hydrationGoal).coerceIn(0, 1000)
+                } else 0
+                views.setProgressBar(R.id.hydration_progress_bar, 1000, progress, false)
+
             } catch (e: Exception) {
                 views.setTextViewText(R.id.med_name, "PillMate")
                 views.setTextViewText(R.id.med_time, "Tap to open")

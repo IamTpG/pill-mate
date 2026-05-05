@@ -43,7 +43,10 @@ import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
+import com.example.pillmate.domain.repository.HealthMetricRepository
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
@@ -68,6 +71,7 @@ val appModule = module {
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
+    single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
@@ -82,8 +86,13 @@ val appModule = module {
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
     factory { GetNextTaskUseCase(get(), get()) }
+    factory { LogHealthMetricUseCase(get()) }
+    factory { GetHealthMetricsUseCase(get()) }
+    factory { UpdateHydrationGoalUseCase(get(), get()) }
+    factory { GetWidgetDataUseCase(get(), get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
 
