@@ -11,7 +11,7 @@ import java.util.Date
 
 open class HybridRepositoryImpl<T>(
     protected val localRepo: LocalRepository<T>,
-    private val remoteRepo: RemoteRepository<T>,
+    protected val remoteRepo: RemoteRepository<T>,
     private val networkChecker: () -> Boolean,
     private val getId: (T) -> String,
     private val getUpdatedAt: (T) -> Date,

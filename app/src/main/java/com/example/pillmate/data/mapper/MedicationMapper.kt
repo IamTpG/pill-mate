@@ -13,6 +13,8 @@ fun MedicationEntity.toDomainModel(inventory: Int = 0): Medication {
         unit = unit,
         photoUrl = photoUrl,
         supply = MedicationSupply(
+            id = "main",
+            batchName = "Main Batch",
             quantity = inventory.toFloat(),
             expirationDate = if (expirationDate > 0) Date(expirationDate) else null
         ),
