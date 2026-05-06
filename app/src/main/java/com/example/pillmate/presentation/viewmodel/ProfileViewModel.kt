@@ -72,6 +72,19 @@ class ProfileViewModel(
                         val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
                         val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
 
+                        // 🟢 Bootstrap missing fields in Firestore if they don't exist
+                        if (!doc.contains("hydrationReminderEnabled")) {
+                            val bootstrap = mapOf(
+                                "hydrationReminderEnabled" to hydrationEnabled,
+                                "hydrationInterval" to hydrationInterval,
+                                "bpReminderEnabled" to bpEnabled,
+                                "bpInterval" to bpInterval,
+                                "weightReminderEnabled" to weightEnabled,
+                                "weightInterval" to weightInterval
+                            )
+                            db.collection("profiles").document(targetUid).set(bootstrap, SetOptions.merge())
+                        }
+
                         profileDao.insertSavedAccount(
                             SavedAccountEntity(
                                 id = firebaseUid,
@@ -111,6 +124,19 @@ class ProfileViewModel(
                     val bpInterval = doc.getLong("bpInterval")?.toInt() ?: 1440
                     val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
                     val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
+
+                    // 🟢 Bootstrap missing fields in Firestore if they don't exist
+                    if (!doc.contains("hydrationReminderEnabled")) {
+                        val bootstrap = mapOf(
+                            "hydrationReminderEnabled" to hydrationEnabled,
+                            "hydrationInterval" to hydrationInterval,
+                            "bpReminderEnabled" to bpEnabled,
+                            "bpInterval" to bpInterval,
+                            "weightReminderEnabled" to weightEnabled,
+                            "weightInterval" to weightInterval
+                        )
+                        db.collection("profiles").document(profileId).set(bootstrap, SetOptions.merge())
+                    }
 
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
