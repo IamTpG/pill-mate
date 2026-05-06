@@ -95,7 +95,7 @@ val appModule = module {
     viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
-    single { HealthReminderManager(get()) }
+    single { HealthReminderManager(get(), get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }

@@ -65,6 +65,12 @@ class ProfileViewModel(
                         val dobMillis = doc.getLong("dateOfBirth")
                         val healthInfo = doc.getString("healthInformation") ?: ""
                         val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
+                        val hydrationEnabled = doc.getBoolean("hydrationReminderEnabled") ?: false
+                        val hydrationInterval = doc.getLong("hydrationInterval")?.toInt() ?: 240
+                        val bpEnabled = doc.getBoolean("bpReminderEnabled") ?: false
+                        val bpInterval = doc.getLong("bpInterval")?.toInt() ?: 1440
+                        val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
+                        val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
 
                         profileDao.insertSavedAccount(
                             SavedAccountEntity(
@@ -76,7 +82,10 @@ class ProfileViewModel(
                         )
 
                         profileDao.clearAllProfiles()
-                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true, hydrationGoal))
+                        profileDao.insertProfile(ProfileEntity(
+                            firebaseUid, name, dobMillis, healthInfo, "Primary User", true, hydrationGoal,
+                            hydrationEnabled, hydrationInterval, bpEnabled, bpInterval, weightEnabled, weightInterval
+                        ))
 
                         syncFollowedProfiles(firebaseUid)
                     }
@@ -96,6 +105,12 @@ class ProfileViewModel(
                     val dobMillis = doc.getLong("dateOfBirth")
                     val healthInfo = doc.getString("healthInformation") ?: ""
                     val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
+                    val hydrationEnabled = doc.getBoolean("hydrationReminderEnabled") ?: false
+                    val hydrationInterval = doc.getLong("hydrationInterval")?.toInt() ?: 240
+                    val bpEnabled = doc.getBoolean("bpReminderEnabled") ?: false
+                    val bpInterval = doc.getLong("bpInterval")?.toInt() ?: 1440
+                    val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
+                    val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
 
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
@@ -104,7 +119,13 @@ class ProfileViewModel(
                                 name = name,
                                 dateOfBirth = dobMillis,
                                 healthInformation = healthInfo,
-                                hydrationGoal = hydrationGoal
+                                hydrationGoal = hydrationGoal,
+                                hydrationReminderEnabled = hydrationEnabled,
+                                hydrationInterval = hydrationInterval,
+                                bpReminderEnabled = bpEnabled,
+                                bpInterval = bpInterval,
+                                weightReminderEnabled = weightEnabled,
+                                weightInterval = weightInterval
                             )
                         )
                     } else {
@@ -116,7 +137,13 @@ class ProfileViewModel(
                                 healthInformation = healthInfo,
                                 role = roleIfNew,
                                 isCurrent = false,
-                                hydrationGoal = hydrationGoal
+                                hydrationGoal = hydrationGoal,
+                                hydrationReminderEnabled = hydrationEnabled,
+                                hydrationInterval = hydrationInterval,
+                                bpReminderEnabled = bpEnabled,
+                                bpInterval = bpInterval,
+                                weightReminderEnabled = weightEnabled,
+                                weightInterval = weightInterval
                             )
                         )
                     }
@@ -166,6 +193,46 @@ class ProfileViewModel(
                 val currentEntity = profileDao.getProfileById(activeId)
                 if (currentEntity != null) {
                     profileDao.insertProfile(currentEntity.copy(hydrationGoal = goal))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateHealthReminder(type: String, enabled: Boolean, interval: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
+            
+            val updates = when (type) {
+                "HYDRATION" -> mapOf(
+                    "hydrationReminderEnabled" to enabled,
+                    "hydrationInterval" to interval
+                )
+                "BLOOD_PRESSURE" -> mapOf(
+                    "bpReminderEnabled" to enabled,
+                    "bpInterval" to interval
+                )
+                "WEIGHT" -> mapOf(
+                    "weightReminderEnabled" to enabled,
+                    "weightInterval" to interval
+                )
+                else -> emptyMap()
+            }
+            
+            if (updates.isEmpty()) return@launch
+
+            try {
+                db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).await()
+                val currentEntity = profileDao.getProfileById(activeId)
+                if (currentEntity != null) {
+                    val updatedEntity = when (type) {
+                        "HYDRATION" -> currentEntity.copy(hydrationReminderEnabled = enabled, hydrationInterval = interval)
+                        "BLOOD_PRESSURE" -> currentEntity.copy(bpReminderEnabled = enabled, bpInterval = interval)
+                        "WEIGHT" -> currentEntity.copy(weightReminderEnabled = enabled, weightInterval = interval)
+                        else -> currentEntity
+                    }
+                    profileDao.insertProfile(updatedEntity)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

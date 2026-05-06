@@ -26,19 +26,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.appcompat.app.AppCompatDelegate
@@ -228,7 +223,7 @@ fun ProfileOptionsScreen(
         )
         
         var showHealthRemindersSheet by remember { mutableStateOf(false) }
-        val healthReminderManager: HealthReminderManager = koinInject()
+        val profileViewModel: ProfileViewModel = koinViewModel()
 
         SettingsButton(
             text = "Health Notifications",
@@ -238,7 +233,7 @@ fun ProfileOptionsScreen(
 
         if (showHealthRemindersSheet) {
             HealthRemindersBottomSheet(
-                manager = healthReminderManager,
+                viewModel = profileViewModel,
                 onDismiss = { showHealthRemindersSheet = false }
             )
         }
@@ -920,10 +915,11 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthRemindersBottomSheet(
-    manager: HealthReminderManager,
+    viewModel: ProfileViewModel,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val profile by viewModel.currentLocalProfile.collectAsState()
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -944,7 +940,7 @@ fun HealthRemindersBottomSheet(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "Settings are local to this device.",
+                text = "Settings are synced with your profile.",
                 color = Color.Gray,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -955,11 +951,34 @@ fun HealthRemindersBottomSheet(
             val bpOptions = listOf(1440 to "Daily", 2880 to "2 Days", 10080 to "Weekly")
             val weightOptions = listOf(10080 to "Weekly", 20160 to "2 Weeks", 43200 to "Monthly")
 
-            HealthReminderItem(label = "Hydration", type = "HYDRATION", manager = manager, options = hydrationOptions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-            HealthReminderItem(label = "Blood Pressure", type = "BLOOD_PRESSURE", manager = manager, options = bpOptions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-            HealthReminderItem(label = "Body Weight", type = "WEIGHT", manager = manager, options = weightOptions)
+            profile?.let { p ->
+                HealthReminderItem(
+                    label = "Hydration",
+                    type = "HYDRATION",
+                    initEnabled = p.hydrationReminderEnabled,
+                    initInterval = p.hydrationInterval,
+                    options = hydrationOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("HYDRATION", e, i) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                HealthReminderItem(
+                    label = "Blood Pressure",
+                    type = "BLOOD_PRESSURE",
+                    initEnabled = p.bpReminderEnabled,
+                    initInterval = p.bpInterval,
+                    options = bpOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("BLOOD_PRESSURE", e, i) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                HealthReminderItem(
+                    label = "Body Weight",
+                    type = "WEIGHT",
+                    initEnabled = p.weightReminderEnabled,
+                    initInterval = p.weightInterval,
+                    options = weightOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("WEIGHT", e, i) }
+                )
+            }
         }
     }
 }
@@ -968,17 +987,19 @@ fun HealthRemindersBottomSheet(
 fun HealthReminderItem(
     label: String,
     type: String,
-    manager: HealthReminderManager,
-    options: List<Pair<Int, String>>
+    initEnabled: Boolean,
+    initInterval: Int,
+    options: List<Pair<Int, String>>,
+    onUpdate: (Boolean, Int) -> Unit
 ) {
-    var enabled by remember { mutableStateOf(manager.isEnabled(type)) }
-    var interval by remember { mutableIntStateOf(manager.getInterval(type)) }
+    var enabled by remember(initEnabled) { mutableStateOf(initEnabled) }
+    var interval by remember(initInterval) { mutableIntStateOf(initInterval) }
 
-    // Ensure interval is one of the valid options if enabled
-    LaunchedEffect(enabled) {
+    // Ensure interval is one of the valid options if enabled and not already valid
+    LaunchedEffect(enabled, interval) {
         if (enabled && options.none { it.first == interval }) {
-            interval = options.first().first
-            manager.updateSetting(type, true, interval)
+            val defaultInterval = options.first().first
+            onUpdate(true, defaultInterval)
         }
     }
 
@@ -993,7 +1014,7 @@ fun HealthReminderItem(
                 checked = enabled,
                 onCheckedChange = { 
                     enabled = it
-                    manager.updateSetting(type, it, interval)
+                    onUpdate(it, interval)
                 },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = PrimaryGreen,
@@ -1023,8 +1044,7 @@ fun HealthReminderItem(
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isSelected) PrimaryGreen else Color.White.copy(alpha = 0.1f))
                             .clickable {
-                                interval = mins
-                                manager.updateSetting(type, true, mins)
+                                onUpdate(true, mins)
                             },
                         contentAlignment = Alignment.Center
                     ) {
