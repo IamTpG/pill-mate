@@ -950,11 +950,16 @@ fun HealthRemindersBottomSheet(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            HealthReminderItem(label = "Hydration", type = "HYDRATION", manager = manager)
+            // Dynamic options per type
+            val hydrationOptions = listOf(60 to "1h", 240 to "4h", 480 to "8h", 1440 to "Daily")
+            val bpOptions = listOf(1440 to "Daily", 2880 to "2 Days", 10080 to "Weekly")
+            val weightOptions = listOf(10080 to "Weekly", 20160 to "2 Weeks", 43200 to "Monthly")
+
+            HealthReminderItem(label = "Hydration", type = "HYDRATION", manager = manager, options = hydrationOptions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-            HealthReminderItem(label = "Blood Pressure", type = "BLOOD_PRESSURE", manager = manager)
+            HealthReminderItem(label = "Blood Pressure", type = "BLOOD_PRESSURE", manager = manager, options = bpOptions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-            HealthReminderItem(label = "Body Weight", type = "WEIGHT", manager = manager)
+            HealthReminderItem(label = "Body Weight", type = "WEIGHT", manager = manager, options = weightOptions)
         }
     }
 }
@@ -963,11 +968,19 @@ fun HealthRemindersBottomSheet(
 fun HealthReminderItem(
     label: String,
     type: String,
-    manager: HealthReminderManager
+    manager: HealthReminderManager,
+    options: List<Pair<Int, String>>
 ) {
     var enabled by remember { mutableStateOf(manager.isEnabled(type)) }
     var interval by remember { mutableIntStateOf(manager.getInterval(type)) }
-    var showIntervalDialog by remember { mutableStateOf(false) }
+
+    // Ensure interval is one of the valid options if enabled
+    LaunchedEffect(enabled) {
+        if (enabled && options.none { it.first == interval }) {
+            interval = options.first().first
+            manager.updateSetting(type, true, interval)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -975,7 +988,7 @@ fun HealthReminderItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Switch(
                 checked = enabled,
                 onCheckedChange = { 
@@ -990,69 +1003,40 @@ fun HealthReminderItem(
         }
         
         if (enabled) {
+            Text(
+                text = "Reminder frequency:",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+            )
+            
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showIntervalDialog = true }
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val intervalText = when (interval) {
-                    60 -> "Hourly"
-                    240 -> "Every 4 hours"
-                    480 -> "Every 8 hours"
-                    720 -> "Twice daily"
-                    1440 -> "Daily"
-                    else -> "Every $interval minutes"
-                }
-                Text(text = "Frequency: ", color = Color.Gray, fontSize = 14.sp)
-                Text(text = intervalText, color = PrimaryGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-
-    if (showIntervalDialog) {
-        AlertDialog(
-            onDismissRequest = { showIntervalDialog = false },
-            containerColor = Color(0xFF2C2C2C),
-            title = { Text("Select Frequency", color = Color.White) },
-            text = {
-                val options = listOf(
-                    60 to "Hourly",
-                    240 to "Every 4 hours",
-                    480 to "Every 8 hours",
-                    720 to "Twice daily",
-                    1440 to "Daily"
-                )
-                Column {
-                    options.forEach { (mins, text) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    interval = mins
-                                    manager.updateSetting(type, enabled, mins)
-                                    showIntervalDialog = false
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = interval == mins,
-                                onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryGreen)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = text, color = Color.White)
-                        }
+                options.forEach { (mins, text) ->
+                    val isSelected = interval == mins
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) PrimaryGreen else Color.White.copy(alpha = 0.1f))
+                            .clickable {
+                                interval = mins
+                                manager.updateSetting(type, true, mins)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = text,
+                            color = if (isSelected) Color.White else Color.LightGray,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showIntervalDialog = false }) {
-                    Text("OK", color = PrimaryGreen)
-                }
             }
-        )
+        }
     }
 }
