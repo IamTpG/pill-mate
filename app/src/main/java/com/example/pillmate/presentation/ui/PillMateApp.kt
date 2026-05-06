@@ -161,7 +161,12 @@ fun PillMateApp(
                 )
             }
             
-            composable(Screen.Vitals.route) {
+            composable(
+                route = Screen.Vitals.route,
+                deepLinks = listOf(
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
+                )
+            ) {
                 val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
                 val currentUserId = auth.currentUser?.uid ?: ""
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->

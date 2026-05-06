@@ -44,6 +44,7 @@ import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
 import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
 import com.example.pillmate.domain.repository.HealthMetricRepository
+import com.example.pillmate.notification.HealthReminderManager
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.google.firebase.functions.FirebaseFunctions
@@ -94,6 +95,7 @@ val appModule = module {
     viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
+    single { HealthReminderManager(get(), get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
