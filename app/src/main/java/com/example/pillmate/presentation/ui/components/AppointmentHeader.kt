@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -32,7 +33,7 @@ fun AppointmentHeader(completedCount: Int, totalCount: Int, onAddClick: () -> Un
 			)
 			Spacer(modifier = Modifier.width(8.dp))
 			Text(
-				text = "Hi! How are you today ?",
+				text = stringResource(R.string.appointment_greeting),
 				color = Color.White,
 				fontSize = 24.sp,
 				fontWeight = FontWeight.Bold
@@ -92,7 +93,7 @@ fun AppointmentHeader(completedCount: Int, totalCount: Int, onAddClick: () -> Un
 									modifier = Modifier.size(20.dp)
 								)
 								Spacer(modifier = Modifier.width(2.dp))
-								Text("Search", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+								Text(stringResource(R.string.appointment_search), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
 							}
 						}
 					}
@@ -108,7 +109,7 @@ fun AppointmentHeader(completedCount: Int, totalCount: Int, onAddClick: () -> Un
 					//.align(Alignment.CenterHorizontally)
 					//.padding(vertical = 24.dp)
 				) {
-					Text("Add more", color = Color.White)
+					Text(stringResource(R.string.appointment_add), color = Color.White)
 				}
 		}
 		

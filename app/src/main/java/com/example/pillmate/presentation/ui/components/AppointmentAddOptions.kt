@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -53,7 +54,7 @@ fun AppointmentAddOptions(
 				verticalAlignment = Alignment.CenterVertically
 			) {
 				Text(
-					text="What would you like to add?",
+					text= stringResource(R.string.appointment_add_options_header),
 					color = Color(0XFF5a9677),
 					fontSize = 18.sp,
 					fontWeight = FontWeight.Medium,
@@ -89,7 +90,7 @@ fun AppointmentAddOptions(
 					)
 					Spacer(modifier = Modifier.width(16.dp))
 					Text(
-						text="Add Appointment",
+						text=stringResource(R.string.appointment_add_appointment),
 						color= colorResource(R.color.primary_green),
 						fontSize = 20.sp,
 					)

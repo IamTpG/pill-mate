@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,14 +61,14 @@ fun AddAppointment(
 		) {
 			TextButton(onClick = onDismissRequest) {
 				Text(
-					text = "Cancel",
+					text = stringResource(R.string.appointment_cancel),
 					style = MaterialTheme.typography.labelLarge, // Automatically 14sp with perfect letter spacing
 					color = colorResource(R.color.primary_green)
 				)
 				
 			}
 			Text(
-				text = "Appointment Details",
+				text = stringResource(R.string.appointment_add_appointment_header),
 				style = MaterialTheme.typography.titleLarge, // Automatically 22sp and Semi-bold
 				color = colorResource(R.color.primary_green),
 				modifier = Modifier.align(Alignment.CenterVertically)
@@ -83,7 +84,7 @@ fun AddAppointment(
 				onValueChange = { value ->
 					formData = formData.copy(name = value)
 				},
-				label = { Text("Appointment Name")},
+				label = { Text(stringResource(R.string.appointment_name))},
 				modifier = Modifier.fillMaxWidth()
 			)
 			
@@ -93,7 +94,7 @@ fun AddAppointment(
 				onValueChange = { value ->
 					formData = formData.copy(location = value)
 				},
-				label = { Text("Location")},
+				label = { Text(stringResource(R.string.appointment_location))},
 				modifier = Modifier.fillMaxWidth()
 			)
 			
@@ -102,7 +103,7 @@ fun AddAppointment(
 				onValueChange = { value ->
 					formData = formData.copy(doctorName = value)
 				},
-				label = { Text("Doctor Name")},
+				label = { Text(stringResource(R.string.appointment_doctor_name))},
 				modifier = Modifier.fillMaxWidth()
 			)
 			
@@ -111,7 +112,7 @@ fun AddAppointment(
 				onValueChange = { value ->
 					formData = formData.copy(description = value)
 				},
-				label = { Text("Description")},
+				label = { Text(stringResource(R.string.appointment_description))},
 				modifier = Modifier.fillMaxWidth()
 			)
 		}
@@ -130,7 +131,7 @@ fun AddAppointment(
 				contentColor = Color.White
 			)) {
 			
-			Text("Submit")
+			Text(stringResource(R.string.appointment_submit))
 		}
 	}
 }

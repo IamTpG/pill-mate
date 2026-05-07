@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
@@ -79,9 +80,9 @@ fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: Stri
 					Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
 						Text(log.name, color = colorResource(R.color.primary_green),fontSize = 16.sp, fontWeight = FontWeight.Bold)
 						Spacer(modifier = Modifier.height(10.dp))
-						Text("Location: ${log.location}")
-						Text("Doctor: ${log.doctorName}")
-						Text("Description: ${log.description}")
+						Text(stringResource(R.string.appointment_location) + ": ${log.location}")
+						Text(stringResource(R.string.appointment_doctor) + ": ${log.doctorName}")
+						Text(stringResource(R.string.appointment_description) + ": ${log.description}")
 					}
 		
 					Icon(
