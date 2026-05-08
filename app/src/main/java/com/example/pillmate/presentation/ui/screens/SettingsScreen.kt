@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
+//import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
@@ -48,6 +48,8 @@ import com.example.pillmate.utils.generateQRCodeBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -56,14 +58,15 @@ import com.journeyapps.barcodescanner.ScanOptions
 
 // Define internal navigation states
 enum class SettingsRoute {
-    OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
+    BACK, OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
 }
 
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues,
     onSignOutComplete: () -> Unit,
-    onNavigateToAuth: () -> Unit
+    onNavigateToAuth: () -> Unit,
+    onBack: () -> Unit
 ) {
     val auth: FirebaseAuth = koinInject()
     val database: AppDatabase = koinInject()
@@ -110,8 +113,12 @@ fun SettingsScreen(
                     isCaregiver = isCaregiver,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
-                    onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB }
+                    onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB },
+                    onBackClick = { currentRoute = SettingsRoute.BACK }
                 )
+            }
+            SettingsRoute.BACK -> {
+                onBack()
             }
             SettingsRoute.EDIT_PROFILE -> {
                 EditProfileScreen(
@@ -142,7 +149,8 @@ fun ProfileOptionsScreen(
     isCaregiver: Boolean,
     onEditClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onCaregiverHubClick: () -> Unit
+    onCaregiverHubClick: () -> Unit,
+    onBackClick : () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
@@ -170,12 +178,23 @@ fun ProfileOptionsScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.Start
+            contentAlignment = Alignment.Center
         ) {
+            IconButton(
+                onClick = { onBackClick() },
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
             Text(
                 text = stringResource(id = R.string.profile),
                 color = Color.White,
@@ -211,7 +230,7 @@ fun ProfileOptionsScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Buttons
         if (!isCaregiver) {
