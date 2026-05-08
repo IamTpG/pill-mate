@@ -150,6 +150,11 @@ fun ProfileOptionsScreen(
     val currentLanguageCode = configuration.locales[0].language
 
     var showLanguageSheet by remember { mutableStateOf(false) }
+    var showSosDialog by remember { mutableStateOf(false) }
+    val profileViewModel: ProfileViewModel = koinViewModel()
+    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val currentSosNumber = currentProfile?.sosNumber ?: ""
+    var inputSosNumber by remember(currentSosNumber) { mutableStateOf(currentSosNumber) }
     val sheetState = rememberModalBottomSheetState()
 
     val currentLanguageDisplay = if (currentLanguageCode == "vi") {
@@ -304,25 +309,56 @@ fun ProfileOptionsScreen(
 
         if (!isCaregiver) {
             Button(
-                onClick = { /* Emergency Action */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-                    .height(60.dp),
+                onClick = { showSosDialog = true }, // 🟢 MỞ DIALOG SETUP
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp).height(60.dp),
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
+                    Icon(Icons.Default.Call, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(id = R.string.emergency),
+                        text = if (currentSosNumber.isEmpty()) "THIẾT LẬP SỐ SOS" else "SOS: $currentSosNumber",
                         color = Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
+        }
+
+        // 🟢 HIỂN THỊ DIALOG NHẬP SỐ SOS
+        if (showSosDialog) {
+            AlertDialog(
+                onDismissRequest = { showSosDialog = false },
+                title = { Text("Thiết lập số khẩn cấp (SOS)", fontWeight = FontWeight.Bold) },
+                text = {
+                    OutlinedTextField(
+                        value = inputSosNumber,
+                        onValueChange = { inputSosNumber = it },
+                        label = { Text("Số điện thoại") },
+                        placeholder = { Text("VD: 0912345678") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            profileViewModel.updateSosNumber(inputSosNumber) {
+                                showSosDialog = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                    ) { Text("Lưu") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSosDialog = false }) { Text("Hủy", color = Color.Gray) }
+                }
+            )
         }
     }
 }

@@ -17,5 +17,6 @@ data class ProfileEntity(
     val bpReminderEnabled: Boolean = false,
     val bpInterval: Int = 1440,
     val weightReminderEnabled: Boolean = false,
-    val weightInterval: Int = 10080
+    val weightInterval: Int = 10080,
+    val sosNumber: String = ""
 )
