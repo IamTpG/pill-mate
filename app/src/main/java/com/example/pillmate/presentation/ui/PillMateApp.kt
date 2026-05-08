@@ -265,7 +265,8 @@ fun MainScaffold(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        label = { Text(screen.title) },
+                        label = null,
+                        alwaysShowLabel = false,
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {

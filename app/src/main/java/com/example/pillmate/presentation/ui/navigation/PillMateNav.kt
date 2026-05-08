@@ -4,12 +4,12 @@ import androidx.annotation.DrawableRes
 import com.example.pillmate.R
 
 sealed class Screen(val route: String, val title: String, @DrawableRes val icon: Int) {
-    object Home : Screen("home", "Home", R.drawable.ic_home)
-    object Cabinet : Screen("cabinet", "Cabinet", R.drawable.pill)
-    object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
-    object Vitals : Screen("vitals", "Vitals", R.drawable.ic_vitals)
+    object Home : Screen("home", "", R.drawable.ic_home)
+    object Cabinet : Screen("cabinet", "", R.drawable.pill)
+    object Settings : Screen("settings", "", R.drawable.ic_settings)
+    object Vitals : Screen("vitals", "", R.drawable.ic_vitals)
     
-    object Appointment : Screen("appointment_detail/{apptId}", "Appointment", R.drawable.ic_calendar) {
+    object Appointment : Screen("appointment_detail/{apptId}", "", R.drawable.ic_calendar) {
         fun createRoute(apptId: String) = "appointment_detail/$apptId"
     }
     // Auth screens
@@ -21,10 +21,10 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object DebugMenu : Screen("debug_menu", "Debug Menu", 0)
 
     // Schedule Builder screen
-    object ScheduleBuilder : Screen("schedule_builder", "Schedule", android.R.drawable.ic_menu_today)
+    object ScheduleBuilder : Screen("schedule_builder", "", android.R.drawable.ic_menu_today)
 
     // AI Chat Screen
-    object AIChat : Screen("ai_chat", "AI", R.drawable.ic_chat)
+    object AIChat : Screen("ai_chat", "", R.drawable.ic_chat)
 
     // Task Alarm Screen
     object TaskAlarm : Screen(
