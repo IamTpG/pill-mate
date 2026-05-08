@@ -184,12 +184,12 @@ fun ProfileOptionsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Avatar
         Box(
             modifier = Modifier
-                .size(140.dp)
+                .size(90.dp)
                 .background(Color.Transparent, CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -201,7 +201,7 @@ fun ProfileOptionsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Username remains dynamic variable
         Text(
