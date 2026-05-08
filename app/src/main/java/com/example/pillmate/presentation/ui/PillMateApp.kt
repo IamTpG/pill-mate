@@ -121,7 +121,8 @@ fun PillMateApp(
                             )
                         },
                         onAddClick = { /* TODO */ },
-                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) }
+                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
+                        onSettingsClick = { navController.navigate(Screen.Settings.route) }
                     )
                 }
             }
@@ -145,6 +146,8 @@ fun PillMateApp(
                         }
                     }, onNavigateToAuth = {
                         navController.navigate("auth_graph")
+                    }, onBack = {
+                        navController.popBackStack()
                     })
                 }
             }
@@ -256,8 +259,7 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { screen ->
-                    NavigationBarItem(
+                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
@@ -265,7 +267,8 @@ fun MainScaffold(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        label = { Text(screen.title) },
+                        label = null,
+                        alwaysShowLabel = false,
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {

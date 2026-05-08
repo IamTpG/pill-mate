@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +34,8 @@ import java.util.Date
 @Composable
 fun HomeHeader(
     onAddClick: () -> Unit,
-    onDebugClick: () -> Unit
+    onDebugClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -62,6 +64,13 @@ fun HomeHeader(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add task",
+                    tint = Color.White
+                )
+            }
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
                     tint = Color.White
                 )
             }
