@@ -29,13 +29,13 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
 
     // Task Alarm Screen
     object TaskAlarm : Screen(
-        "task_alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}",
+        "task_alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}&isFromAlarm={isFromAlarm}",
         "Task Alarm",
         0
     ) {
         fun createRoute(
             sourceId: String, scheduleId: String, title: String, details: String,
-            type: String, instructions: String, time: String, scheduledTimeIso: String, rrule: String, dose: Float
+            type: String, instructions: String, time: String, scheduledTimeIso: String, rrule: String, dose: Float, isFromAlarm: Boolean = false
         ): String {
             val encTitle = Uri.encode(title.ifBlank { " " })
             val encDetails = Uri.encode(details.ifBlank { " " })
@@ -44,7 +44,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
             val encTime = Uri.encode(time.ifBlank { " " })
             val encIso = Uri.encode(scheduledTimeIso.ifBlank { " " })
             val encRrule = Uri.encode(rrule.ifBlank { " " })
-            return "task_alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&scheduledTimeIso=$encIso&rrule=$encRrule&dose=$dose"
+            return "task_alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&scheduledTimeIso=$encIso&rrule=$encRrule&dose=$dose&isFromAlarm=$isFromAlarm"
         }
     }
 }

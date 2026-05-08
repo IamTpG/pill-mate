@@ -41,6 +41,7 @@ fun TaskAlarmScreen(
     scheduledTimeIso: String,
     rrule: String,
     dose: Float = 1.0f,
+    isFromAlarm: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -253,6 +254,7 @@ fun TaskAlarmScreen(
                 
                 OutlinedButton(
                     onClick = { viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date()) },
+                    enabled = isFromAlarm,
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),
