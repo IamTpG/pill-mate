@@ -318,7 +318,7 @@ fun ProfileOptionsScreen(
                     Icon(Icons.Default.Call, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (currentSosNumber.isEmpty()) "THIẾT LẬP SỐ SOS" else "SOS: $currentSosNumber",
+                        text = if (currentSosNumber.isEmpty()) stringResource(id = R.string.setup_sos) else stringResource(id = R.string.sos_number_format, currentSosNumber),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -331,13 +331,13 @@ fun ProfileOptionsScreen(
         if (showSosDialog) {
             AlertDialog(
                 onDismissRequest = { showSosDialog = false },
-                title = { Text("Thiết lập số khẩn cấp (SOS)", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.sos_dialog_title), fontWeight = FontWeight.Bold) },
                 text = {
                     OutlinedTextField(
                         value = inputSosNumber,
                         onValueChange = { inputSosNumber = it },
-                        label = { Text("Số điện thoại") },
-                        placeholder = { Text("VD: 0912345678") },
+                        label = { Text(stringResource(id = R.string.phone_number_label)) },
+                        placeholder = { Text(stringResource(id = R.string.phone_number_placeholder)) },
                         singleLine = true,
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone
@@ -353,10 +353,10 @@ fun ProfileOptionsScreen(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
-                    ) { Text("Lưu") }
+                    ) { Text(stringResource(id = R.string.save)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showSosDialog = false }) { Text("Hủy", color = Color.Gray) }
+                    TextButton(onClick = { showSosDialog = false }) { Text(stringResource(id = R.string.cancel), color = Color.Gray) }
                 }
             )
         }

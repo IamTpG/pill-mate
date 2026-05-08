@@ -39,7 +39,7 @@ class SosWidgetProvider : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                         views.setOnClickPendingIntent(R.id.widget_sos_button, pendingIntent)
-                        views.setTextViewText(R.id.widget_sos_text, "GỌI SOS")
+                        views.setTextViewText(R.id.widget_sos_text, context.getString(R.string.call_sos))
                     } else {
                         // Nếu chưa cài số, bấm vào sẽ mở app
                         val intent = Intent(context, com.example.pillmate.MainActivity::class.java)
@@ -48,7 +48,7 @@ class SosWidgetProvider : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                         views.setOnClickPendingIntent(R.id.widget_sos_button, pendingIntent)
-                        views.setTextViewText(R.id.widget_sos_text, "Setup SOS")
+                        views.setTextViewText(R.id.widget_sos_text, context.getString(R.string.setup_sos))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
