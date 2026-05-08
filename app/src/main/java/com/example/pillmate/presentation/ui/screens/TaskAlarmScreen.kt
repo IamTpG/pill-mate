@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +38,7 @@ fun TaskAlarmScreen(
     taskTypeString: String,
     instructions: String,
     startTimeStr: String,
+    scheduledTimeIso: String,
     rrule: String,
     dose: Float = 1.0f,
     onDismiss: () -> Unit
@@ -81,13 +83,17 @@ fun TaskAlarmScreen(
     val fallbackFormat = SimpleDateFormat("H:m", Locale.getDefault())
 
     val parsedStart: Date? = try {
-        when {
-            startTimeStr.contains("T") -> isoFormat.parse(startTimeStr)
-            startTimeStr.isNotBlank() -> {
-                try { displayFormat.parse(startTimeStr) } 
-                catch (e: Exception) { fallbackFormat.parse(startTimeStr) }
+        if (scheduledTimeIso.isNotBlank()) {
+            isoFormat.parse(scheduledTimeIso)
+        } else {
+            when {
+                startTimeStr.contains("T") -> isoFormat.parse(startTimeStr)
+                startTimeStr.isNotBlank() -> {
+                    try { displayFormat.parse(startTimeStr) }
+                    catch (e: Exception) { fallbackFormat.parse(startTimeStr) }
+                }
+                else -> null
             }
-            else -> null
         }
     } catch (e: Exception) { null }
 
@@ -216,7 +222,7 @@ fun TaskAlarmScreen(
             Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), dose, selectedSupplyId) },
+                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date(), dose, selectedSupplyId) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
@@ -233,7 +239,7 @@ fun TaskAlarmScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 OutlinedButton(
-                    onClick = { viewModel.onSkipClicked(sourceId, scheduleId, taskType, Date()) },
+                    onClick = { viewModel.onSkipClicked(sourceId, scheduleId, taskType, parsedStart ?: Date()) },
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),
@@ -246,7 +252,7 @@ fun TaskAlarmScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 OutlinedButton(
-                    onClick = { viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, Date()) },
+                    onClick = { viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date()) },
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),

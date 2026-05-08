@@ -113,6 +113,7 @@ class GetHomeTasksUseCase(
                             sourceId = schedule.eventSnapshot.sourceId,
                             title = schedule.eventSnapshot.title,
                             time = displayTime,
+                            scheduledTimeIso = scheduledTimeDate?.let { isoFormat.format(it) } ?: "",
                             doseDescription = details,
                             dose = fallbackDose,
                             taskType = schedule.type,

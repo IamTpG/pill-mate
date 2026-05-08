@@ -115,6 +115,7 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
+                                    scheduledTimeIso = task.scheduledTimeIso,
                                     rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
@@ -215,11 +216,12 @@ fun PillMateApp(
                     androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("instructions") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("time") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
+                    androidx.navigation.navArgument("scheduledTimeIso") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
                     androidx.navigation.navArgument("dose") { type = androidx.navigation.NavType.FloatType; defaultValue = 1.0f }
                 ),
                 deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}" }
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}" }
                 )
             ) { backStackEntry ->
                 val viewModel: TaskLogViewModel = koinViewModel()
@@ -232,6 +234,7 @@ fun PillMateApp(
                     taskTypeString = backStackEntry.arguments?.getString("type") ?: "OTHER",
                     instructions = backStackEntry.arguments?.getString("instructions") ?: "",
                     startTimeStr = backStackEntry.arguments?.getString("time") ?: "",
+                    scheduledTimeIso = backStackEntry.arguments?.getString("scheduledTimeIso") ?: "",
                     rrule = backStackEntry.arguments?.getString("rrule") ?: "",
                     dose = backStackEntry.arguments?.getFloat("dose") ?: 1.0f,
                     onDismiss = { navController.popBackStack() }
