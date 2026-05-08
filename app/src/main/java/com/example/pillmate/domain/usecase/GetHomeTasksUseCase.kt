@@ -83,13 +83,13 @@ class GetHomeTasksUseCase(
                             null
                         }
 
-                        // Match against both schedule ID and the explicit scheduled time
-                        val matchingLog = logs.find { log -> 
-                            log.scheduleId == schedule.id && 
-                            scheduledTimeDate != null && 
-                            Math.abs(log.scheduledTime.time - scheduledTimeDate.time) < 60000 
-                        }
-                        
+                        // Match against both schedule ID and the explicit scheduled time, pick newest log
+                        val matchingLog = logs.filter { log ->
+                            log.scheduleId == schedule.id &&
+                            scheduledTimeDate != null &&
+                            Math.abs(log.scheduledTime.time - scheduledTimeDate.time) < 60000
+                        }.maxByOrNull { it.createdAt }
+
                         var status = matchingLog?.status
 
                         if (status == null && scheduledTimeDate != null) {
