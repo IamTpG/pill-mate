@@ -210,7 +210,7 @@ fun TaskItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clickable(enabled = task.status != LogStatus.MISSED, onClick = onClick),
+            .clickable(enabled = task.status != LogStatus.COMPLETED, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)

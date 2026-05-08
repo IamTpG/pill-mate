@@ -84,7 +84,7 @@ class TaskNotificationManager(private val context: Context) {
         val encTime = android.net.Uri.encode((startTime ?: "").ifBlank { " " })
         val encRrule = android.net.Uri.encode((rrule ?: "").ifBlank { " " })
 
-        val deepLinkUri = android.net.Uri.parse("pillmate://alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule")
+        val deepLinkUri = android.net.Uri.parse("pillmate://alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule&isFromAlarm=true")
 
         val fullScreenIntent = Intent(context, com.example.pillmate.MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
