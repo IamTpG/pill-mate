@@ -192,34 +192,6 @@ fun TaskAlarmScreen(
                 }
             }
 
-            // SUPPLY SELECTION UI
-            if (taskType == TaskType.MEDICATION && availableSupplies.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "Select Batch", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(availableSupplies.size) { index ->
-                        val supply = availableSupplies[index]
-                        val isSelected = selectedSupplyId == supply.id
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedSupplyId = supply.id },
-                            label = { Text("${supply.batchName} (${supply.quantity})") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0x20FFFFFF),
-                                selectedContainerColor = Color(0xFF4CAF50),
-                                labelColor = Color.White,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
