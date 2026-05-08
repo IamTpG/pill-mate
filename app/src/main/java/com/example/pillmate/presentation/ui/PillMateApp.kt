@@ -122,7 +122,8 @@ fun PillMateApp(
                         },
                         onAddClick = { /* TODO */ },
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
-                        onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                        onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                        onVaultClick = { navController.navigate(Screen.ImageVault.route) }
                     )
                 }
             }
@@ -149,6 +150,16 @@ fun PillMateApp(
                     }, onBack = {
                         navController.popBackStack()
                     })
+                }
+            }
+            composable(Screen.ImageVault.route) {
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    val vaultViewModel: com.example.pillmate.presentation.viewmodel.ImageVaultViewModel = koinViewModel()
+                    com.example.pillmate.presentation.ui.screens.ImageVaultScreen(
+                        viewModel = vaultViewModel,
+                        paddingValues = innerPadding,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
             composable(Screen.AIChat.route) {

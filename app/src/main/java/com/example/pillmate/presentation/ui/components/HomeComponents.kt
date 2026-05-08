@@ -35,7 +35,8 @@ import java.util.Date
 fun HomeHeader(
     onAddClick: () -> Unit,
     onDebugClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onVaultClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -64,6 +65,13 @@ fun HomeHeader(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add task",
+                    tint = Color.White
+                )
+            }
+            IconButton(onClick = onVaultClick) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                    contentDescription = "Medical Vault",
                     tint = Color.White
                 )
             }

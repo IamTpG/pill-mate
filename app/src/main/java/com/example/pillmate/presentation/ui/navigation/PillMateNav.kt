@@ -45,6 +45,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
             return "task_alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule&dose=$dose"
         }
     }
+    object ImageVault : Screen("image_vault", "Thư viện y tế", R.drawable.ic_photo)
 }
 
 val bottomNavItems = listOf(

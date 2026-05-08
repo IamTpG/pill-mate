@@ -97,5 +97,9 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
+    // Images storage
+    implementation("com.google.firebase:firebase-storage")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
     debugImplementation("org.jetbrains.compose.ui:ui-tooling:1.10.0")
 }
