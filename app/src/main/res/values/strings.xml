@@ -62,4 +62,11 @@
     <string name="use_another_account">Use another account</string>
     <string name="following">Following</string>
     <string name="grant_access">Grant access</string>
+    <string name="setup_sos">SETUP SOS</string>
+    <string name="sos_number_format">SOS: %1$s</string>
+    <string name="sos_dialog_title">Setup Emergency Number (SOS)</string>
+    <string name="phone_number_label">Phone Number</string>
+    <string name="phone_number_placeholder">e.g., 0912345678</string>
+    <string name="call_sos">CALL SOS</string>
+    <string name="sos_icon_desc">SOS Icon</string>
 </resources>
