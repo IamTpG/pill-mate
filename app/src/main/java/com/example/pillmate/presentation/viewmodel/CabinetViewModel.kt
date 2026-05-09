@@ -26,7 +26,6 @@ import com.example.pillmate.domain.usecase.DeleteMedicationUseCase
 
 data class CabinetUiState(
     val isLoading: Boolean = true,
-    val healthScore: Int = 100,
     val activeMedsCount: Int = 0,
     val lowStockCount: Int = 0,
     val searchQuery: String = "",
@@ -86,12 +85,8 @@ class CabinetViewModel(
                             !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
                         }
 
-                        val penalty = expired.size * 5
-                        val score = (100 - penalty).coerceIn(0, 100)
-
                         CabinetUiState(
                             isLoading = false,
-                            healthScore = score,
                             activeMedsCount = active.size,
                             lowStockCount = filteredMeds.count { (it.supply?.quantity ?: 0f) < 10f },
                             searchQuery = query,
@@ -133,7 +128,7 @@ class CabinetViewModel(
         return photoUrl
     }
 
-    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
+    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long?, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = getEffectiveProfileId() ?: return@launch
 
@@ -150,7 +145,7 @@ class CabinetViewModel(
                     id = "main",
                     batchName = "Main Batch",
                     quantity = 0f,
-                    expirationDate = if (expirationDate > 0) java.util.Date(expirationDate) else null
+                    expirationDate = if (expirationDate != null && expirationDate > 0) java.util.Date(expirationDate) else null
                 )
             )
 
@@ -197,7 +192,7 @@ class CabinetViewModel(
         newUnit: String,
         newCount: Int,
         newDescription: String,
-        newExpirationDate: Long,
+        newExpirationDate: Long?,
         imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -211,10 +206,10 @@ class CabinetViewModel(
                 photoUrl = photoUrl,
                 supply = existingMedication.supply?.copy(
                     id = "main",
-                    expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null
+                    expirationDate = if (newExpirationDate != null && newExpirationDate > 0) java.util.Date(newExpirationDate) else null
                 ) ?: com.example.pillmate.domain.model.MedicationSupply(
                     id = "main",
-                    expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null,
+                    expirationDate = if (newExpirationDate != null && newExpirationDate > 0) java.util.Date(newExpirationDate) else null,
                     quantity = 0f
                 )
             )

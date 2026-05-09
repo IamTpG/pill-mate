@@ -146,7 +146,6 @@ fun CabinetScreen(
                 // --- HEADER ---
                 item {
                     CabinetHeader(
-                        healthScore = uiState.healthScore,
                         activeCount = uiState.activeMedsCount,
                         lowStockCount = uiState.lowStockCount,
                         onSearchClick = { showLibrarySearch = true }
