@@ -33,8 +33,8 @@ import java.util.Date
 
 @Composable
 fun HomeHeader(
-    onAddClick: () -> Unit,
-    onDebugClick: () -> Unit,
+//    onAddClick: () -> Unit,
+//    onDebugClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
     Row(
@@ -53,20 +53,20 @@ fun HomeHeader(
             fontWeight = FontWeight.Bold
         )
         Row {
-            IconButton(onClick = onDebugClick) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Debug Menu",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = onAddClick) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add task",
-                    tint = Color.White
-                )
-            }
+//            IconButton(onClick = onDebugClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Info,
+//                    contentDescription = "Debug Menu",
+//                    tint = Color.White
+//                )
+//            }
+//            IconButton(onClick = onAddClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Add,
+//                    contentDescription = "Add task",
+//                    tint = Color.White
+//                )
+//            }
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Default.Settings,

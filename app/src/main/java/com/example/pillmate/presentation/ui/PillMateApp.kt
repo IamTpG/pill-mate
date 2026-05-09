@@ -122,8 +122,6 @@ fun PillMateApp(
                                 )
                             )
                         },
-                        onAddClick = { /* TODO */ },
-                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onSettingsClick = { navController.navigate(Screen.Settings.route) }
                     )
                 }
