@@ -26,7 +26,6 @@ import com.example.pillmate.domain.usecase.DeleteMedicationUseCase
 
 data class CabinetUiState(
     val isLoading: Boolean = true,
-    val healthScore: Int = 100,
     val activeMedsCount: Int = 0,
     val lowStockCount: Int = 0,
     val searchQuery: String = "",
@@ -86,12 +85,8 @@ class CabinetViewModel(
                             !(it.supply?.expirationDate?.before(java.util.Date()) ?: false)
                         }
 
-                        val penalty = expired.size * 5
-                        val score = (100 - penalty).coerceIn(0, 100)
-
                         CabinetUiState(
                             isLoading = false,
-                            healthScore = score,
                             activeMedsCount = active.size,
                             lowStockCount = filteredMeds.count { (it.supply?.quantity ?: 0f) < 10f },
                             searchQuery = query,
