@@ -89,7 +89,7 @@ fun VitalsScreen(
                             value = uiState.latestBloodPressure,
                             unit = "mmHg",
                             status = uiState.bloodPressureStatus,
-                            icon = R.drawable.ic_vitals
+                            icon = R.drawable.ic_vitals_outlined
                         )
                         MetricCard(
                             modifier = Modifier.weight(1f),
@@ -223,7 +223,7 @@ fun HydrationCard(current: Int, target: Int, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_reminder), // Proxy for Water icon
+                    painter = painterResource(id = R.drawable.ic_water_drop), // Water icon
                     contentDescription = null,
                     tint = Color(0xFF5D5DFF),
                     modifier = Modifier.size(20.dp)
@@ -292,14 +292,14 @@ fun RecentActivityItem(metric: HealthMetric) {
         Row(modifier = Modifier.padding(16.dp).fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF5F5F5)), contentAlignment = Alignment.Center) {
                 Icon(
-                    painter = painterResource(id = if (metric.type == MetricType.WATER) R.drawable.ic_reminder else R.drawable.ic_vitals),
+                    painter = painterResource(id = if (metric.type == MetricType.WATER) R.drawable.ic_water_drop else R.drawable.ic_vitals_outlined),
                     contentDescription = null,
                     tint = if (metric.type == MetricType.WATER) Color(0xFF5D5DFF) else Color(0xFFFF708D)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(SimpleDateFormat("hh:mm a", Locale.getDefault()).format(metric.recordedAt), fontSize = 12.sp, color = Color.Gray)
+                Text(SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(metric.recordedAt), fontSize = 12.sp, color = Color.Gray)
                 Text(metric.type.name.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold)
             }
             Text(
