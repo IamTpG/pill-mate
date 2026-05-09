@@ -64,6 +64,28 @@ class ProfileViewModel(
                         val name = doc.getString("fullName") ?: "Unknown User"
                         val dobMillis = doc.getLong("dateOfBirth")
                         val healthInfo = doc.getString("healthInformation") ?: ""
+                        val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
+                        val hydrationEnabled = doc.getBoolean("hydrationReminderEnabled") ?: false
+                        val hydrationInterval = doc.getLong("hydrationInterval")?.toInt() ?: 240
+                        val bpEnabled = doc.getBoolean("bpReminderEnabled") ?: false
+                        val bpInterval = doc.getLong("bpInterval")?.toInt() ?: 1440
+                        val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
+                        val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
+                        val sosNumber = doc.getString("sosNumber") ?: ""
+
+                        // 🟢 Bootstrap missing fields in Firestore if they don't exist
+                        if (!doc.contains("hydrationReminderEnabled")) {
+                            val bootstrap = mapOf(
+                                "hydrationReminderEnabled" to hydrationEnabled,
+                                "hydrationInterval" to hydrationInterval,
+                                "bpReminderEnabled" to bpEnabled,
+                                "bpInterval" to bpInterval,
+                                "weightReminderEnabled" to weightEnabled,
+                                "weightInterval" to weightInterval,
+                                "sosNumber" to sosNumber
+                            )
+                            db.collection("profiles").document(targetUid).set(bootstrap, SetOptions.merge())
+                        }
 
                         profileDao.insertSavedAccount(
                             SavedAccountEntity(
@@ -75,7 +97,10 @@ class ProfileViewModel(
                         )
 
                         profileDao.clearAllProfiles()
-                        profileDao.insertProfile(ProfileEntity(firebaseUid, name, dobMillis, healthInfo, "Primary User", true))
+                        profileDao.insertProfile(ProfileEntity(
+                            firebaseUid, name, dobMillis, healthInfo, "Primary User", true, hydrationGoal,
+                            hydrationEnabled, hydrationInterval, bpEnabled, bpInterval, weightEnabled, weightInterval, sosNumber = sosNumber
+                        ))
 
                         syncFollowedProfiles(firebaseUid)
                     }
@@ -94,6 +119,28 @@ class ProfileViewModel(
                     val name = doc.getString("fullName") ?: "Unknown User"
                     val dobMillis = doc.getLong("dateOfBirth")
                     val healthInfo = doc.getString("healthInformation") ?: ""
+                    val hydrationGoal = doc.getLong("hydrationGoal")?.toInt() ?: 2500
+                    val hydrationEnabled = doc.getBoolean("hydrationReminderEnabled") ?: false
+                    val hydrationInterval = doc.getLong("hydrationInterval")?.toInt() ?: 240
+                    val bpEnabled = doc.getBoolean("bpReminderEnabled") ?: false
+                    val bpInterval = doc.getLong("bpInterval")?.toInt() ?: 1440
+                    val weightEnabled = doc.getBoolean("weightReminderEnabled") ?: false
+                    val weightInterval = doc.getLong("weightInterval")?.toInt() ?: 10080
+                    val sosNumber = doc.getString("sosNumber") ?: ""
+
+                    // 🟢 Bootstrap missing fields in Firestore if they don't exist
+                    if (!doc.contains("hydrationReminderEnabled")) {
+                        val bootstrap = mapOf(
+                            "hydrationReminderEnabled" to hydrationEnabled,
+                            "hydrationInterval" to hydrationInterval,
+                            "bpReminderEnabled" to bpEnabled,
+                            "bpInterval" to bpInterval,
+                            "weightReminderEnabled" to weightEnabled,
+                            "weightInterval" to weightInterval,
+                            "sosNumber" to sosNumber
+                        )
+                        db.collection("profiles").document(profileId).set(bootstrap, SetOptions.merge())
+                    }
 
                     val existing = profileDao.getProfileById(profileId)
                     if (existing != null) {
@@ -101,7 +148,14 @@ class ProfileViewModel(
                             existing.copy(
                                 name = name,
                                 dateOfBirth = dobMillis,
-                                healthInformation = healthInfo
+                                healthInformation = healthInfo,
+                                hydrationGoal = hydrationGoal,
+                                hydrationReminderEnabled = hydrationEnabled,
+                                hydrationInterval = hydrationInterval,
+                                bpReminderEnabled = bpEnabled,
+                                bpInterval = bpInterval,
+                                weightReminderEnabled = weightEnabled,
+                                weightInterval = weightInterval
                             )
                         )
                     } else {
@@ -112,7 +166,15 @@ class ProfileViewModel(
                                 dateOfBirth = dobMillis,
                                 healthInformation = healthInfo,
                                 role = roleIfNew,
-                                isCurrent = false
+                                isCurrent = false,
+                                hydrationGoal = hydrationGoal,
+                                hydrationReminderEnabled = hydrationEnabled,
+                                hydrationInterval = hydrationInterval,
+                                bpReminderEnabled = bpEnabled,
+                                bpInterval = bpInterval,
+                                weightReminderEnabled = weightEnabled,
+                                weightInterval = weightInterval,
+                                sosNumber = sosNumber
                             )
                         )
                     }
@@ -123,14 +185,15 @@ class ProfileViewModel(
         }
     }
 
-    fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, onSuccess: () -> Unit) {
+    fun saveProfile(name: String, dobMillis: Long?, healthInfo: String, hydrationGoal: Int = 2500, onSuccess: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeId = currentLocalProfile.value?.id ?: return@launch
 
             val updates = mapOf(
                 "fullName" to name,
                 "dateOfBirth" to dobMillis,
-                "healthInformation" to healthInfo
+                "healthInformation" to healthInfo,
+                "hydrationGoal" to hydrationGoal
             )
 
             try {
@@ -141,11 +204,67 @@ class ProfileViewModel(
                         currentEntity.copy(
                             name = name,
                             dateOfBirth = dobMillis,
-                            healthInformation = healthInfo
+                            healthInformation = healthInfo,
+                            hydrationGoal = hydrationGoal
                         )
                     )
                 }
                 withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateHydrationGoal(goal: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
+            try {
+                db.collection("profiles").document(activeId).update("hydrationGoal", goal).await()
+                val currentEntity = profileDao.getProfileById(activeId)
+                if (currentEntity != null) {
+                    profileDao.insertProfile(currentEntity.copy(hydrationGoal = goal))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateHealthReminder(type: String, enabled: Boolean, interval: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
+            
+            val updates = when (type) {
+                "HYDRATION" -> mapOf(
+                    "hydrationReminderEnabled" to enabled,
+                    "hydrationInterval" to interval
+                )
+                "BLOOD_PRESSURE" -> mapOf(
+                    "bpReminderEnabled" to enabled,
+                    "bpInterval" to interval
+                )
+                "WEIGHT" -> mapOf(
+                    "weightReminderEnabled" to enabled,
+                    "weightInterval" to interval
+                )
+                else -> emptyMap()
+            }
+            
+            if (updates.isEmpty()) return@launch
+
+            try {
+                db.collection("profiles").document(activeId).set(updates, SetOptions.merge()).await()
+                val currentEntity = profileDao.getProfileById(activeId)
+                if (currentEntity != null) {
+                    val updatedEntity = when (type) {
+                        "HYDRATION" -> currentEntity.copy(hydrationReminderEnabled = enabled, hydrationInterval = interval)
+                        "BLOOD_PRESSURE" -> currentEntity.copy(bpReminderEnabled = enabled, bpInterval = interval)
+                        "WEIGHT" -> currentEntity.copy(weightReminderEnabled = enabled, weightInterval = interval)
+                        else -> currentEntity
+                    }
+                    profileDao.insertProfile(updatedEntity)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -248,6 +367,24 @@ class ProfileViewModel(
                     loadProfileDetails(patientId) // Hàm này sẽ gọi Firestore và save vào Room
                 }
             } catch (e: Exception) { /* Log lỗi sync */ }
+        }
+    }
+
+    fun updateSosNumber(number: String, onSuccess: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeId = currentLocalProfile.value?.id ?: return@launch
+            try {
+                // Cập nhật lên Firestore
+                db.collection("profiles").document(activeId).update("sosNumber", number).await()
+                // Cập nhật dưới Room
+                val currentEntity = profileDao.getProfileById(activeId)
+                if (currentEntity != null) {
+                    profileDao.insertProfile(currentEntity.copy(sosNumber = number))
+                }
+                withContext(Dispatchers.Main) { onSuccess() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

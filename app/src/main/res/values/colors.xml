@@ -4,6 +4,7 @@
     <color name="primary_green">#2ECC71</color>
     <color name="primary_dark">#1B2631</color>
     <color name="accent_teal">#1ABC9C</color>
+    <color name="secondary_teal">#16A085</color>
     
     <!-- Status Colors -->
     <color name="status_done">#27AE60</color>

@@ -60,6 +60,7 @@ fun AppointmentScreen(
 			modifier = Modifier.fillMaxSize(),
 			contentScale = ContentScale.Crop
 		)
+		Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 		
 		Column(modifier = Modifier.fillMaxSize()) {
 			
@@ -103,7 +104,7 @@ fun AppointmentScreen(
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(Color.Black.copy(alpha = 0.5f)),
+				.background(Color.Black.copy(alpha = 0.6f)),
 			contentAlignment = Alignment.Center
 		) {
 			AppointmentAddOptions(

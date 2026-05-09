@@ -18,6 +18,7 @@ import com.example.pillmate.presentation.ui.screens.*
 import com.example.pillmate.presentation.viewmodel.*
 import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import androidx.navigation.navArgument
@@ -115,6 +116,7 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
+	                                scheduledTimeIso = task.scheduledTimeIso,
                                     rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
@@ -123,6 +125,7 @@ fun PillMateApp(
                         onAddClick = { /* TODO */ },
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onMapClick = { navController.navigate(Screen.Map.route)}
+                        
                     )
                 }
             }
@@ -137,15 +140,6 @@ fun PillMateApp(
                     )
                 }
             }
-            composable(Screen.Reminders.route) {
-                MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    val viewModel: ReminderViewModel = koinViewModel()
-                    ReminderScreen(
-                        viewModel = viewModel, 
-                        paddingValues = innerPadding
-                    )
-                }
-            }
             composable(Screen.Settings.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     SettingsScreen(paddingValues = innerPadding, onSignOutComplete = {
@@ -155,6 +149,8 @@ fun PillMateApp(
                         }
                     }, onNavigateToAuth = {
                         navController.navigate("auth_graph")
+                    }, onBack = {
+                        navController.popBackStack()
                     })
                 }
             }
@@ -170,12 +166,26 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
-            composable(route = Screen.Map.route) {
-                MapScreen(
-                    navController = navController
-                )
-            }
-            
+	        composable(route = Screen.Map.route) {
+		        MapScreen(
+			        navController = navController
+		        )
+	        }
+	        composable(
+		        route = Screen.Vitals.route,
+		        deepLinks = listOf(
+			        androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
+		        )
+	        ) {
+		        val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+		        val currentUserId = auth.currentUser?.uid ?: ""
+		        MainScaffold(navController, onSignOutComplete) { innerPadding ->
+			        val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
+				        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
+			        )
+			        VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
+		        }
+	        }
            composable(route = Screen.Appointment.route) {
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
@@ -232,8 +242,10 @@ fun PillMateApp(
                     taskTypeString = backStackEntry.arguments?.getString("type") ?: "OTHER",
                     instructions = backStackEntry.arguments?.getString("instructions") ?: "",
                     startTimeStr = backStackEntry.arguments?.getString("time") ?: "",
+                    scheduledTimeIso = backStackEntry.arguments?.getString("scheduledTimeIso") ?: "",
                     rrule = backStackEntry.arguments?.getString("rrule") ?: "",
                     dose = backStackEntry.arguments?.getFloat("dose") ?: 1.0f,
+                    isFromAlarm = backStackEntry.arguments?.getBoolean("isFromAlarm") ?: false,
                     onDismiss = { navController.popBackStack() }
                 )
             }
@@ -256,8 +268,7 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { screen ->
-                    NavigationBarItem(
+                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
@@ -265,7 +276,8 @@ fun MainScaffold(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        label = { Text(screen.title) },
+                        label = null,
+                        alwaysShowLabel = false,
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {

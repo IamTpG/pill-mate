@@ -9,7 +9,6 @@ import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.domain.usecase.LogTaskUseCase
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
-import com.example.pillmate.presentation.viewmodel.ReminderViewModel
 import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -43,7 +42,11 @@ import com.example.pillmate.util.AlarmTracker
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
+import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
+import com.example.pillmate.domain.repository.HealthMetricRepository
+import com.example.pillmate.notification.HealthReminderManager
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
@@ -68,6 +71,7 @@ val appModule = module {
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
     single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
+    single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
@@ -82,10 +86,16 @@ val appModule = module {
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
     factory { GetNextTaskUseCase(get(), get()) }
+    factory { LogHealthMetricUseCase(get()) }
+    factory { GetHealthMetricsUseCase(get()) }
+    factory { UpdateHydrationGoalUseCase(get(), get()) }
+    factory { GetWidgetDataUseCase(get(), get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
+    single { HealthReminderManager(get(), get()) }
 
     single { AppDatabase.getDatabase(androidContext()) }
     single { get<AppDatabase>().medicationDao() }
@@ -113,12 +123,11 @@ val appModule = module {
 val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
-    viewModel { ReminderViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
-    viewModel { ScheduleBuilderViewModel(get(), get(), get()) }
+    viewModel { ScheduleBuilderViewModel(get(), get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }

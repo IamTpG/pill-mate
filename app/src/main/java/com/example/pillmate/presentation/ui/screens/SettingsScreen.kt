@@ -21,30 +21,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
+//import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.example.pillmate.R
 import com.google.firebase.auth.FirebaseAuth
+import com.example.pillmate.notification.HealthReminderManager
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
@@ -52,6 +48,8 @@ import com.example.pillmate.utils.generateQRCodeBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -60,14 +58,15 @@ import com.journeyapps.barcodescanner.ScanOptions
 
 // Define internal navigation states
 enum class SettingsRoute {
-    OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
+    BACK, OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
 }
 
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues,
     onSignOutComplete: () -> Unit,
-    onNavigateToAuth: () -> Unit
+    onNavigateToAuth: () -> Unit,
+    onBack: () -> Unit
 ) {
     val auth: FirebaseAuth = koinInject()
     val database: AppDatabase = koinInject()
@@ -102,7 +101,7 @@ fun SettingsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .background(Color.Black.copy(alpha = 0.6f))
         )
 
         // Internal Navigation
@@ -114,8 +113,12 @@ fun SettingsScreen(
                     isCaregiver = isCaregiver,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
-                    onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB }
+                    onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB },
+                    onBackClick = { currentRoute = SettingsRoute.BACK }
                 )
+            }
+            SettingsRoute.BACK -> {
+                onBack()
             }
             SettingsRoute.EDIT_PROFILE -> {
                 EditProfileScreen(
@@ -146,7 +149,8 @@ fun ProfileOptionsScreen(
     isCaregiver: Boolean,
     onEditClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onCaregiverHubClick: () -> Unit
+    onCaregiverHubClick: () -> Unit,
+    onBackClick : () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
@@ -154,6 +158,11 @@ fun ProfileOptionsScreen(
     val currentLanguageCode = configuration.locales[0].language
 
     var showLanguageSheet by remember { mutableStateOf(false) }
+    var showSosDialog by remember { mutableStateOf(false) }
+    val profileViewModel: ProfileViewModel = koinViewModel()
+    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val currentSosNumber = currentProfile?.sosNumber ?: ""
+    var inputSosNumber by remember(currentSosNumber) { mutableStateOf(currentSosNumber) }
     val sheetState = rememberModalBottomSheetState()
 
     val currentLanguageDisplay = if (currentLanguageCode == "vi") {
@@ -169,12 +178,23 @@ fun ProfileOptionsScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.Start
+            contentAlignment = Alignment.Center
         ) {
+            IconButton(
+                onClick = { onBackClick() },
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
             Text(
                 text = stringResource(id = R.string.profile),
                 color = Color.White,
@@ -183,12 +203,12 @@ fun ProfileOptionsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Avatar
         Box(
             modifier = Modifier
-                .size(140.dp)
+                .size(90.dp)
                 .background(Color.Transparent, CircleShape),
             contentAlignment = Alignment.Center
         ) {
@@ -200,7 +220,7 @@ fun ProfileOptionsScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Username remains dynamic variable
         Text(
@@ -210,7 +230,7 @@ fun ProfileOptionsScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Buttons
         if (!isCaregiver) {
@@ -225,6 +245,22 @@ fun ProfileOptionsScreen(
             icon = Icons.Default.Face,
             onClick = onCaregiverHubClick
         )
+        
+        var showHealthRemindersSheet by remember { mutableStateOf(false) }
+        val profileViewModel: ProfileViewModel = koinViewModel()
+
+        SettingsButton(
+            text = "Health Notifications",
+            icon = Icons.Default.Notifications,
+            onClick = { showHealthRemindersSheet = true }
+        )
+
+        if (showHealthRemindersSheet) {
+            HealthRemindersBottomSheet(
+                viewModel = profileViewModel,
+                onDismiss = { showHealthRemindersSheet = false }
+            )
+        }
 
         // Language Button with Dropdown Menu
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -292,25 +328,56 @@ fun ProfileOptionsScreen(
 
         if (!isCaregiver) {
             Button(
-                onClick = { /* Emergency Action */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-                    .height(60.dp),
+                onClick = { showSosDialog = true }, // 🟢 MỞ DIALOG SETUP
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp).height(60.dp),
                 shape = RoundedCornerShape(15.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
+                    Icon(Icons.Default.Call, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(id = R.string.emergency),
+                        text = if (currentSosNumber.isEmpty()) stringResource(id = R.string.setup_sos) else stringResource(id = R.string.sos_number_format, currentSosNumber),
                         color = Color.White,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
+        }
+
+        // 🟢 HIỂN THỊ DIALOG NHẬP SỐ SOS
+        if (showSosDialog) {
+            AlertDialog(
+                onDismissRequest = { showSosDialog = false },
+                title = { Text(stringResource(id = R.string.sos_dialog_title), fontWeight = FontWeight.Bold) },
+                text = {
+                    OutlinedTextField(
+                        value = inputSosNumber,
+                        onValueChange = { inputSosNumber = it },
+                        label = { Text(stringResource(id = R.string.phone_number_label)) },
+                        placeholder = { Text(stringResource(id = R.string.phone_number_placeholder)) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            profileViewModel.updateSosNumber(inputSosNumber) {
+                                showSosDialog = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                    ) { Text(stringResource(id = R.string.save)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSosDialog = false }) { Text(stringResource(id = R.string.cancel), color = Color.Gray) }
+                }
+            )
         }
     }
 }
@@ -668,7 +735,7 @@ fun CaregiverHubScreen(
     paddingValues: PaddingValues,
     onBack: () -> Unit
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf(stringResource(R.string.following), stringResource(R.string.grant_access))
 
     Column(
@@ -896,6 +963,155 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
             Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HealthRemindersBottomSheet(
+    viewModel: ProfileViewModel,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val profile by viewModel.currentLocalProfile.collectAsState()
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color(0xFF1B1B1B),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.4f)) }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 40.dp, start = 24.dp, end = 24.dp)
+        ) {
+            Text(
+                text = "Health Notifications",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Text(
+                text = "Settings are synced with your profile.",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Dynamic options per type
+            val hydrationOptions = listOf(60 to "1h", 240 to "4h", 480 to "8h", 1440 to "Daily")
+            val bpOptions = listOf(1440 to "Daily", 2880 to "2 Days", 10080 to "Weekly")
+            val weightOptions = listOf(10080 to "Weekly", 20160 to "2 Weeks", 43200 to "Monthly")
+
+            profile?.let { p ->
+                HealthReminderItem(
+                    label = "Hydration",
+                    type = "HYDRATION",
+                    initEnabled = p.hydrationReminderEnabled,
+                    initInterval = p.hydrationInterval,
+                    options = hydrationOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("HYDRATION", e, i) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                HealthReminderItem(
+                    label = "Blood Pressure",
+                    type = "BLOOD_PRESSURE",
+                    initEnabled = p.bpReminderEnabled,
+                    initInterval = p.bpInterval,
+                    options = bpOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("BLOOD_PRESSURE", e, i) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                HealthReminderItem(
+                    label = "Body Weight",
+                    type = "WEIGHT",
+                    initEnabled = p.weightReminderEnabled,
+                    initInterval = p.weightInterval,
+                    options = weightOptions,
+                    onUpdate = { e, i -> viewModel.updateHealthReminder("WEIGHT", e, i) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun HealthReminderItem(
+    label: String,
+    type: String,
+    initEnabled: Boolean,
+    initInterval: Int,
+    options: List<Pair<Int, String>>,
+    onUpdate: (Boolean, Int) -> Unit
+) {
+    var enabled by remember(initEnabled) { mutableStateOf(initEnabled) }
+    var interval by remember(initInterval) { mutableIntStateOf(initInterval) }
+
+    // Ensure interval is one of the valid options if enabled and not already valid
+    LaunchedEffect(enabled, interval) {
+        if (enabled && options.none { it.first == interval }) {
+            val defaultInterval = options.first().first
+            onUpdate(true, defaultInterval)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Switch(
+                checked = enabled,
+                onCheckedChange = { 
+                    enabled = it
+                    onUpdate(it, interval)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = PrimaryGreen,
+                    checkedTrackColor = PrimaryGreen.copy(alpha = 0.5f)
+                )
+            )
+        }
+        
+        if (enabled) {
+            Text(
+                text = "Reminder frequency:",
+                color = Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                options.forEach { (mins, text) ->
+                    val isSelected = interval == mins
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) PrimaryGreen else Color.White.copy(alpha = 0.1f))
+                            .clickable {
+                                onUpdate(true, mins)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = text,
+                            color = if (isSelected) Color.White else Color.LightGray,
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
         }
     }
 }
