@@ -34,7 +34,7 @@ import com.example.pillmate.domain.model.Medication
 fun AddMedicationDialog(
     medicationToEdit: Medication? = null,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, unit: String, count: Int, description: String, expirationDate: Long, imageUri: Uri?) -> Unit
+    onConfirm: (name: String, unit: String, count: Int, description: String, expirationDate: Long?, imageUri: Uri?) -> Unit
 ) {
     var name by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.name ?: "") }
     var unit by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.unit ?: "") }
@@ -191,11 +191,10 @@ fun AddMedicationDialog(
                     if (name.isBlank()) { nameError = "Name is required"; hasError = true }
                     if (unit.isBlank()) { unitError = "Unit is required"; hasError = true }
                     if (countText.isBlank() || countText.toIntOrNull() == null) { countError = "Enter a valid number"; hasError = true }
-                    if (!hasPickedDate || datePickerState.selectedDateMillis == null) { dateError = "Expiration date is required"; hasError = true }
                     if (hasError) return@Button
 
                     val count = countText.toIntOrNull() ?: 0
-                    val expDateLong = datePickerState.selectedDateMillis!!
+                    val expDateLong = if (hasPickedDate) datePickerState.selectedDateMillis else null
 
                     onConfirm(name, unit, count, description, expDateLong, imageUri)
                 },

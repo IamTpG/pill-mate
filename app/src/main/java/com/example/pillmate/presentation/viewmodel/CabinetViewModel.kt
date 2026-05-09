@@ -133,7 +133,7 @@ class CabinetViewModel(
         return photoUrl
     }
 
-    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long, imageUriStr: String?) {
+    fun addMedication(name: String, unit: String, initialCount: Int, description: String, expirationDate: Long?, imageUriStr: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             val activeProfileId = getEffectiveProfileId() ?: return@launch
 
@@ -150,7 +150,7 @@ class CabinetViewModel(
                     id = "main",
                     batchName = "Main Batch",
                     quantity = 0f,
-                    expirationDate = if (expirationDate > 0) java.util.Date(expirationDate) else null
+                    expirationDate = if (expirationDate != null && expirationDate > 0) java.util.Date(expirationDate) else null
                 )
             )
 
@@ -197,7 +197,7 @@ class CabinetViewModel(
         newUnit: String,
         newCount: Int,
         newDescription: String,
-        newExpirationDate: Long,
+        newExpirationDate: Long?,
         imageUriStr: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -211,10 +211,10 @@ class CabinetViewModel(
                 photoUrl = photoUrl,
                 supply = existingMedication.supply?.copy(
                     id = "main",
-                    expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null
+                    expirationDate = if (newExpirationDate != null && newExpirationDate > 0) java.util.Date(newExpirationDate) else null
                 ) ?: com.example.pillmate.domain.model.MedicationSupply(
                     id = "main",
-                    expirationDate = if (newExpirationDate > 0) java.util.Date(newExpirationDate) else null,
+                    expirationDate = if (newExpirationDate != null && newExpirationDate > 0) java.util.Date(newExpirationDate) else null,
                     quantity = 0f
                 )
             )
