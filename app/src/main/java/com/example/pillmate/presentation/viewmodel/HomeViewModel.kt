@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -25,7 +26,8 @@ class HomeViewModel(
     private val medicationRepository: MedicationRepository,
     private val getHomeTasksUseCase: GetHomeTasksUseCase,
     private val syncAlarmsUseCase: com.example.pillmate.domain.usecase.SyncAlarmsUseCase,
-    private val profileId: String
+    private val profileDao: com.example.pillmate.data.local.dao.ProfileDao,
+    private val auth: com.google.firebase.auth.FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -41,11 +43,31 @@ class HomeViewModel(
 
     init {
         generateCalendarDays()
-        loadData()
+        observeProfile()
+    }
+
+    private suspend fun getEffectiveProfileId(): String? {
+        val active = profileDao.getActiveProfile()?.id
+        if (active != null) return active
         
-        // Self-Healing: Sync alarms on launch to catch missed ones
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id
+        if (anyLocal != null) return anyLocal
+        
+        return auth.currentUser?.uid
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private fun observeProfile() {
         viewModelScope.launch {
-            syncAlarmsUseCase(profileId)
+            // Self-Healing (Initial sync)
+            getEffectiveProfileId()?.let { syncAlarmsUseCase(it) }
+
+            profileDao.getCurrentProfileFlow().collect { profile ->
+                val effectiveId = profile?.id ?: getEffectiveProfileId()
+                effectiveId?.let { id ->
+                    loadData(id)
+                }
+            }
         }
     }
 
@@ -80,10 +102,12 @@ class HomeViewModel(
     fun selectDate(date: Date) {
         _uiState.value = _uiState.value.copy(selectedDate = date)
         generateCalendarDays()
-        loadData(date)
+        viewModelScope.launch {
+            getEffectiveProfileId()?.let { loadData(it, date) }
+        }
     }
 
-    fun loadData(date: Date = _uiState.value.selectedDate) {
+    fun loadData(profileId: String, date: Date = _uiState.value.selectedDate) {
         loadDataJob?.cancel()
         _uiState.value = _uiState.value.copy(isLoading = true)
         loadDataJob = viewModelScope.launch {
@@ -95,6 +119,12 @@ class HomeViewModel(
                         isLoading = false
                     )
                 }
+        }
+    }
+
+    fun reloadData() {
+        viewModelScope.launch {
+            getEffectiveProfileId()?.let { loadData(it) }
         }
     }
 }

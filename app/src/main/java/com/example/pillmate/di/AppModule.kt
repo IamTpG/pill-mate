@@ -92,7 +92,6 @@ val appModule = module {
     factory { GetWidgetDataUseCase(get(), get(), get()) }
 
     viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
-    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
     single { HealthReminderManager(get(), get()) }
@@ -121,7 +120,7 @@ val appModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
@@ -131,4 +130,5 @@ val viewModelModule = module {
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }
+    viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
 }

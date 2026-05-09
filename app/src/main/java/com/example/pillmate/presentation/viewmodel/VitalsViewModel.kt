@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.usecase.UpdateHydrationGoalUseCase
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 
 data class VitalsUiState(
@@ -41,15 +42,36 @@ class VitalsViewModel(
     private val logHealthMetricUseCase: LogHealthMetricUseCase,
     private val updateHydrationGoalUseCase: UpdateHydrationGoalUseCase,
     private val profileDao: ProfileDao,
-    private val profileId: String
+    private val auth: com.google.firebase.auth.FirebaseAuth
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VitalsUiState())
     val uiState: StateFlow<VitalsUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        observeProfile()
         watchProfile()
+    }
+
+    private suspend fun getEffectiveProfileId(): String? {
+        val active = profileDao.getActiveProfile()?.id
+        if (active != null) return active
+        
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id
+        if (anyLocal != null) return anyLocal
+        
+        return auth.currentUser?.uid
+    }
+
+    private fun observeProfile() {
+        viewModelScope.launch {
+            profileDao.getCurrentProfileFlow().collect { profile ->
+                val effectiveId = profile?.id ?: getEffectiveProfileId()
+                effectiveId?.let { id ->
+                    loadData(id)
+                }
+            }
+        }
     }
 
     private fun watchProfile() {
@@ -62,7 +84,7 @@ class VitalsViewModel(
         }
     }
 
-    fun loadData() {
+    fun loadData(profileId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             getHealthMetricsUseCase.execute(profileId, 20).collect { metrics ->
@@ -136,14 +158,16 @@ class VitalsViewModel(
                 unit = unit,
                 recordedAt = Date()
             )
-            logHealthMetricUseCase.execute(profileId, metric)
+            val effectiveId = getEffectiveProfileId() ?: return@launch
+            logHealthMetricUseCase.execute(effectiveId, metric)
             toggleLogPanel(false)
         }
     }
 
     fun updateHydrationTarget(target: Int) {
         viewModelScope.launch {
-            updateHydrationGoalUseCase.execute(profileId, target)
+            val effectiveId = getEffectiveProfileId() ?: return@launch
+            updateHydrationGoalUseCase.execute(effectiveId, target)
         }
     }
 
