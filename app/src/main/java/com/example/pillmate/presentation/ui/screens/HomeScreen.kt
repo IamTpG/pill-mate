@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -33,11 +34,15 @@ fun HomeScreen(
     paddingValues: PaddingValues,
     onTaskClick: (HomeTask) -> Unit,
     onSettingsClick: () -> Unit,
+    onAIClick: () -> Unit,
     profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
         profileViewModel.syncCurrentProfile()
     }
+
+    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val isCaregiverView = currentProfile?.role == "Caregiver_View"
 
     val uiState by viewModel.uiState.collectAsState()
     val calendarState = rememberLazyListState()
@@ -104,6 +109,31 @@ fun HomeScreen(
                 items(uiState.dateTasks) { task ->
                     TaskItem(task = task, onClick = { onTaskClick(task) })
                 }
+            }
+        }
+
+        if (!isCaregiverView) {
+            androidx.compose.material3.FloatingActionButton(
+                onClick = onAIClick,
+                modifier = Modifier
+                    .align(androidx.compose.ui.Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        ambientColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green),
+                        spotColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green)
+                    ),
+                shape = androidx.compose.foundation.shape.CircleShape,
+                containerColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green),
+                contentColor = Color.White,
+                elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_chat),
+                    contentDescription = "AI Chat",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

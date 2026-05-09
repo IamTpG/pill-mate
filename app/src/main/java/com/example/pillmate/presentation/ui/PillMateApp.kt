@@ -122,7 +122,8 @@ fun PillMateApp(
                                 )
                             )
                         },
-                        onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                        onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                        onAIClick = { navController.navigate(Screen.AIChat.route) }
                     )
                 }
             }
@@ -153,7 +154,10 @@ fun PillMateApp(
             }
             composable(Screen.AIChat.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    AIChatScreen(paddingValues = innerPadding)
+                    AIChatScreen(
+                        paddingValues = innerPadding,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
             composable(Screen.DebugMenu.route) {
@@ -263,7 +267,9 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
+                bottomNavItems.filter { screen -> 
+                    screen.route != Screen.Settings.route
+                }.forEach { screen -> NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
@@ -273,14 +279,19 @@ fun MainScaffold(
                         },
                         label = null,
                         alwaysShowLabel = false,
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
+                                   (screen.route == Screen.Home.route && currentDestination?.route == Screen.AIChat.route),
                         onClick = {
+                            if (screen.route == Screen.Home.route && currentDestination?.route == Screen.AIChat.route) {
+                                navController.popBackStack()
+                                return@NavigationBarItem
+                            }
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
-                                restoreState = true
+                                restoreState = screen.route != Screen.Home.route
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(

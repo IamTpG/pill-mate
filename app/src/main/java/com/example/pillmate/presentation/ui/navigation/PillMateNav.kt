@@ -54,7 +54,6 @@ val bottomNavItems = listOf(
     Screen.Cabinet,
     Screen.Vitals,
     Screen.ScheduleBuilder,
-    Screen.AIChat,
     Screen.Appointment,
     Screen.Settings
 )
