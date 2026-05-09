@@ -16,7 +16,7 @@ import org.maplibre.spatialk.geojson.Position
 fun Map(modifier: Modifier = Modifier) {
 	val cameraState = rememberCameraState(
 		firstPosition = CameraPosition(
-			target = Position(10.7769, 106.7009), // TP.HCM
+			target = Position(106.7009, 10.7769), // TP.HCM
 			zoom = 12.0
 		)
 	)
@@ -27,6 +27,7 @@ fun Map(modifier: Modifier = Modifier) {
 		
 		
 		MaplibreMap(
+			cameraState = cameraState,
 			baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
 			options =
 				MapOptions(
@@ -37,6 +38,7 @@ fun Map(modifier: Modifier = Modifier) {
 							isRotateEnabled = true,
 							isScrollEnabled = true,
 						)
+					
 				)
 		)
 	}
