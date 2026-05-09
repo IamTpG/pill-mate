@@ -59,6 +59,7 @@ fun VitalsScreen(
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             VitalsHeader(
                 showAdd = !isCaregiver,
+                showSettings = !isCaregiver,
                 onAddClick = { viewModel.toggleLogPanel(true) },
                 onReportClick = { viewModel.toggleWeeklyReport(true) },
                 onSettingsClick = { showHealthRemindersSheet = true }
@@ -155,6 +156,7 @@ fun VitalsScreen(
 @Composable
 fun VitalsHeader(
     showAdd: Boolean,
+    showSettings: Boolean,
     onAddClick: () -> Unit,
     onReportClick: () -> Unit,
     onSettingsClick: () -> Unit
@@ -181,15 +183,17 @@ fun VitalsHeader(
                 ) {
                     Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C), modifier = Modifier.size(20.dp))
                 }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f))
-                        .clickable { onSettingsClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
+                if (showSettings) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .clickable { onSettingsClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
                 }
                 if (showAdd) {
                     Box(
