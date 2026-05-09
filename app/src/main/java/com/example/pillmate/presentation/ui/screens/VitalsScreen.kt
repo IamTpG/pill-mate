@@ -28,7 +28,9 @@ import com.example.pillmate.domain.model.MetricType
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
 import com.example.pillmate.presentation.ui.components.HydrationGoalDialog
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.presentation.viewmodel.WeeklyStats
+import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,6 +40,9 @@ fun VitalsScreen(
     paddingValues: PaddingValues
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profileViewModel: ProfileViewModel = koinViewModel()
+    val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
     var showHydrationDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -50,6 +55,7 @@ fun VitalsScreen(
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             VitalsHeader(
+                showAdd = !isCaregiver,
                 onAddClick = { viewModel.toggleLogPanel(true) },
                 onReportClick = { viewModel.toggleWeeklyReport(true) }
             )
@@ -63,7 +69,7 @@ fun VitalsScreen(
                     HydrationCard(
                         current = uiState.hydrationMl,
                         target = uiState.hydrationTarget,
-                        onClick = { showHydrationDialog = true }
+                        onClick = { if (!isCaregiver) showHydrationDialog = true }
                     )
                 }
 
@@ -136,7 +142,7 @@ fun VitalsScreen(
 }
 
 @Composable
-fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
+fun VitalsHeader(showAdd: Boolean, onAddClick: () -> Unit, onReportClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,15 +165,17 @@ fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
                 ) {
                     Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C), modifier = Modifier.size(20.dp))
                 }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .clickable { onAddClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+                if (showAdd) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .clickable { onAddClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+                    }
                 }
             }
         }
