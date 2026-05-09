@@ -2,6 +2,7 @@ package com.example.pillmate.presentation.ui.screens
 
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,8 +58,9 @@ fun HomeScreen(
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.Crop
         )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             HomeHeader(onSettingsClick = onSettingsClick)

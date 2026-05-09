@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.Alignment
@@ -83,6 +84,7 @@ fun AddMedicationDialog(
         title = { Text(if (medicationToEdit != null) "Edit Medication" else "Add Medication", color = Color.Black) },
         text = {
             Column(
+                modifier = Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

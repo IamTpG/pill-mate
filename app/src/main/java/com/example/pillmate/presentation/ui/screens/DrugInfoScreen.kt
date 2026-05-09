@@ -13,8 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
@@ -39,7 +37,7 @@ fun DrugInfoScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(painter = painterResource(id = R.drawable.background), contentDescription = "Background", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)))
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize()) {
             CenterAlignedTopAppBar(
@@ -48,7 +46,6 @@ fun DrugInfoScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White) }
                 },
                 actions = {
-                    IconButton(onClick = { /* Share */ }) { Icon(Icons.Default.Share, contentDescription = "Share", tint = Color.White) }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
@@ -74,10 +71,6 @@ fun DrugInfoScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(drug.brandName.take(30), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black, maxLines = 1)
                                     Text(drug.genericName.take(40), fontSize = 14.sp, color = Color.DarkGray, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, maxLines = 1)
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(modifier = Modifier.size(48.dp).background(Color.White, CircleShape).border(1.dp, Color(0xFFE0E0E0), CircleShape), contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.FavoriteBorder, contentDescription = "Health", tint = Color(0xFF4CAF50), modifier = Modifier.size(24.dp))
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
