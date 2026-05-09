@@ -280,9 +280,9 @@ fun MainScaffold(
                         label = null,
                         alwaysShowLabel = false,
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
-                                   (screen.route == Screen.Home.route && currentDestination?.route == Screen.AIChat.route),
+                                   (screen.route == Screen.Home.route && (currentDestination?.route == Screen.AIChat.route || currentDestination?.route == Screen.Settings.route)),
                         onClick = {
-                            if (screen.route == Screen.Home.route && currentDestination?.route == Screen.AIChat.route) {
+                            if (screen.route == Screen.Home.route && (currentDestination?.route == Screen.AIChat.route || currentDestination?.route == Screen.Settings.route)) {
                                 navController.popBackStack()
                                 return@NavigationBarItem
                             }

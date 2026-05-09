@@ -58,7 +58,7 @@ import com.journeyapps.barcodescanner.ScanOptions
 
 // Define internal navigation states
 enum class SettingsRoute {
-    BACK, OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
+    OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
 }
 
 @Composable
@@ -106,7 +106,7 @@ fun SettingsScreen(
 
         // Internal Navigation
         when (currentRoute) {
-                SettingsRoute.OPTIONS -> {
+            SettingsRoute.OPTIONS -> {
                 ProfileOptionsScreen(
                     paddingValues = paddingValues,
                     userName = displayName,
@@ -114,11 +114,8 @@ fun SettingsScreen(
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
                     onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB },
-                    onBackClick = { currentRoute = SettingsRoute.BACK }
+                    onBackClick = { onBack() }
                 )
-            }
-            SettingsRoute.BACK -> {
-                onBack()
             }
             SettingsRoute.EDIT_PROFILE -> {
                 EditProfileScreen(
