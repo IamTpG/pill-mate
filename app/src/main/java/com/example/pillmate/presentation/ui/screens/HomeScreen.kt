@@ -32,8 +32,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     paddingValues: PaddingValues,
     onTaskClick: (HomeTask) -> Unit,
-    onAddClick: () -> Unit,
-    onDebugClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
@@ -64,7 +63,7 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onAddClick = onAddClick, onDebugClick = onDebugClick)
+            HomeHeader(onSettingsClick = onSettingsClick)
 
             LazyColumn(
                 modifier = Modifier

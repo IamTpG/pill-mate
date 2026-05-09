@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,8 +33,9 @@ import java.util.Date
 
 @Composable
 fun HomeHeader(
-    onAddClick: () -> Unit,
-    onDebugClick: () -> Unit
+//    onAddClick: () -> Unit,
+//    onDebugClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -51,17 +53,24 @@ fun HomeHeader(
             fontWeight = FontWeight.Bold
         )
         Row {
-            IconButton(onClick = onDebugClick) {
+//            IconButton(onClick = onDebugClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Info,
+//                    contentDescription = "Debug Menu",
+//                    tint = Color.White
+//                )
+//            }
+//            IconButton(onClick = onAddClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Add,
+//                    contentDescription = "Add task",
+//                    tint = Color.White
+//                )
+//            }
+            IconButton(onClick = onSettingsClick) {
                 Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Debug Menu",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = onAddClick) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add task",
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
                     tint = Color.White
                 )
             }
@@ -201,7 +210,7 @@ fun TaskItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clickable(enabled = task.status != LogStatus.MISSED, onClick = onClick),
+            .clickable(enabled = task.status != LogStatus.COMPLETED, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)

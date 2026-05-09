@@ -18,6 +18,7 @@ import com.example.pillmate.presentation.ui.screens.*
 import com.example.pillmate.presentation.viewmodel.*
 import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import androidx.navigation.navArgument
@@ -115,13 +116,13 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
+                                    scheduledTimeIso = task.scheduledTimeIso,
                                     rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
                             )
                         },
-                        onAddClick = { /* TODO */ },
-                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) }
+                        onSettingsClick = { navController.navigate(Screen.Settings.route) }
                     )
                 }
             }
@@ -145,6 +146,8 @@ fun PillMateApp(
                         }
                     }, onNavigateToAuth = {
                         navController.navigate("auth_graph")
+                    }, onBack = {
+                        navController.popBackStack()
                     })
                 }
             }
@@ -160,7 +163,7 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
-            
+
             composable(
                 route = Screen.Vitals.route,
                 deepLinks = listOf(
@@ -179,10 +182,10 @@ fun PillMateApp(
             composable(route = Screen.Appointment.route) {
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
-                
+
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     val appointmentViewModel: AppointmentViewModel = koinViewModel()
-                    
+
                     AppointmentScreen(
                         viewModel = appointmentViewModel,
                         profileId = currentUserId,
@@ -208,18 +211,20 @@ fun PillMateApp(
             composable(
                 route = Screen.TaskAlarm.route,
                 arguments = listOf(
-                    androidx.navigation.navArgument("sourceId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("scheduleId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("details") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("instructions") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("time") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("dose") { type = androidx.navigation.NavType.FloatType; defaultValue = 1.0f }
+                    navArgument("sourceId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduleId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("title") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("details") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("type") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("instructions") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("time") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduledTimeIso") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("rrule") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("dose") { type = NavType.FloatType; defaultValue = 1.0f },
+                    navArgument("isFromAlarm") { type = NavType.BoolType; defaultValue = false }
                 ),
                 deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}" }
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}&isFromAlarm={isFromAlarm}" }
                 )
             ) { backStackEntry ->
                 val viewModel: TaskLogViewModel = koinViewModel()
@@ -232,8 +237,10 @@ fun PillMateApp(
                     taskTypeString = backStackEntry.arguments?.getString("type") ?: "OTHER",
                     instructions = backStackEntry.arguments?.getString("instructions") ?: "",
                     startTimeStr = backStackEntry.arguments?.getString("time") ?: "",
+                    scheduledTimeIso = backStackEntry.arguments?.getString("scheduledTimeIso") ?: "",
                     rrule = backStackEntry.arguments?.getString("rrule") ?: "",
                     dose = backStackEntry.arguments?.getFloat("dose") ?: 1.0f,
+                    isFromAlarm = backStackEntry.arguments?.getBoolean("isFromAlarm") ?: false,
                     onDismiss = { navController.popBackStack() }
                 )
             }
@@ -256,8 +263,7 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { screen ->
-                    NavigationBarItem(
+                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
@@ -265,7 +271,8 @@ fun MainScaffold(
                                 modifier = Modifier.size(24.dp)
                             )
                         },
-                        label = { Text(screen.title) },
+                        label = null,
+                        alwaysShowLabel = false,
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {
