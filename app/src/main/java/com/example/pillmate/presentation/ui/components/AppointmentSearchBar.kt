@@ -91,7 +91,7 @@ fun AppointmentSearchBar(
 		// Suggestions drop-down
 		LazyColumn(
 			modifier = Modifier.fillMaxWidth(),
-			contentPadding = PaddingValues(16.dp),
+			//contentPadding = PaddingValues(16.dp),
 			verticalArrangement = Arrangement.spacedBy(8.dp)
 		) {
 			items(suggestions) { suggestion ->

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
@@ -21,14 +22,21 @@ import com.example.pillmate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: String) -> Unit) {
+fun AppointmentCard(
+	log: AppointmentLog,
+	isCareGiver: Boolean,
+	onSwipeStartToEnd: () -> Unit,
+	onSwipeEndToStart: (appointmentId: String) -> Unit
+) {
 	//val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-
 	
 	val swipetoDismissBoxState = rememberSwipeToDismissBoxState(
 		confirmValueChange = {
 			if (it == SwipeToDismissBoxValue.EndToStart) {
 				onSwipeEndToStart(log.id)
+			}
+			if (it == SwipeToDismissBoxValue.StartToEnd) {
+				onSwipeStartToEnd()
 			}
 			
 			it != SwipeToDismissBoxValue.StartToEnd && it != SwipeToDismissBoxValue.EndToStart
@@ -42,24 +50,45 @@ fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: Stri
 			.padding(vertical = 8.dp),
 		backgroundContent = {
 			when (swipetoDismissBoxState.dismissDirection) {
-				SwipeToDismissBoxValue.StartToEnd -> { }
+				SwipeToDismissBoxValue.StartToEnd -> {
+					if (!isCareGiver) {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.background(
+									color = Color(0xFFD8F3DC),
+									shape = RoundedCornerShape(20.dp)
+								),
+							contentAlignment = Alignment.CenterStart
+						) {
+							Icon(
+								imageVector = Icons.Default.Edit,
+								contentDescription = "Edit item",
+								modifier = Modifier.padding(12.dp),
+								tint = Color.White
+							)
+						}
+					}
+				}
 				
 				SwipeToDismissBoxValue.EndToStart -> {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.background(
-								color = Color.Red,
-								shape = RoundedCornerShape(20.dp)
-							),
-						contentAlignment = Alignment.CenterEnd
-					) {
-						Icon(
-							imageVector = Icons.Default.Delete,
-							contentDescription = "Remove item",
-							modifier = Modifier.padding(12.dp),
-							tint = Color.White
-						)
+					if (!isCareGiver) {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.background(
+									color = Color.Red,
+									shape = RoundedCornerShape(20.dp)
+								),
+							contentAlignment = Alignment.CenterEnd
+						) {
+							Icon(
+								imageVector = Icons.Default.Delete,
+								contentDescription = "Remove item",
+								modifier = Modifier.padding(12.dp),
+								tint = Color.White
+							)
+						}
 					}
 				}
 				
@@ -104,5 +133,5 @@ fun PreviewAppointmentCard() {
 		"Doctor House",
 		"Mr. Thang",
 		"Don't be late"
-	), {})
+	), isCareGiver = false, {}, {})
 }

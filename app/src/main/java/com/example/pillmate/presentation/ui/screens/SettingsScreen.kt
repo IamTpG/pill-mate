@@ -44,7 +44,7 @@ import com.example.pillmate.notification.HealthReminderManager
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
-import com.example.pillmate.utils.generateQRCodeBitmap
+import com.example.pillmate.util.generateQRCodeBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
