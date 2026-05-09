@@ -18,14 +18,13 @@ import java.util.Date
 import java.util.UUID
 
 class HybridMedicationRepositoryImpl(
-    localRepo: LocalRepository<Medication>,
-    remoteRepo: RemoteRepository<Medication>,
-    private val supplyLogDao: SupplyLogDao,
+    private val localMedRepo: MedicationRepository,
+    private val remoteMedRepo: MedicationRepository,
     private val firestore: FirebaseFirestore,
-    private val networkChecker: NetworkChecker
+    internal val networkChecker: NetworkChecker
 ) : HybridRepositoryImpl<Medication>(
-    localRepo = localRepo,
-    remoteRepo = remoteRepo,
+    localRepo = localMedRepo as LocalRepository<Medication>,
+    remoteRepo = remoteMedRepo as RemoteRepository<Medication>,
     networkChecker = { networkChecker.isOnline() },
     getId = { it.id },
     getUpdatedAt = { it.updatedAt },
@@ -34,11 +33,11 @@ class HybridMedicationRepositoryImpl(
     copyWithDeleted = { item, date -> item.copy(deletedAt = date) } // Enable soft delete
 ), MedicationRepository {
     override suspend fun add(profileId: String, item: Medication): Result<Unit> = runCatching {
-        localRepo.add(profileId, item).getOrThrow()
+        localMedRepo.add(profileId, item).getOrThrow()
         
         // Sync to Firestore
         if (networkChecker.isOnline()) {
-            remoteRepo.add(profileId, item).getOrThrow()
+            remoteMedRepo.add(profileId, item).getOrThrow()
             
             // Subcollection doc 'main' is source of truth for batch details
             item.supply?.let { s ->
@@ -56,11 +55,11 @@ class HybridMedicationRepositoryImpl(
         val updatedItem = if (getDeletedAt(item) == null) {
             item.copy(updatedAt = Date())
         } else item
-        localRepo.update(profileId, updatedItem).getOrThrow()
+        localMedRepo.update(profileId, updatedItem).getOrThrow()
         
         // Sync to Firestore
         if (networkChecker.isOnline()) {
-            remoteRepo.update(profileId, updatedItem).getOrThrow()
+            remoteMedRepo.update(profileId, updatedItem).getOrThrow()
             
             // Subcollection 'main' source of truth
             updatedItem.supply?.let { s ->
@@ -74,82 +73,42 @@ class HybridMedicationRepositoryImpl(
     }
 
     override suspend fun getMedicationWithSupply(profileId: String, id: String): Result<Medication?> = runCatching {
-        // ...Existing heavy fetch logic is fine as a deep-dive...
-        val med = getById(profileId, id).getOrThrow()
-        if (med != null) {
-            val mainSupply = getMedicationSupplies(profileId, id).getOrNull()?.find { it.id == "main" }
-            med.copy(supply = mainSupply)
-        } else null
+        if (networkChecker.isOnline()) {
+            remoteMedRepo.getMedicationWithSupply(profileId, id).getOrNull()
+        } else {
+            localMedRepo.getMedicationWithSupply(profileId, id).getOrNull()
+        }
     }
 
     override suspend fun getMedicationSupplies(profileId: String, medId: String): Result<List<MedicationSupply>> = runCatching {
-        val supplyDocs = firestore.collection("profiles").document(profileId)
-            .collection("medications").document(medId)
-            .collection("supply").get().await()
-
-        supplyDocs.documents.map { doc ->
-            val inventoryLogs = doc.reference.collection("logs").get().await()
-            val totalQty = inventoryLogs.documents.sumOf { (it.get("changeAmount") as? Number)?.toDouble() ?: 0.0 }.toFloat()
-
-            doc.toObject(MedicationSupply::class.java)!!.copy(
-                id = doc.id,
-                quantity = totalQty
-            )
+        if (networkChecker.isOnline()) {
+            remoteMedRepo.getMedicationSupplies(profileId, medId).getOrThrow()
+        } else {
+            localMedRepo.getMedicationSupplies(profileId, medId).getOrThrow()
         }
     }
 
     override suspend fun updateMedicationSupply(profileId: String, medId: String, changeAmount: Float, supplyId: String?): Result<Unit> = runCatching {
-        val targetSupplyRef = firestore.collection("profiles").document(profileId)
-            .collection("medications").document(medId)
-            .collection("supply").document(supplyId ?: "main")
-
-        val inventoryLog = hashMapOf(
-            "changeAmount" to changeAmount,
-            "reason" to if (changeAmount < 0) "TAKEN" else "REFILL",
-            "timestamp" to Timestamp.now()
-        )
-        targetSupplyRef.collection("logs").add(inventoryLog).await()
+        localMedRepo.updateMedicationSupply(profileId, medId, changeAmount, supplyId).getOrThrow()
+        if (networkChecker.isOnline()) {
+            remoteMedRepo.updateMedicationSupply(profileId, medId, changeAmount, supplyId).getOrThrow()
+        }
     }
 
     override suspend fun logInventoryChange(profileId: String, medicationId: String, amount: Int, reason: String): Result<Unit> = runCatching {
-        val newLog = SupplyLogEntity(
-            id = UUID.randomUUID().toString(),
-            medicationId = medicationId,
-            changeAmount = amount,
-            reason = reason,
-            timestamp = System.currentTimeMillis()
-        )
-        supplyLogDao.insertSupplyLog(newLog)
+        localMedRepo.logInventoryChange(profileId, medicationId, amount, reason).getOrThrow()
 
         // Sync to Firestore
-        try {
-            val logData = hashMapOf(
-                "id" to newLog.id,
-                "changeAmount" to newLog.changeAmount,
-                "reason" to newLog.reason,
-                "timestamp" to newLog.timestamp
-            )
-            firestore.collection("profiles").document(profileId)
-                .collection("medications").document(medicationId)
-                .collection("supply").document("main")
-                .collection("logs").document(newLog.id)
-                .set(logData).await()
-        } catch (_: Exception) {
-            // Silently fail remote sync — local is source of truth for inventory
+        if (networkChecker.isOnline()) {
+            try {
+                remoteMedRepo.logInventoryChange(profileId, medicationId, amount, reason).getOrThrow()
+            } catch (_: Exception) {
+                // Silently fail remote sync — local is source of truth for inventory
+            }
         }
     }
 
     override fun getLogsForMedication(medicationId: String): Flow<List<InventoryLog>> {
-        return supplyLogDao.getLogsForMedication(medicationId).map { entities ->
-            entities.map { entity ->
-                InventoryLog(
-                    id = entity.id,
-                    medId = entity.medicationId,
-                    changeAmount = entity.changeAmount.toFloat(),
-                    reason = entity.reason,
-                    timestamp = Date(entity.timestamp)
-                )
-            }
-        }
+        return localMedRepo.getLogsForMedication(medicationId)
     }
 }

@@ -62,9 +62,8 @@ val appModule = module {
         val roomRepo = RoomMedicationRepositoryImpl(get(), get())
         val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
         HybridMedicationRepositoryImpl(
-            localRepo = roomRepo,
-            remoteRepo = firestoreRepo,
-            supplyLogDao = get(),
+            localMedRepo = roomRepo,
+            remoteMedRepo = firestoreRepo,
             firestore = get(),
             networkChecker = com.example.pillmate.util.NetworkChecker(androidContext())
         )
