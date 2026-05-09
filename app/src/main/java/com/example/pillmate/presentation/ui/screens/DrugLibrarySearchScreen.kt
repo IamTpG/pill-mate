@@ -92,7 +92,7 @@ fun DrugLibrarySearchScreen(
                     
                     val scrollState = rememberScrollState()
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp).horizontalScroll(scrollState),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 8.dp).horizontalScroll(scrollState),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         uiState.recentSearches.forEach { search ->
