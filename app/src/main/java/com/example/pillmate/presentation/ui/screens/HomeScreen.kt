@@ -102,7 +102,13 @@ fun HomeScreen(
                 }
 
                 items(uiState.dateTasks) { task ->
-                    TaskItem(task = task, onClick = { onTaskClick(task) })
+                    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+                    val isCaregiver = currentProfile?.role == "Caregiver_View"
+                    TaskItem(
+                        task = task,
+                        isReadOnly = isCaregiver,
+                        onClick = { onTaskClick(task) }
+                    )
                 }
             }
         }

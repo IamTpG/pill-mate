@@ -170,12 +170,8 @@ fun PillMateApp(
                     androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
                 )
             ) {
-                val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
-                val currentUserId = auth.currentUser?.uid ?: ""
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
-                        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
-                    )
+                    val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel()
                     VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
                 }
             }
