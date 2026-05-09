@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import com.example.pillmate.domain.model.MetricType
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
 import com.example.pillmate.presentation.ui.components.HydrationGoalDialog
+import com.example.pillmate.presentation.ui.components.HealthRemindersBottomSheet
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.presentation.viewmodel.WeeklyStats
 import org.koin.androidx.compose.koinViewModel
@@ -44,6 +46,7 @@ fun VitalsScreen(
     val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
     val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
     var showHydrationDialog by remember { mutableStateOf(false) }
+    var showHealthRemindersSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -57,7 +60,8 @@ fun VitalsScreen(
             VitalsHeader(
                 showAdd = !isCaregiver,
                 onAddClick = { viewModel.toggleLogPanel(true) },
-                onReportClick = { viewModel.toggleWeeklyReport(true) }
+                onReportClick = { viewModel.toggleWeeklyReport(true) },
+                onSettingsClick = { showHealthRemindersSheet = true }
             )
 
             LazyColumn(
@@ -139,10 +143,22 @@ fun VitalsScreen(
             onDismiss = { viewModel.toggleWeeklyReport(false) }
         )
     }
+
+    if (showHealthRemindersSheet) {
+        HealthRemindersBottomSheet(
+            viewModel = profileViewModel,
+            onDismiss = { showHealthRemindersSheet = false }
+        )
+    }
 }
 
 @Composable
-fun VitalsHeader(showAdd: Boolean, onAddClick: () -> Unit, onReportClick: () -> Unit) {
+fun VitalsHeader(
+    showAdd: Boolean,
+    onAddClick: () -> Unit,
+    onReportClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,6 +180,16 @@ fun VitalsHeader(showAdd: Boolean, onAddClick: () -> Unit, onReportClick: () -> 
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C), modifier = Modifier.size(20.dp))
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .clickable { onSettingsClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
                 }
                 if (showAdd) {
                     Box(
