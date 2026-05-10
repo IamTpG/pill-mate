@@ -82,6 +82,7 @@ fun CabinetScreen(
     var selectedMedication by remember { mutableStateOf<Medication?>(null) }
     var medicationToEdit by remember { mutableStateOf<Medication?>(null) }
     var showLogDoseDialog by remember { mutableStateOf(false) }
+    var showRefillDialog by remember { mutableStateOf(false) }
 
     // Update selectedMedication if it was modified in the DB
     if (selectedMedication != null) {
@@ -104,9 +105,11 @@ fun CabinetScreen(
             MedicationDetailScreen(
                 medication = selectedMedication!!,
                 logs = logs,
+                paddingValues = paddingValues,
                 onBack = { selectedMedication = null },
                 onEditClick = { if (!isReadOnly) medicationToEdit = selectedMedication },
                 onLogDoseClick = { if (!isReadOnly) showLogDoseDialog = true },
+                onRefillClick = { if (!isReadOnly) showRefillDialog = true },
                 onDeleteClick = {
                     if (!isReadOnly) {
                         viewModel.deleteMedication(selectedMedication!!)
@@ -269,6 +272,51 @@ fun CabinetScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showLogDoseDialog = false }) {
+                        Text("Cancel", color = Color.Gray)
+                    }
+                }
+            )
+        }
+
+        if (showRefillDialog && selectedMedication != null) {
+            var refillAmountText by remember { mutableStateOf("") }
+            AlertDialog(
+                onDismissRequest = { showRefillDialog = false },
+                containerColor = Color.White,
+                title = { Text("Refill Medication", color = Color.Black) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "Current stock: ${selectedMedication!!.quantity.toInt()} ${selectedMedication!!.unit}",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                        OutlinedTextField(
+                            value = refillAmountText,
+                            onValueChange = { newVal -> refillAmountText = newVal.filter { it.isDigit() } },
+                            label = { Text("Amount to add") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val amount = refillAmountText.toIntOrNull() ?: 0
+                            if (amount > 0) {
+                                viewModel.refillMedication(selectedMedication!!.id, amount)
+                            }
+                            showRefillDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E8B6E))
+                    ) {
+                        Text("Refill", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRefillDialog = false }) {
                         Text("Cancel", color = Color.Gray)
                     }
                 }

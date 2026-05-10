@@ -212,6 +212,25 @@ class CabinetViewModel(
         }
     }
 
+    fun refillMedication(medicationId: String, amount: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val activeProfileId = getEffectiveProfileId() ?: return@launch
+            if (amount <= 0) return@launch
+
+            supplyLogRepository.add(
+                activeProfileId,
+                SupplyLog(
+                    id = UUID.randomUUID().toString(),
+                    medId = medicationId,
+                    changeAmount = amount.toFloat(),
+                    reason = "REFILL",
+                    createdAt = Date(),
+                    updatedAt = Date()
+                )
+            )
+        }
+    }
+
     fun getLogsForMedication(medicationId: String): Flow<List<SupplyLog>> {
         return supplyLogRepository.getLogsForMedication(medicationId)
     }
