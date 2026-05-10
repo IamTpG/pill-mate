@@ -33,7 +33,7 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 import com.example.pillmate.domain.model.Medication
-import com.example.pillmate.domain.model.InventoryLog
+import com.example.pillmate.domain.model.SupplyLog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,7 +41,7 @@ import java.util.Locale
 @Composable
 fun MedicationDetailScreen(
     medication: Medication,
-    logs: List<InventoryLog>,
+    logs: List<SupplyLog>,
     onBack: () -> Unit,
     onEditClick: () -> Unit,
     onLogDoseClick: () -> Unit,
@@ -138,7 +138,7 @@ fun MedicationDetailScreen(
                                 color = Color.Gray
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            val isExpired = medication.supply?.expirationDate?.before(java.util.Date()) == true
+                            val isExpired = medication.expirationDate?.before(java.util.Date()) == true
                             val badgeColor = if (isExpired) Color(0xFFFFEBEE) else Color(0xFFFCF4F4)
                             val textColor = if (isExpired) Color(0xFFD32F2F) else Color(0xFF333333)
                             val badgeText = if (isExpired) "Expired" else "Active Prescription"
@@ -158,7 +158,7 @@ fun MedicationDetailScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        val qty = medication.supply?.quantity?.toInt() ?: 0
+                        val qty = medication.quantity.toInt()
                         val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                         InfoCard(
                             modifier = Modifier.weight(1f),
@@ -166,7 +166,7 @@ fun MedicationDetailScreen(
                             value = "$qty $unitLabel",
                             icon = Icons.Outlined.Info
                         )
-                        val expiryDate = medication.supply?.expirationDate?.let {
+                        val expiryDate = medication.expirationDate?.let {
                             SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it)
                         } ?: "Unknown"
                         InfoCard(
@@ -183,13 +183,13 @@ fun MedicationDetailScreen(
                     if (logs.isEmpty()) {
                         Text("No logs yet", modifier = Modifier.padding(horizontal = 16.dp), color = Color.Gray)
                     } else {
-                        logs.sortedByDescending { it.timestamp }.forEach { log ->
+                        logs.sortedByDescending { it.createdAt }.forEach { log ->
                             val status = if (log.changeAmount <= 0) {
                                 val qty = kotlin.math.abs(log.changeAmount).toInt()
                                 val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                                 "Taken $qty $unitLabel"
                             } else "Refilled/Adjusted"
-                            val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(log.timestamp)
+                            val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(log.createdAt)
                             HistoryCard(status, timestampStr, isSkipped = false, reason = log.reason)
                         }
                     }
@@ -197,8 +197,8 @@ fun MedicationDetailScreen(
             }
         }
 
-        val isExpired = medication.supply?.expirationDate?.before(java.util.Date()) == true
-        val isOutOfStock = (medication.supply?.quantity?.toInt() ?: 0) <= 0
+        val isExpired = medication.expirationDate?.before(java.util.Date()) == true
+        val isOutOfStock = medication.quantity.toInt() <= 0
         val isDisabled = isExpired || isOutOfStock
         val buttonLabel = when {
             isExpired -> "Medication Expired"

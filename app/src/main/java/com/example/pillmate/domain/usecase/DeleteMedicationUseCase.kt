@@ -6,14 +6,17 @@ import kotlinx.coroutines.tasks.await
 
 class DeleteMedicationUseCase(
     private val medicationRepository: MedicationRepository,
-    private val scheduleRepository: com.example.pillmate.domain.repository.ScheduleRepository,
-    private val firestore: FirebaseFirestore
+    private val supplyLogRepository: com.example.pillmate.domain.repository.SupplyLogRepository,
+    private val scheduleRepository: com.example.pillmate.domain.repository.ScheduleRepository
 ) {
-    suspend operator fun invoke(profileId: String, medicationId: String): Result<Unit> = runCatching {
+suspend operator fun invoke(profileId: String, medicationId: String): Result<Unit> = runCatching {
         // 1. Soft-delete the medication itself
         medicationRepository.remove(profileId, medicationId).getOrThrow()
 
-        // 2. Cascade soft-delete related schedules
+        // 2. Cascade delete related supply logs
+        supplyLogRepository.deleteLogsForMedication(profileId, medicationId).getOrThrow()
+
+        // 3. Cascade soft-delete related schedules
         try {
             val schedules = scheduleRepository.getAllOnce(profileId).getOrNull() ?: emptyList()
             val relatedSchedules = schedules.filter { it.eventSnapshot.sourceId == medicationId }

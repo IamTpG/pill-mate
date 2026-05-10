@@ -38,13 +38,13 @@ fun AddMedicationDialog(
 ) {
     var name by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.name ?: "") }
     var unit by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.unit ?: "") }
-    var countText by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.quantity?.toInt()?.let { if (it > 0) it.toString() else "" } ?: "") }
+    var countText by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.quantity?.toInt()?.let { if (it > 0) it.toString() else "" } ?: "") }
     var description by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.description ?: "") }
     
     var showDatePicker by remember { mutableStateOf(false) }
-    var hasPickedDate by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.supply?.expirationDate != null) }
+    var hasPickedDate by remember(medicationToEdit) { mutableStateOf(medicationToEdit?.expirationDate != null) }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = medicationToEdit?.supply?.expirationDate?.time,
+        initialSelectedDateMillis = medicationToEdit?.expirationDate?.time,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                 // Earliest selectable date is tomorrow
