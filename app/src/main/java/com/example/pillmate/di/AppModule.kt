@@ -46,6 +46,7 @@ import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
 import com.example.pillmate.domain.repository.HealthMetricRepository
 import com.example.pillmate.notification.HealthReminderManager
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.example.pillmate.presentation.viewmodel.AppointmentScheduleViewModel
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.google.firebase.functions.FirebaseFunctions
 
@@ -131,4 +132,5 @@ val viewModelModule = module {
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }
+    viewModel { AppointmentScheduleViewModel(get(), get(), get()) }
 }

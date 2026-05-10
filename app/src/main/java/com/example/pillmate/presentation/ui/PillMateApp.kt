@@ -22,6 +22,7 @@ import androidx.navigation.NavType
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import androidx.navigation.navArgument
+import com.example.pillmate.presentation.ui.components.AppointmentScheduleForm
 
 @Composable
 fun PillMateApp(
@@ -186,17 +187,42 @@ fun PillMateApp(
 			        VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
 		        }
 	        }
-           composable(route = Screen.Appointment.route) {
+           composable(route = Screen.Appointment.route) {backStackEntry ->
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
-                
+               val parentEntry = remember(backStackEntry) {
+                   navController.getBackStackEntry("main_graph")
+               }
+               val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     val appointmentViewModel: AppointmentViewModel = koinViewModel()
                     
                     AppointmentScreen(
                         viewModel = appointmentViewModel,
                         profileId = currentUserId,
-                        paddingValues = innerPadding // Pass the scaffold padding here
+                        paddingValues = innerPadding,
+                        onNavigateToScheduleBuilder = { appointment ->
+                            appointmentScheduleViewModel.setSelectedAppointment(appointment)
+                            appointmentScheduleViewModel.openScheduleBuilder(null)
+                            navController.navigate(Screen.AppointmentSchedule.route)
+                        }
+                        
+                    )
+                }
+            }
+            composable(Screen.AppointmentSchedule.route) { backStackEntry ->
+                // Gọi lại ViewModel dùng chung (cùng một instance với màn hình Appointment phía trên)
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
+                
+                // Bọc trong MainScaffold và sử dụng innerPadding để giải quyết lỗi paddingValues
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    AppointmentScheduleForm(
+                        paddingValues = innerPadding,
+                        viewModel = appointmentScheduleViewModel,
+                        onBack = { navController.navigate(Screen.Appointment.route) }
                     )
                 }
             }

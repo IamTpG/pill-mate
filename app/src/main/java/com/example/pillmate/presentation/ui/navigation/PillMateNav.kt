@@ -13,6 +13,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object Appointment : Screen("appointment_detail/{apptId}", "", R.drawable.ic_calendar) {
         fun createRoute(apptId: String) = "appointment_detail/$apptId"
     }
+    object AppointmentSchedule: Screen("appointment_schedule", "", 0)
     // Auth screens
     object AuthOptions : Screen("auth_options", "Auth", 0)
     object SignIn : Screen("sign_in", "Sign In", 0)

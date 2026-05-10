@@ -22,9 +22,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.pillmate.R
 import com.example.pillmate.domain.model.Appointment
+import com.example.pillmate.domain.model.AppointmentLog
 import com.example.pillmate.presentation.ui.components.AddAppointment
 import com.example.pillmate.presentation.ui.components.AppointmentAddOptions
 import com.example.pillmate.presentation.ui.components.AppointmentCard
+import com.example.pillmate.presentation.ui.components.AppointmentDetailBottomSheet
 import com.example.pillmate.presentation.ui.components.AppointmentHeader
 import com.example.pillmate.presentation.ui.components.AppointmentSearchBar
 import com.example.pillmate.presentation.ui.components.EditAppointment
@@ -35,7 +37,8 @@ import org.koin.androidx.compose.koinViewModel
 fun AppointmentScreen(
 	viewModel: AppointmentViewModel,
 	profileId: String,
-	paddingValues: PaddingValues
+	paddingValues: PaddingValues,
+	onNavigateToScheduleBuilder: (Appointment) -> Unit
 ) {
 	val logs by viewModel.uiState.collectAsState()
 	
@@ -55,6 +58,8 @@ fun AppointmentScreen(
 	val profileViewModel: ProfileViewModel = koinViewModel()
 	val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
 	val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
+	
+	var selectedAppointmentForDetails by remember { mutableStateOf<AppointmentLog?>(null) }
 	
 	LaunchedEffect(profileId) {
 		if (profileId.isNotEmpty()) {
@@ -95,7 +100,10 @@ fun AppointmentScreen(
 				horizontalAlignment = Alignment.CenterHorizontally
 			) {
 				items(displayedLogs) { log ->
-					AppointmentCard(log = log, isCaregiver, {
+					AppointmentCard(
+						log = log, isCaregiver,
+						onClickCard = { selectedAppointmentForDetails = log },
+						{
 						showEditAppointment = true
 						editAppointment = Appointment(
 							log.id,
@@ -154,20 +162,16 @@ fun AppointmentScreen(
 		}
 	}
 	
-	
-//	if (isShowAddOptions) {
-//		Box(
-//			modifier = Modifier
-//				.fillMaxSize()
-//				.background(Color.Black.copy(alpha = 0.6f)),
-//			contentAlignment = Alignment.Center
-//		) {
-//			AppointmentAddOptions(
-//				onClickCloseButton = { isShowAddOptions = false },
-//				onClickAddAppointment = { isShowAddAppointment = true }
-//			)
-//		}
-//	}
-//
+	selectedAppointmentForDetails?.let { log ->
+		AppointmentDetailBottomSheet(
+			appointment = log,
+			onDismiss = { selectedAppointmentForDetails = null },
+			onNavigateToSchedule = {
+				// Map AppointmentLog sang Appointment nếu cần thiết, tuỳ architecture của bạn
+				val appointment = Appointment(log.id, log.name, log.location, log.doctorName, log.description)
+				onNavigateToScheduleBuilder(appointment)
+			}
+		)
+	}
 
 }

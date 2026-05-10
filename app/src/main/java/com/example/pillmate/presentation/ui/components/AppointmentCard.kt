@@ -1,6 +1,7 @@
 package com.example.pillmate.presentation.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,6 +26,7 @@ import com.example.pillmate.R
 fun AppointmentCard(
 	log: AppointmentLog,
 	isCareGiver: Boolean,
+	onClickCard: () -> Unit,
 	onSwipeStartToEnd: () -> Unit,
 	onSwipeEndToStart: (appointmentId: String) -> Unit
 ) {
@@ -99,7 +101,7 @@ fun AppointmentCard(
 			Card(
 				shape = RoundedCornerShape(20.dp),
 				colors = CardDefaults.cardColors(containerColor = Color.White),
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth().clickable { onClickCard() }
 			) {
 				Row(
 					modifier = Modifier.fillMaxWidth(),
@@ -133,5 +135,5 @@ fun PreviewAppointmentCard() {
 		"Doctor House",
 		"Mr. Thang",
 		"Don't be late"
-	), isCareGiver = false, {}, {})
+	), isCareGiver = false, {}, {}, {})
 }
