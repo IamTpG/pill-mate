@@ -179,7 +179,7 @@ fun ScheduleBuilderScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(uiState.selectedMedication?.name ?: "Unknown", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp)
-                                    Text("${uiState.selectedMedication?.supply?.quantity?.toInt() ?: 0} ${uiState.selectedMedication?.unit ?: ""}", color = Color.Gray, fontSize = 14.sp)
+                                    Text("${uiState.selectedMedication?.quantity?.toInt() ?: 0} ${uiState.selectedMedication?.unit ?: ""}", color = Color.Gray, fontSize = 14.sp)
                                 }
                             }
                             Text("Change", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onChangeMedication() })

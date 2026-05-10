@@ -24,7 +24,7 @@ import com.example.pillmate.data.local.entity.SavedAccountEntity
         ChatSessionEntity::class,
         ChatMessageEntity::class
     ],
-    version = 9,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

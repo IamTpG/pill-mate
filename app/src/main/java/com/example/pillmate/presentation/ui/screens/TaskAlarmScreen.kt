@@ -26,6 +26,9 @@ import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.example.pillmate.util.RecurrenceEvaluator
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.filter
+import kotlin.collections.firstOrNull
+import kotlin.collections.isNotEmpty
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,22 +52,7 @@ fun TaskAlarmScreen(
 
     // Observers
     val logResult by viewModel.logResult.collectAsState()
-    val availableSupplies by viewModel.availableSupplies.collectAsState()
-    var selectedSupplyId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(sourceId) {
-        if (taskType == TaskType.MEDICATION) {
-            viewModel.fetchSupplies(sourceId)
-        }
-    }
-
-    // Effect to select the smartest default (lowest stock)
-    LaunchedEffect(availableSupplies) {
-        if (selectedSupplyId == null && availableSupplies.isNotEmpty()) {
-            selectedSupplyId = availableSupplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }?.id 
-                ?: availableSupplies.firstOrNull()?.id
-        }
-    }
 
     LaunchedEffect(logResult) {
         logResult?.let { result ->
@@ -195,7 +183,7 @@ fun TaskAlarmScreen(
             Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date(), dose, selectedSupplyId) },
+                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date(), dose) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),

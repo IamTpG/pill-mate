@@ -25,11 +25,10 @@ class LowStockWorker(
         val medications = medicationsResult.getOrNull() ?: return Result.retry()
 
         medications.forEach { medication ->
-            val supply = medication.supply
-            if (supply != null && supply.quantity < 5.0f) {
+            if (medication.quantity < 5.0f) {
                 notificationManager.showLowStockNotification(
                     medName = medication.name,
-                    remaining = supply.quantity
+                    remaining = medication.quantity
                 )
             }
         }
