@@ -83,7 +83,15 @@ val appModule = module {
         )
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
-    single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
+    single<ScheduleRepository> {
+        val roomRepo = com.example.pillmate.data.repository.RoomScheduleRepositoryImpl(get())
+        val firestoreRepo = FirestoreScheduleRepositoryImpl(get())
+        com.example.pillmate.data.repository.HybridScheduleRepositoryImpl(
+            localScheduleRepo = roomRepo,
+            remoteScheduleRepo = firestoreRepo,
+            networkChecker = NetworkChecker(androidContext())
+        )
+    }
     single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
@@ -112,6 +120,7 @@ val appModule = module {
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
     single { get<AppDatabase>().profileDao() }
+    single { get<AppDatabase>().scheduleDao() }
     single {
         Retrofit.Builder()
             .baseUrl("https://api.fda.gov/")
