@@ -111,6 +111,7 @@ val appModule = module {
     factory { GetHealthMetricsUseCase(get()) }
     factory { UpdateHydrationGoalUseCase(get(), get()) }
     factory { GetWidgetDataUseCase(get(), get(), get()) }
+    factory { CalculateDailyIntakeUseCase(get(), get()) }
 
 
     single { TaskNotificationManager(get()) }
@@ -145,7 +146,7 @@ val viewModelModule = module {
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), get(), get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get(), get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }

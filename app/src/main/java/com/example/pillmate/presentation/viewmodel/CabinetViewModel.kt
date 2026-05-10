@@ -7,7 +7,9 @@ import com.example.pillmate.data.local.dao.ProfileDao
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.model.SupplyLog
 import com.example.pillmate.domain.repository.MedicationRepository
+import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.domain.repository.SupplyLogRepository
+import com.example.pillmate.domain.usecase.CalculateDailyIntakeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.UUID
 
+import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.usecase.DeleteMedicationUseCase
 import java.util.Date
 
@@ -31,13 +34,17 @@ data class CabinetUiState(
     val lowStockCount: Int = 0,
     val searchQuery: String = "",
     val activeMedications: List<Medication> = emptyList(),
-    val expiredMedications: List<Medication> = emptyList()
+    val expiredMedications: List<Medication> = emptyList(),
+    val dailyRequirements: Map<String, Float> = emptyMap()
 )
 
 class CabinetViewModel(
     private val medicationRepository: MedicationRepository,
     private val supplyLogRepository: SupplyLogRepository,
     private val deleteMedicationUseCase: DeleteMedicationUseCase,
+    private val calculateDailyIntakeUseCase: CalculateDailyIntakeUseCase,
+    private val scheduleRepository: ScheduleRepository,
+    private val logRepository: LogRepository,
     private val profileDao: ProfileDao,
     private val auth: FirebaseAuth,
     application: Application
@@ -69,10 +76,15 @@ class CabinetViewModel(
                 val effectiveId = profile?.id ?: getEffectiveProfileId()
                 
                 if (effectiveId != null) {
+                    val today = java.util.Date()
                     combine(
                         medicationRepository.getAll(effectiveId),
-                        _searchQuery
-                    ) { allMedications, query ->
+                        _searchQuery,
+                        scheduleRepository.getAll(effectiveId),
+                        logRepository.getLogsForDayFlow(effectiveId, today)
+                    ) { allMedications, query, schedules, logs ->
+                        val todayIntake = calculateDailyIntakeUseCase.computeIntake(schedules, today, logs)
+                        android.util.Log.d("CabinetVM", "Today Intake: $todayIntake, Schedules: ${schedules.size}, Logs: ${logs.size}")
 
                         val filteredMeds = if (query.isBlank()) {
                             allMedications
@@ -81,19 +93,29 @@ class CabinetViewModel(
                         }
 
                         val expired = filteredMeds.filter {
-                            it.expirationDate?.before(java.util.Date()) == true
+                            it.expirationDate?.before(today) == true
                         }
                         val active = filteredMeds.filter {
-                            !(it.expirationDate?.before(java.util.Date()) ?: false)
+                            !(it.expirationDate?.before(today) ?: false)
+                        }
+
+                        val lowStock = filteredMeds.count { 
+                            val requirement = todayIntake[it.id] ?: 0f
+                            val isLow = requirement > 0f && it.quantity < requirement
+                            if (requirement > 0f) {
+                                android.util.Log.d("CabinetVM", "Checking Med: ${it.name}, Qty: ${it.quantity}, Req: $requirement, IsLow: $isLow")
+                            }
+                            isLow
                         }
 
                         CabinetUiState(
                             isLoading = false,
                             activeMedsCount = active.size,
-                            lowStockCount = filteredMeds.count { it.quantity < 10f },
+                            lowStockCount = lowStock,
                             searchQuery = query,
                             activeMedications = active,
-                            expiredMedications = expired
+                            expiredMedications = expired,
+                            dailyRequirements = todayIntake
                         )
                     }
                 } else {

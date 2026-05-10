@@ -176,12 +176,15 @@ fun CabinetScreen(
                         )
                     }
                 } else {
-                    items(currentMeds) { medication ->
-                        MedicationCard(
-                            medication = medication,
-                            onClick = { selectedMedication = medication }
-                        )
-                    }
+                items(currentMeds) { medication ->
+                    val requirement = uiState.dailyRequirements[medication.id] ?: 0f
+                    val isLowStock = requirement > 0f && medication.quantity < requirement
+                    MedicationCard(
+                        medication = medication,
+                        isLowStock = isLowStock,
+                        onClick = { selectedMedication = medication }
+                    )
+                }
                 }
             }
 
