@@ -27,15 +27,17 @@ import com.example.pillmate.R
 import com.example.pillmate.presentation.model.HomeTask
 import com.example.pillmate.presentation.ui.components.*
 import com.example.pillmate.presentation.viewmodel.HomeViewModel
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
     paddingValues: PaddingValues,
+    onDebugClick: () -> Unit,
     onTaskClick: (HomeTask) -> Unit,
     onSettingsClick: () -> Unit,
     onAIClick: () -> Unit,
-    profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
+    profileViewModel: ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
         profileViewModel.syncCurrentProfile()
@@ -68,7 +70,7 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onSettingsClick = onSettingsClick)
+            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick)
 
             LazyColumn(
                 modifier = Modifier

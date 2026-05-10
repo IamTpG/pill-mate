@@ -47,9 +47,23 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
         val rrule = intent.getStringExtra("EXTRA_RRULE")
         val startTime = intent.getStringExtra("EXTRA_START_TIME")
         val instructions = intent.getStringExtra("EXTRA_INSTRUCTIONS")
+        val dose = intent.getFloatExtra("EXTRA_DOSE", 1.0f)
+
+        val pendingResult = goAsync()
 
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try {
+                // Parse dose time for comparison
+                val timeParts = (startTime ?: "08:00").split(":")
+                val targetHour = if (startTime?.contains("PM", ignoreCase = true) == true) {
+                    (timeParts[0].trim().toIntOrNull() ?: 0).let { if (it < 12) it + 12 else it }
+                } else if (startTime?.contains("AM", ignoreCase = true) == true) {
+                    (timeParts[0].trim().toIntOrNull() ?: 0).let { if (it == 12) 0 else it }
+                } else {
+                    timeParts[0].trim().toIntOrNull() ?: 0
+                }
+                val targetMinute = timeParts.getOrNull(1)?.filter { it.isDigit() }?.toIntOrNull() ?: 0
+
                 // Check for today's logs for this schedule
                 val today = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault()).format(java.util.Date())
                 val logs = db.collection("profiles").document(currentProfileId)
@@ -59,16 +73,29 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
                     .await()
 
                 val alreadyHandled = logs.documents.any { doc ->
-                    val timestamp = doc.getTimestamp("timestamp")?.toDate() ?: java.util.Date()
-                    val logDate = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault()).format(timestamp)
+                    val scheduledTime = doc.getTimestamp("scheduledTime")?.toDate()
                     val status = doc.getString("status")
-                    logDate == today && (status == "COMPLETED" || status == "SKIPPED")
+                    if (scheduledTime != null) {
+                        val cal = java.util.Calendar.getInstance().apply { time = scheduledTime }
+                        val logDate = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault()).format(scheduledTime)
+                        logDate == today && (status == "COMPLETED" || status == "SKIPPED") &&
+                        cal.get(java.util.Calendar.HOUR_OF_DAY) == targetHour &&
+                        cal.get(java.util.Calendar.MINUTE) == targetMinute
+                    } else false
                 }
 
                 if (alreadyHandled) {
-                    Log.d("TaskAlarmReceiver", "Alarm skipped: Already handled for today")
+                    Log.d("TaskAlarmReceiver", "Alarm skipped: Already handled for today at $startTime")
                     return@launch
                 }
+
+                // Compute exact scheduled time millis for the notification
+                val scheduledTimeMillis = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, targetHour)
+                    set(java.util.Calendar.MINUTE, targetMinute)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
 
                 notificationManager.showTaskNotification(
                     sourceId = sourceId,
@@ -79,9 +106,12 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
                     reminderType = reminderType,
                     rrule = rrule,
                     startTime = startTime,
-                    instructions = instructions
+                    instructions = instructions,
+                    scheduledTimeMillis = scheduledTimeMillis,
+                    dose = dose
                 )
             } catch (e: Exception) {
+                Log.e("TaskAlarmReceiver", "Failed to verify log completion, falling back to show notification: ${e.message}", e)
                 // If check fails, fallback to showing notification (better not to miss a med)
                 notificationManager.showTaskNotification(
                     sourceId = sourceId,
@@ -94,6 +124,8 @@ class TaskAlarmReceiver : BroadcastReceiver(), KoinComponent {
                     startTime = startTime,
                     instructions = instructions
                 )
+            } finally {
+                pendingResult.finish()
             }
         }
     }
