@@ -8,7 +8,9 @@ data class SupplyLogEntity(
     @PrimaryKey
     val id: String, 
     val medicationId: String, 
-    val changeAmount: Int,
+    val changeAmount: Float,
     val reason: String,
-    val timestamp: Long 
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long? = null
 )

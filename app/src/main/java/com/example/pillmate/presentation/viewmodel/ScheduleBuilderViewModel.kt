@@ -75,7 +75,7 @@ class ScheduleBuilderViewModel(
                 existingScheduleId = null,
                 readOnly = false,
                 reminderTimes = emptyList(),
-                startDate = null,
+                startDate = Date(),
                 endDate = null,
                 repeatFrequency = "Daily",
                 saveSuccess = false,
@@ -99,7 +99,7 @@ class ScheduleBuilderViewModel(
                     readOnly = false,
                     scheduleName = "",
                     reminderTimes = emptyList(),
-                    startDate = null,
+                    startDate = Date(),
                     endDate = null,
                     repeatFrequency = "Daily",
                     saveSuccess = false,
@@ -313,8 +313,8 @@ class ScheduleBuilderViewModel(
                     createdAt = state.startDate ?: Date(),
                     eventSnapshot = ScheduleEvent(
                         sourceId = state.selectedMedication!!.id,
-                        title = state.selectedMedication.name,
-                        instructions = "${state.selectedMedication.supply?.quantity ?: 0} ${state.selectedMedication.unit}",
+                        title = state.selectedMedication!!.name,
+                        instructions = "${state.selectedMedication!!.quantity.toInt()} ${state.selectedMedication!!.unit}",
                         dose = 1.0f
                     )
                 )

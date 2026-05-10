@@ -8,7 +8,7 @@ sealed class Screen(val route: String, val title: String, @DrawableRes val icon:
     object Home : Screen("home", "", R.drawable.ic_home)
     object Cabinet : Screen("cabinet", "", R.drawable.pill)
     object Settings : Screen("settings", "", R.drawable.ic_settings)
-    object Vitals : Screen("vitals", "", R.drawable.ic_vitals)
+    object Vitals : Screen("vitals", "", R.drawable.ic_vitals_outlined)
     
     object Appointment : Screen("appointment_detail/{apptId}", "", R.drawable.ic_calendar) {
         fun createRoute(apptId: String) = "appointment_detail/$apptId"
@@ -56,7 +56,6 @@ val bottomNavItems = listOf(
     Screen.Cabinet,
     Screen.Vitals,
     Screen.ScheduleBuilder,
-    Screen.AIChat,
     Screen.Appointment,
     Screen.Settings
 )

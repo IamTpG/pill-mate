@@ -22,9 +22,10 @@ import com.example.pillmate.data.local.entity.SavedAccountEntity
         ProfileEntity::class,
         SavedAccountEntity::class,
         ChatSessionEntity::class,
-        ChatMessageEntity::class
+        ChatMessageEntity::class,
+        com.example.pillmate.data.local.entity.ScheduleEntity::class
     ],
-    version = 9,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun supplyLogDao(): SupplyLogDao
     abstract fun profileDao(): ProfileDao
     abstract fun chatDao(): ChatDao
+    abstract fun scheduleDao(): com.example.pillmate.data.local.dao.ScheduleDao
 
     companion object {
         @Volatile

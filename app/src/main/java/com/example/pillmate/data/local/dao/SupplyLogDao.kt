@@ -13,13 +13,13 @@ interface SupplyLogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertSupplyLog(log: SupplyLogEntity): Long
 
-    @Query("SELECT * FROM supply_logs WHERE medicationId = :medicationId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM supply_logs WHERE medicationId = :medicationId ORDER BY createdAt DESC")
     fun getLogsForMedication(medicationId: String): Flow<List<SupplyLogEntity>>
 
     @Query("SELECT SUM(changeAmount) FROM supply_logs WHERE medicationId = :medicationId")
-    fun getCurrentInventoryCount(medicationId: String): Flow<Int?>
+    fun getCurrentInventoryCount(medicationId: String): Flow<Float?>
 
-    @Query("SELECT * FROM supply_logs ORDER BY timestamp DESC")
+    @Query("SELECT * FROM supply_logs ORDER BY createdAt DESC")
     fun observeAllLogs(): Flow<List<SupplyLogEntity>>
 
     @Query("DELETE FROM supply_logs WHERE medicationId = :medicationId")

@@ -48,6 +48,7 @@ fun ScheduleBuilderScreen(
     paddingValues: PaddingValues,
     viewModel: ScheduleBuilderViewModel,
     onBack: () -> Unit,
+    onChangeMedication: () -> Unit = onBack,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -178,21 +179,18 @@ fun ScheduleBuilderScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(uiState.selectedMedication?.name ?: "Unknown", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp)
-                                    Text("${uiState.selectedMedication?.supply?.quantity?.toInt() ?: 0} ${uiState.selectedMedication?.unit ?: ""}", color = Color.Gray, fontSize = 14.sp)
+                                    Text("${uiState.selectedMedication?.quantity?.toInt() ?: 0} ${uiState.selectedMedication?.unit ?: ""}", color = Color.Gray, fontSize = 14.sp)
                                 }
                             }
-                            Text("Change", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onBack() })
+                            Text("Change", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onChangeMedication() })
                         }
                     }
                 }
 
                 // Section 2: Repeat Frequency
                 item {
-                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("REPEAT FREQUENCY", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Box(modifier = Modifier.background(Color.White, RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                            Text("Current: ${uiState.repeatFrequency}", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 10.sp)
-                        }
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

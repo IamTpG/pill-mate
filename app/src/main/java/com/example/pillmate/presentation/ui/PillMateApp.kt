@@ -117,16 +117,15 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
-	                                scheduledTimeIso = task.scheduledTimeIso,
+                                    scheduledTimeIso = task.scheduledTimeIso,
                                     rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
                             )
                         },
-                        onAddClick = { /* TODO */ },
-                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
-                        onMapClick = { navController.navigate(Screen.Map.route)}
-                        
+                        onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                        onAIClick = { navController.navigate(Screen.AIChat.route) },
+	                    onMapClick = { navController.navigate(Screen.Map.route)}
                     )
                 }
             }
@@ -223,11 +222,11 @@ fun PillMateApp(
                 
                 // Bọc trong MainScaffold và sử dụng innerPadding để giải quyết lỗi paddingValues
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    AppointmentScheduleForm(
-                        paddingValues = innerPadding,
-                        viewModel = appointmentScheduleViewModel,
-                        onBack = { navController.navigate(Screen.Appointment.route) }
-                    )
+	                AppointmentScheduleForm(
+	                    paddingValues = innerPadding,
+	                    viewModel = appointmentScheduleViewModel,
+	                    onBack = { navController.navigate(Screen.Appointment.route) }
+	                )
                 }
             }
             composable(Screen.ScheduleBuilder.route) {
@@ -236,11 +235,19 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onCompleteMapping = {
                             navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
                             }
                         },
                         onBack = {
-                            navController.popBackStack()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -248,18 +255,20 @@ fun PillMateApp(
             composable(
                 route = Screen.TaskAlarm.route,
                 arguments = listOf(
-                    androidx.navigation.navArgument("sourceId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("scheduleId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("details") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("instructions") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("time") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("dose") { type = androidx.navigation.NavType.FloatType; defaultValue = 1.0f }
+                    navArgument("sourceId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduleId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("title") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("details") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("type") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("instructions") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("time") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduledTimeIso") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("rrule") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("dose") { type = NavType.FloatType; defaultValue = 1.0f },
+                    navArgument("isFromAlarm") { type = NavType.BoolType; defaultValue = false }
                 ),
                 deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}" }
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}&isFromAlarm={isFromAlarm}" }
                 )
             ) { backStackEntry ->
                 val viewModel: TaskLogViewModel = koinViewModel()

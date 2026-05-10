@@ -2,6 +2,7 @@ package com.example.pillmate.presentation.ui.screens
 
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -31,14 +33,17 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     paddingValues: PaddingValues,
     onTaskClick: (HomeTask) -> Unit,
-    onAddClick: () -> Unit,
-    onDebugClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onAIClick: () -> Unit,
     onMapClick: () -> Unit,
     profileViewModel: com.example.pillmate.presentation.viewmodel.ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
         profileViewModel.syncCurrentProfile()
     }
+
+    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val isCaregiverView = currentProfile?.role == "Caregiver_View"
 
     val uiState by viewModel.uiState.collectAsState()
     val calendarState = rememberLazyListState()
@@ -59,11 +64,12 @@ fun HomeScreen(
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.Crop
         )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onAddClick = onAddClick, onDebugClick = onDebugClick, onMapClick = onMapClick)
+            HomeHeader(onSettingsClick = onSettingsClick, onMapClick)
 
             LazyColumn(
                 modifier = Modifier
@@ -102,8 +108,39 @@ fun HomeScreen(
                 }
 
                 items(uiState.dateTasks) { task ->
-                    TaskItem(task = task, onClick = { onTaskClick(task) })
+                    val currentProfile by profileViewModel.currentLocalProfile.collectAsState()
+                    val isCaregiver = currentProfile?.role == "Caregiver_View"
+                    TaskItem(
+                        task = task,
+                        isReadOnly = isCaregiver,
+                        onClick = { onTaskClick(task) }
+                    )
                 }
+            }
+        }
+
+        if (!isCaregiverView) {
+            androidx.compose.material3.FloatingActionButton(
+                onClick = onAIClick,
+                modifier = Modifier
+                    .align(androidx.compose.ui.Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = androidx.compose.foundation.shape.CircleShape,
+                        ambientColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green),
+                        spotColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green)
+                    ),
+                shape = androidx.compose.foundation.shape.CircleShape,
+                containerColor = androidx.compose.ui.res.colorResource(id = R.color.primary_green),
+                contentColor = Color.White,
+                elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_chat),
+                    contentDescription = "AI Chat",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
