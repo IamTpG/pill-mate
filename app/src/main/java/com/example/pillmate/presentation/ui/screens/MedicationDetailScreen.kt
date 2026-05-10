@@ -42,9 +42,11 @@ import java.util.Locale
 fun MedicationDetailScreen(
     medication: Medication,
     logs: List<SupplyLog>,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     onBack: () -> Unit,
     onEditClick: () -> Unit,
     onLogDoseClick: () -> Unit,
+    onRefillClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -63,7 +65,9 @@ fun MedicationDetailScreen(
         )
 
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             // Top Bar
             CenterAlignedTopAppBar(
@@ -85,7 +89,7 @@ fun MedicationDetailScreen(
             )
 
             LazyColumn(
-                contentPadding = PaddingValues(bottom = 100.dp),
+                contentPadding = PaddingValues(bottom = 16.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 // Top White Card
@@ -188,41 +192,62 @@ fun MedicationDetailScreen(
                                 val qty = kotlin.math.abs(log.changeAmount).toInt()
                                 val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                                 "Taken $qty $unitLabel"
-                            } else "Refilled/Adjusted"
+                            } else {
+                                val qty = log.changeAmount.toInt()
+                                val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
+                                when (log.reason) {
+                                    "REFILL" -> "Refilled +$qty $unitLabel"
+                                    "INITIAL_STOCK" -> "Initial +$qty $unitLabel"
+                                    else -> "Adjusted +$qty $unitLabel"
+                                }
+                            }
                             val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(log.createdAt)
                             HistoryCard(status, timestampStr, isSkipped = false, reason = log.reason)
                         }
                     }
                 }
             }
-        }
 
-        val isExpired = medication.expirationDate?.before(java.util.Date()) == true
-        val isOutOfStock = medication.quantity.toInt() <= 0
-        val isDisabled = isExpired || isOutOfStock
-        val buttonLabel = when {
-            isExpired -> "Medication Expired"
-            isOutOfStock -> "Out of Stock"
-            else -> "+ Log Current Dose"
-        }
+            // Action buttons - in Column flow, below LazyColumn
+            val isExpired = medication.expirationDate?.before(java.util.Date()) == true
+            val isOutOfStock = medication.quantity.toInt() <= 0
+            val isLogDisabled = isExpired || isOutOfStock
+            val logLabel = when {
+                isExpired -> "Expired"
+                isOutOfStock -> "Out of Stock"
+                else -> "Log Dose"
+            }
 
-        // Floating Action Button - Bottom Sticky
-        Button(
-            onClick = onLogDoseClick,
-            enabled = !isDisabled,
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 140.dp)
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF1E6C54),
-                disabledContainerColor = Color.LightGray,
-                disabledContentColor = Color.White
-            )
-        ) {
-            Text(buttonLabel, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onLogDoseClick,
+                    enabled = !isLogDisabled,
+                    shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp, topEnd = 8.dp, bottomEnd = 8.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1E6C54),
+                        disabledContainerColor = Color.LightGray,
+                        disabledContentColor = Color.White
+                    )
+                ) {
+                    Text(logLabel, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = onRefillClick,
+                    shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 16.dp, bottomEnd = 16.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2E8B6E)
+                    )
+                ) {
+                    Text("+ Refill", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         if (showDeleteDialog) {
