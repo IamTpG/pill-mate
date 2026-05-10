@@ -152,7 +152,11 @@ fun PillMateApp(
                         navController.navigate("auth_graph")
                     }, onBack = {
                         navController.popBackStack()
-                    })
+                    }, onNavigateToSignIn = { email, password ->
+                        navController.navigate("signin?email=$email&password=$password")
+                    },
+                    
+                    )
                 }
             }
             composable(Screen.AIChat.route) {

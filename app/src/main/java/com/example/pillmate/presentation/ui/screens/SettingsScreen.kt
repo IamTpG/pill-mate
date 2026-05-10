@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -55,6 +56,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.pillmate.presentation.ui.components.SwitchAccountDialog
+import com.example.pillmate.presentation.viewmodel.AuthViewModel
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+import org.koin.androidx.compose.koinViewModel
 
 // Define internal navigation states
 enum class SettingsRoute {
@@ -66,7 +74,8 @@ fun SettingsScreen(
     paddingValues: PaddingValues,
     onSignOutComplete: () -> Unit,
     onNavigateToAuth: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToSignIn: (email: String, password: String) -> Unit = { _, _ -> }
 ) {
     val auth: FirebaseAuth = koinInject()
     val database: AppDatabase = koinInject()
@@ -89,7 +98,36 @@ fun SettingsScreen(
     val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
 
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
+    
+    val authViewModel: AuthViewModel = koinViewModel()
+     var showSwitchAccountDialog by remember { mutableStateOf(false) }
+     
+     val webClientId = stringResource(id = R.string.default_web_client_id)
 
+     // Google launcher dùng cho chuyển tài khoản Google
+     val switchGoogleLauncher = rememberLauncherForActivityResult(
+         ActivityResultContracts.StartActivityForResult()
+     ) { result ->
+         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+         try {
+             val account = task.getResult(ApiException::class.java)
+             val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
+             authViewModel.signInWithGoogle(credential)
+         } catch (e: ApiException) {
+             Toast.makeText(context, "Google: ${e.message}", Toast.LENGTH_SHORT).show()
+         }
+     }
+
+     fun launchGoogleSignInWithHint(emailHint: String) {
+         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+             .requestIdToken(webClientId)
+             .requestEmail()
+             .setAccountName(emailHint)   // gợi ý tài khoản Google
+             .build()
+         val client = GoogleSignIn.getClient(context, gso)
+         switchGoogleLauncher.launch(client.signInIntent)
+     }
+    
     Box(modifier = Modifier.fillMaxSize()) {
         // Shared Background
         Image(
@@ -139,6 +177,21 @@ fun SettingsScreen(
             }
         }
     }
+    if (showSwitchAccountDialog) {
+         SwitchAccountDialog(
+             viewModel = authViewModel,
+             onDismiss = { showSwitchAccountDialog = false },
+             onAccountSelected = { email, password, isGoogle ->
+                 showSwitchAccountDialog = false
+                 if (isGoogle) {
+                     launchGoogleSignInWithHint(email)
+                 } else {
+                     // Điền sẵn email/password rồi navigate sang SignInScreen
+                     onNavigateToSignIn(email, password ?: "")
+                 }
+             }
+         )
+     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

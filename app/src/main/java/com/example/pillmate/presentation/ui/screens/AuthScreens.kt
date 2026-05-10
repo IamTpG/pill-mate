@@ -124,77 +124,77 @@ fun SignUpOptionsScreen(
                 modifier = Modifier.padding(top = 16.dp, bottom = 32.dp)
             )
 
-            if (savedAccounts.isNotEmpty()) {
-                // GIAO DIỆN KHI ĐÃ CÓ TÀI KHOẢN LƯU
-                Text(
-                    text = stringResource(id = R.string.recent_login),
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp, end = 32.dp, bottom = 16.dp),
-                    textAlign = TextAlign.Start
-                )
-
-                LazyColumn(
-                    modifier = Modifier
-                        .heightIn(max = 300.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(savedAccounts) { account ->
-                        SavedAccountItem(account) {
-                            if (account.loginMethod == "GOOGLE") {
-                                launchGoogleSignIn(account.email)
-                            } else {
-                                onNavigateToSignIn(account.email, account.password ?: "")
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                OutlinedButton(
-                    onClick = { launchGoogleSignIn() },
-                    modifier = Modifier.width(350.dp).height(60.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    border = BorderStroke(1.5.dp, Color.White),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                ) {
-                    Text(text = stringResource(id = R.string.continue_with_google), fontSize = 18.sp)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextButton(onClick = { onNavigateToSignIn("", "") }) {
-                    Text(stringResource(id = R.string.use_another_account), color = Color.White, fontSize = 16.sp)
-                }
-            } else {
-                // GIAO DIỆN KHI CHƯA CÓ TÀI KHOẢN LƯU
-                Button(
-                    onClick = { onNavigateToSignIn("", "") },
-                    modifier = Modifier.width(350.dp).height(60.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
-                ) {
-                    Text(text = stringResource(id = R.string.sign_in_with_email), fontSize = 18.sp)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
-                    onClick = { launchGoogleSignIn() },
-                    modifier = Modifier.width(350.dp).height(60.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    border = BorderStroke(1.5.dp, Color.White),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
-                ) {
-                    Text(text = stringResource(id = R.string.continue_with_google), fontSize = 18.sp)
-                }
-            }
+//            if (savedAccounts.isNotEmpty()) {
+//                // GIAO DIỆN KHI ĐÃ CÓ TÀI KHOẢN LƯU
+//                Text(
+//                    text = stringResource(id = R.string.recent_login),
+//                    color = Color.White,
+//                    fontSize = 18.sp,
+//                    fontWeight = FontWeight.Bold,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(start = 32.dp, end = 32.dp, bottom = 16.dp),
+//                    textAlign = TextAlign.Start
+//                )
+//
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .heightIn(max = 300.dp)
+//                        .fillMaxWidth()
+//                        .padding(horizontal = 32.dp),
+//                    verticalArrangement = Arrangement.spacedBy(12.dp)
+//                ) {
+//                    items(savedAccounts) { account ->
+//                        SavedAccountItem(account) {
+//                            if (account.loginMethod == "GOOGLE") {
+//                                launchGoogleSignIn(account.email)
+//                            } else {
+//                                onNavigateToSignIn(account.email, account.password ?: "")
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                Spacer(modifier = Modifier.height(24.dp))
+//
+//                OutlinedButton(
+//                    onClick = { launchGoogleSignIn() },
+//                    modifier = Modifier.width(350.dp).height(60.dp),
+//                    shape = RoundedCornerShape(15.dp),
+//                    border = BorderStroke(1.5.dp, Color.White),
+//                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+//                ) {
+//                    Text(text = stringResource(id = R.string.continue_with_google), fontSize = 18.sp)
+//                }
+//
+//                Spacer(modifier = Modifier.height(12.dp))
+//
+//                TextButton(onClick = { onNavigateToSignIn("", "") }) {
+//                    Text(stringResource(id = R.string.use_another_account), color = Color.White, fontSize = 16.sp)
+//                }
+//            } else {
+//                // GIAO DIỆN KHI CHƯA CÓ TÀI KHOẢN LƯU
+//                Button(
+//                    onClick = { onNavigateToSignIn("", "") },
+//                    modifier = Modifier.width(350.dp).height(60.dp),
+//                    shape = RoundedCornerShape(15.dp),
+//                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+//                ) {
+//                    Text(text = stringResource(id = R.string.sign_in_with_email), fontSize = 18.sp)
+//                }
+//
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                OutlinedButton(
+//                    onClick = { launchGoogleSignIn() },
+//                    modifier = Modifier.width(350.dp).height(60.dp),
+//                    shape = RoundedCornerShape(15.dp),
+//                    border = BorderStroke(1.5.dp, Color.White),
+//                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+//                ) {
+//                    Text(text = stringResource(id = R.string.continue_with_google), fontSize = 18.sp)
+//                }
+//            }
 
             Spacer(modifier = Modifier.weight(0.1f))
 
