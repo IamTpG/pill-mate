@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
@@ -178,11 +179,25 @@ fun DebugMenuScreen(
 
             Button(
                 onClick = {
-                    viewModel.copyFcmTokenToClipboard(context)
+                    viewModel.triggerLowStockWorker(context)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-            ) { Text("Copy FCM Token for Direct Test") }
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Trigger Low Stock Check Now") }
+
+            Text("Health Notification Triggers:", style = MaterialTheme.typography.titleMedium)
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { viewModel.triggerHealthNotification("HYDRATION") }, modifier = Modifier.weight(1f)) {
+                    Text("Water", fontSize = 12.sp)
+                }
+                Button(onClick = { viewModel.triggerHealthNotification("BLOOD_PRESSURE") }, modifier = Modifier.weight(1f)) {
+                    Text("BP", fontSize = 12.sp)
+                }
+                Button(onClick = { viewModel.triggerHealthNotification("WEIGHT") }, modifier = Modifier.weight(1f)) {
+                    Text("Weight", fontSize = 12.sp)
+                }
+            }
         }
 
         if (showScheduleDialog) {

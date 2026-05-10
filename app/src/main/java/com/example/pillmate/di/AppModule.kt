@@ -90,7 +90,7 @@ val appModule = module {
     single { FcmTokenManager(get()) }
     single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get(), get(), get()) }
     factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }

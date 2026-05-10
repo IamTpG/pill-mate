@@ -75,6 +75,16 @@ class DebugViewModel(
         alarmTracker.clear()
     }
 
+    fun triggerLowStockWorker(context: Context) {
+        val request = androidx.work.OneTimeWorkRequestBuilder<com.example.pillmate.workers.LowStockWorker>().build()
+        androidx.work.WorkManager.getInstance(context).enqueue(request)
+        Toast.makeText(context, "LowStockWorker triggered manually!", Toast.LENGTH_SHORT).show()
+    }
+
+    fun triggerHealthNotification(type: String) {
+        notificationManager.showHealthNotification(type)
+    }
+
     fun generateSampleData(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         viewModelScope.launch {
             try {
