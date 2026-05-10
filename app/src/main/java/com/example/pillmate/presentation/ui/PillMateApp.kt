@@ -199,11 +199,19 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onCompleteMapping = {
                             navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
                             }
                         },
                         onBack = {
-                            navController.popBackStack()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
