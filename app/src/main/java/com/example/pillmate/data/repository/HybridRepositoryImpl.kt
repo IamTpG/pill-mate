@@ -90,7 +90,7 @@ open class HybridRepositoryImpl<T>(
         }
     }
 
-    suspend fun syncAll(profileId: String) {
+    open suspend fun syncAll(profileId: String) {
         if (!networkChecker()) return
 
         val localItems = localRepo.getAllOnce(profileId).getOrNull() ?: emptyList()

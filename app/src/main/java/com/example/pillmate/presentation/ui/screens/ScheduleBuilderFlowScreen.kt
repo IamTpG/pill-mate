@@ -70,6 +70,9 @@ fun ScheduleBuilderFlowScreen(
                     onBack = {
                         uiState.selectedMedication?.let { scheduleViewModel.setSelectedMedication(it) }
                         currentScreen = "LIST"
+                    },
+                    onChangeMedication = {
+                        currentScreen = "PICKER"
                     }
                 )
             }

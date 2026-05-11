@@ -15,6 +15,7 @@ import com.example.pillmate.data.local.entity.ChatSessionEntity
 import com.example.pillmate.data.local.entity.ProfileEntity
 import com.example.pillmate.data.local.entity.SavedAccountEntity
 import com.example.pillmate.data.local.entity.MedicalImageEntity
+import com.example.pillmate.data.local.entity.ScheduleEntity
 
 @Database(
     entities = [
@@ -24,9 +25,10 @@ import com.example.pillmate.data.local.entity.MedicalImageEntity
         SavedAccountEntity::class,
         ChatSessionEntity::class,
         ChatMessageEntity::class,
-        MedicalImageEntity::class
+        MedicalImageEntity::class,
+        ScheduleEntity::class
     ],
-    version = 10,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun chatDao(): ChatDao
     abstract fun imageDao(): com.example.pillmate.data.local.dao.ImageDao
+    abstract fun scheduleDao(): com.example.pillmate.data.local.dao.ScheduleDao
 
     companion object {
         @Volatile

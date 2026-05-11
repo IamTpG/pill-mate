@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,7 +45,7 @@ import com.example.pillmate.notification.HealthReminderManager
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
-import com.example.pillmate.utils.generateQRCodeBitmap
+import com.example.pillmate.util.generateQRCodeBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -55,10 +56,18 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.vectorResource
+import com.example.pillmate.presentation.ui.components.SwitchAccountDialog
+import com.example.pillmate.presentation.viewmodel.AuthViewModel
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+import org.koin.androidx.compose.koinViewModel
 
 // Define internal navigation states
 enum class SettingsRoute {
-    BACK, OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
+    OPTIONS, EDIT_PROFILE, CAREGIVER_HUB
 }
 
 @Composable
@@ -66,7 +75,8 @@ fun SettingsScreen(
     paddingValues: PaddingValues,
     onSignOutComplete: () -> Unit,
     onNavigateToAuth: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToSignIn: (email: String, password: String) -> Unit = { _, _ -> }
 ) {
     val auth: FirebaseAuth = koinInject()
     val database: AppDatabase = koinInject()
@@ -89,7 +99,36 @@ fun SettingsScreen(
     val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
 
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
+    
+    val authViewModel: AuthViewModel = koinViewModel()
+     var showSwitchAccountDialog by remember { mutableStateOf(false) }
+     
+     val webClientId = stringResource(id = R.string.default_web_client_id)
 
+     // Google launcher dùng cho chuyển tài khoản Google
+     val switchGoogleLauncher = rememberLauncherForActivityResult(
+         ActivityResultContracts.StartActivityForResult()
+     ) { result ->
+         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+         try {
+             val account = task.getResult(ApiException::class.java)
+             val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
+             authViewModel.signInWithGoogle(credential)
+         } catch (e: ApiException) {
+             Toast.makeText(context, "Google: ${e.message}", Toast.LENGTH_SHORT).show()
+         }
+     }
+
+     fun launchGoogleSignInWithHint(emailHint: String) {
+         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+             .requestIdToken(webClientId)
+             .requestEmail()
+             .setAccountName(emailHint)   // gợi ý tài khoản Google
+             .build()
+         val client = GoogleSignIn.getClient(context, gso)
+         switchGoogleLauncher.launch(client.signInIntent)
+     }
+    
     Box(modifier = Modifier.fillMaxSize()) {
         // Shared Background
         Image(
@@ -101,24 +140,23 @@ fun SettingsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .background(Color.Black.copy(alpha = 0.6f))
         )
 
         // Internal Navigation
         when (currentRoute) {
-                SettingsRoute.OPTIONS -> {
+            SettingsRoute.OPTIONS -> {
                 ProfileOptionsScreen(
                     paddingValues = paddingValues,
                     userName = displayName,
                     isCaregiver = isCaregiver,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
+                    
                     onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB },
-                    onBackClick = { currentRoute = SettingsRoute.BACK }
+                    onShowSwitchAccountDialog = { showSwitchAccountDialog = true},
+                    onBackClick = { onBack() }
                 )
-            }
-            SettingsRoute.BACK -> {
-                onBack()
             }
             SettingsRoute.EDIT_PROFILE -> {
                 EditProfileScreen(
@@ -139,6 +177,21 @@ fun SettingsScreen(
             }
         }
     }
+    if (showSwitchAccountDialog) {
+         SwitchAccountDialog(
+             viewModel = authViewModel,
+             onDismiss = { showSwitchAccountDialog = false },
+             onAccountSelected = { email, password, isGoogle ->
+                 showSwitchAccountDialog = false
+                 if (isGoogle) {
+                     launchGoogleSignInWithHint(email)
+                 } else {
+                     // Điền sẵn email/password rồi navigate sang SignInScreen
+                     onNavigateToSignIn(email, password ?: "")
+                 }
+             }
+         )
+     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -150,6 +203,7 @@ fun ProfileOptionsScreen(
     onEditClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onCaregiverHubClick: () -> Unit,
+    onShowSwitchAccountDialog: () -> Unit,
     onBackClick : () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
@@ -246,21 +300,6 @@ fun ProfileOptionsScreen(
             onClick = onCaregiverHubClick
         )
         
-        var showHealthRemindersSheet by remember { mutableStateOf(false) }
-        val profileViewModel: ProfileViewModel = koinViewModel()
-
-        SettingsButton(
-            text = "Health Notifications",
-            icon = Icons.Default.Notifications,
-            onClick = { showHealthRemindersSheet = true }
-        )
-
-        if (showHealthRemindersSheet) {
-            HealthRemindersBottomSheet(
-                viewModel = profileViewModel,
-                onDismiss = { showHealthRemindersSheet = false }
-            )
-        }
 
         // Language Button with Dropdown Menu
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -315,7 +354,13 @@ fun ProfileOptionsScreen(
                 }
             }
         }
-
+        
+        SettingsButton(
+            text = "Switch Account",
+            icon = ImageVector.vectorResource(R.drawable.ic_switch_account),
+            onClick = onShowSwitchAccountDialog
+        )
+        
         if (!isCaregiver) {
             SettingsButton(
                 text = stringResource(id = R.string.log_out),
@@ -963,155 +1008,6 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
             Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HealthRemindersBottomSheet(
-    viewModel: ProfileViewModel,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState()
-    val profile by viewModel.currentLocalProfile.collectAsState()
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color(0xFF1B1B1B),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.4f)) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 40.dp, start = 24.dp, end = 24.dp)
-        ) {
-            Text(
-                text = "Health Notifications",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = "Settings are synced with your profile.",
-                color = Color.Gray,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // Dynamic options per type
-            val hydrationOptions = listOf(60 to "1h", 240 to "4h", 480 to "8h", 1440 to "Daily")
-            val bpOptions = listOf(1440 to "Daily", 2880 to "2 Days", 10080 to "Weekly")
-            val weightOptions = listOf(10080 to "Weekly", 20160 to "2 Weeks", 43200 to "Monthly")
-
-            profile?.let { p ->
-                HealthReminderItem(
-                    label = "Hydration",
-                    type = "HYDRATION",
-                    initEnabled = p.hydrationReminderEnabled,
-                    initInterval = p.hydrationInterval,
-                    options = hydrationOptions,
-                    onUpdate = { e, i -> viewModel.updateHealthReminder("HYDRATION", e, i) }
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-                HealthReminderItem(
-                    label = "Blood Pressure",
-                    type = "BLOOD_PRESSURE",
-                    initEnabled = p.bpReminderEnabled,
-                    initInterval = p.bpInterval,
-                    options = bpOptions,
-                    onUpdate = { e, i -> viewModel.updateHealthReminder("BLOOD_PRESSURE", e, i) }
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-                HealthReminderItem(
-                    label = "Body Weight",
-                    type = "WEIGHT",
-                    initEnabled = p.weightReminderEnabled,
-                    initInterval = p.weightInterval,
-                    options = weightOptions,
-                    onUpdate = { e, i -> viewModel.updateHealthReminder("WEIGHT", e, i) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun HealthReminderItem(
-    label: String,
-    type: String,
-    initEnabled: Boolean,
-    initInterval: Int,
-    options: List<Pair<Int, String>>,
-    onUpdate: (Boolean, Int) -> Unit
-) {
-    var enabled by remember(initEnabled) { mutableStateOf(initEnabled) }
-    var interval by remember(initInterval) { mutableIntStateOf(initInterval) }
-
-    // Ensure interval is one of the valid options if enabled and not already valid
-    LaunchedEffect(enabled, interval) {
-        if (enabled && options.none { it.first == interval }) {
-            val defaultInterval = options.first().first
-            onUpdate(true, defaultInterval)
-        }
-    }
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Switch(
-                checked = enabled,
-                onCheckedChange = { 
-                    enabled = it
-                    onUpdate(it, interval)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = PrimaryGreen,
-                    checkedTrackColor = PrimaryGreen.copy(alpha = 0.5f)
-                )
-            )
-        }
-        
-        if (enabled) {
-            Text(
-                text = "Reminder frequency:",
-                color = Color.Gray,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                options.forEach { (mins, text) ->
-                    val isSelected = interval == mins
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) PrimaryGreen else Color.White.copy(alpha = 0.1f))
-                            .clickable {
-                                onUpdate(true, mins)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = text,
-                            color = if (isSelected) Color.White else Color.LightGray,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
         }
     }
 }

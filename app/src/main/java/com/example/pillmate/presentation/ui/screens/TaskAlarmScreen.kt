@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +26,9 @@ import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.example.pillmate.util.RecurrenceEvaluator
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.filter
+import kotlin.collections.firstOrNull
+import kotlin.collections.isNotEmpty
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +41,10 @@ fun TaskAlarmScreen(
     taskTypeString: String,
     instructions: String,
     startTimeStr: String,
+    scheduledTimeIso: String,
     rrule: String,
     dose: Float = 1.0f,
+    isFromAlarm: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -46,22 +52,7 @@ fun TaskAlarmScreen(
 
     // Observers
     val logResult by viewModel.logResult.collectAsState()
-    val availableSupplies by viewModel.availableSupplies.collectAsState()
-    var selectedSupplyId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(sourceId) {
-        if (taskType == TaskType.MEDICATION) {
-            viewModel.fetchSupplies(sourceId)
-        }
-    }
-
-    // Effect to select the smartest default (lowest stock)
-    LaunchedEffect(availableSupplies) {
-        if (selectedSupplyId == null && availableSupplies.isNotEmpty()) {
-            selectedSupplyId = availableSupplies.filter { it.quantity > 0 }.minByOrNull { it.quantity }?.id 
-                ?: availableSupplies.firstOrNull()?.id
-        }
-    }
 
     LaunchedEffect(logResult) {
         logResult?.let { result ->
@@ -81,13 +72,17 @@ fun TaskAlarmScreen(
     val fallbackFormat = SimpleDateFormat("H:m", Locale.getDefault())
 
     val parsedStart: Date? = try {
-        when {
-            startTimeStr.contains("T") -> isoFormat.parse(startTimeStr)
-            startTimeStr.isNotBlank() -> {
-                try { displayFormat.parse(startTimeStr) } 
-                catch (e: Exception) { fallbackFormat.parse(startTimeStr) }
+        if (scheduledTimeIso.isNotBlank()) {
+            isoFormat.parse(scheduledTimeIso)
+        } else {
+            when {
+                startTimeStr.contains("T") -> isoFormat.parse(startTimeStr)
+                startTimeStr.isNotBlank() -> {
+                    try { displayFormat.parse(startTimeStr) }
+                    catch (e: Exception) { fallbackFormat.parse(startTimeStr) }
+                }
+                else -> null
             }
-            else -> null
         }
     } catch (e: Exception) { null }
 
@@ -185,38 +180,10 @@ fun TaskAlarmScreen(
                 }
             }
 
-            // SUPPLY SELECTION UI
-            if (taskType == TaskType.MEDICATION && availableSupplies.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(text = "Select Batch", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                androidx.compose.foundation.lazy.LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(availableSupplies.size) { index ->
-                        val supply = availableSupplies[index]
-                        val isSelected = selectedSupplyId == supply.id
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedSupplyId = supply.id },
-                            label = { Text("${supply.batchName} (${supply.quantity})") },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = Color(0x20FFFFFF),
-                                selectedContainerColor = Color(0xFF4CAF50),
-                                labelColor = Color.White,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.weight(0.1f))
 
             Button(
-                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, Date(), dose, selectedSupplyId) },
+                onClick = { viewModel.onTakeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date(), dose) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp),
@@ -233,7 +200,7 @@ fun TaskAlarmScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 OutlinedButton(
-                    onClick = { viewModel.onSkipClicked(sourceId, scheduleId, taskType, Date()) },
+                    onClick = { viewModel.onSkipClicked(sourceId, scheduleId, taskType, parsedStart ?: Date()) },
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),
@@ -246,7 +213,8 @@ fun TaskAlarmScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 OutlinedButton(
-                    onClick = { viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, Date()) },
+                    onClick = { viewModel.onSnoozeClicked(sourceId, scheduleId, taskType, parsedStart ?: Date()) },
+                    enabled = isFromAlarm,
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp),

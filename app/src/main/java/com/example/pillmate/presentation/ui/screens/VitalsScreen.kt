@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +29,10 @@ import com.example.pillmate.domain.model.MetricType
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
 import com.example.pillmate.presentation.ui.components.HydrationGoalDialog
+import com.example.pillmate.presentation.ui.components.HealthRemindersBottomSheet
+import com.example.pillmate.presentation.viewmodel.ProfileViewModel
 import com.example.pillmate.presentation.viewmodel.WeeklyStats
+import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,20 +42,28 @@ fun VitalsScreen(
     paddingValues: PaddingValues
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profileViewModel: ProfileViewModel = koinViewModel()
+    val currentLocalProfile by profileViewModel.currentLocalProfile.collectAsState()
+    val isCaregiver = currentLocalProfile?.role == "Caregiver_View"
     var showHydrationDialog by remember { mutableStateOf(false) }
+    var showHealthRemindersSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.Crop
         )
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             VitalsHeader(
+                showAdd = !isCaregiver,
+                showSettings = !isCaregiver,
                 onAddClick = { viewModel.toggleLogPanel(true) },
-                onReportClick = { viewModel.toggleWeeklyReport(true) }
+                onReportClick = { viewModel.toggleWeeklyReport(true) },
+                onSettingsClick = { showHealthRemindersSheet = true }
             )
 
             LazyColumn(
@@ -63,7 +75,7 @@ fun VitalsScreen(
                     HydrationCard(
                         current = uiState.hydrationMl,
                         target = uiState.hydrationTarget,
-                        onClick = { showHydrationDialog = true }
+                        onClick = { if (!isCaregiver) showHydrationDialog = true }
                     )
                 }
 
@@ -78,7 +90,7 @@ fun VitalsScreen(
                             value = uiState.latestBloodPressure,
                             unit = "mmHg",
                             status = uiState.bloodPressureStatus,
-                            icon = R.drawable.ic_vitals
+                            icon = R.drawable.ic_vitals_outlined
                         )
                         MetricCard(
                             modifier = Modifier.weight(1f),
@@ -133,10 +145,23 @@ fun VitalsScreen(
             onDismiss = { viewModel.toggleWeeklyReport(false) }
         )
     }
+
+    if (showHealthRemindersSheet) {
+        HealthRemindersBottomSheet(
+            viewModel = profileViewModel,
+            onDismiss = { showHealthRemindersSheet = false }
+        )
+    }
 }
 
 @Composable
-fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
+fun VitalsHeader(
+    showAdd: Boolean,
+    showSettings: Boolean,
+    onAddClick: () -> Unit,
+    onReportClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,15 +184,29 @@ fun VitalsHeader(onAddClick: () -> Unit, onReportClick: () -> Unit) {
                 ) {
                     Icon(painterResource(R.drawable.ic_history), contentDescription = null, tint = Color(0xFF1ABC9C), modifier = Modifier.size(20.dp))
                 }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .clickable { onAddClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+                if (showSettings) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .clickable { onSettingsClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
+                    }
+                }
+                if (showAdd) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .clickable { onAddClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1E6C54))
+                    }
                 }
             }
         }
@@ -185,7 +224,7 @@ fun HydrationCard(current: Int, target: Int, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_reminder), // Proxy for Water icon
+                    painter = painterResource(id = R.drawable.ic_water_drop), // Water icon
                     contentDescription = null,
                     tint = Color(0xFF5D5DFF),
                     modifier = Modifier.size(20.dp)
@@ -254,14 +293,14 @@ fun RecentActivityItem(metric: HealthMetric) {
         Row(modifier = Modifier.padding(16.dp).fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFF5F5F5)), contentAlignment = Alignment.Center) {
                 Icon(
-                    painter = painterResource(id = if (metric.type == MetricType.WATER) R.drawable.ic_reminder else R.drawable.ic_vitals),
+                    painter = painterResource(id = if (metric.type == MetricType.WATER) R.drawable.ic_water_drop else R.drawable.ic_vitals_outlined),
                     contentDescription = null,
                     tint = if (metric.type == MetricType.WATER) Color(0xFF5D5DFF) else Color(0xFFFF708D)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(SimpleDateFormat("hh:mm a", Locale.getDefault()).format(metric.recordedAt), fontSize = 12.sp, color = Color.Gray)
+                Text(SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(metric.recordedAt), fontSize = 12.sp, color = Color.Gray)
                 Text(metric.type.name.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold)
             }
             Text(

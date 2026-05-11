@@ -18,9 +18,11 @@ import com.example.pillmate.presentation.ui.screens.*
 import com.example.pillmate.presentation.viewmodel.*
 import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import androidx.navigation.navArgument
+import com.example.pillmate.presentation.ui.components.AppointmentScheduleForm
 
 @Composable
 fun PillMateApp(
@@ -115,15 +117,18 @@ fun PillMateApp(
                                     type = task.taskType.name,
                                     instructions = "",
                                     time = task.time,
+                                    scheduledTimeIso = task.scheduledTimeIso,
                                     rrule = task.recurrenceRule ?: "",
                                     dose = task.dose
                                 )
                             )
                         },
-                        onAddClick = { /* TODO */ },
+
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onSettingsClick = { navController.navigate(Screen.Settings.route) },
-                        onVaultClick = { navController.navigate(Screen.ImageVault.route) }
+                        onVaultClick = { navController.navigate(Screen.ImageVault.route) },
+                        onAIClick = { navController.navigate(Screen.AIChat.route) },
+	                      onMapClick = { navController.navigate(Screen.Map.route) }
                     )
                 }
             }
@@ -149,7 +154,11 @@ fun PillMateApp(
                         navController.navigate("auth_graph")
                     }, onBack = {
                         navController.popBackStack()
-                    })
+                    }, onNavigateToSignIn = { email, password ->
+                        navController.navigate("signin?email=$email&password=$password")
+                    },
+                    
+                    )
                 }
             }
             composable(Screen.ImageVault.route) {
@@ -164,7 +173,7 @@ fun PillMateApp(
             }
             composable(Screen.AIChat.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    AIChatScreen(paddingValues = innerPadding)
+                    AIChatScreen(paddingValues = innerPadding,  onBack = { navController.popBackStack() })
                 }
             }
             composable(Screen.DebugMenu.route) {
@@ -174,34 +183,63 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
-            
-            composable(
-                route = Screen.Vitals.route,
-                deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
-                )
-            ) {
-                val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
-                val currentUserId = auth.currentUser?.uid ?: ""
-                MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
-                        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
-                    )
-                    VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
-                }
-            }
-            composable(route = Screen.Appointment.route) {
+	        composable(route = Screen.Map.route) {
+		        MapScreen(
+			        navController = navController
+		        )
+	        }
+	        composable(
+		        route = Screen.Vitals.route,
+		        deepLinks = listOf(
+			        androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
+		        )
+	        ) {
+		        val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+		        val currentUserId = auth.currentUser?.uid ?: ""
+		        MainScaffold(navController, onSignOutComplete) { innerPadding ->
+			        val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
+				        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
+			        )
+			        VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
+		        }
+	        }
+           composable(route = Screen.Appointment.route) {backStackEntry ->
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
-                
+               val parentEntry = remember(backStackEntry) {
+                   navController.getBackStackEntry("main_graph")
+               }
+               val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     val appointmentViewModel: AppointmentViewModel = koinViewModel()
                     
                     AppointmentScreen(
                         viewModel = appointmentViewModel,
                         profileId = currentUserId,
-                        paddingValues = innerPadding // Pass the scaffold padding here
+                        paddingValues = innerPadding,
+                        onNavigateToScheduleBuilder = { appointment ->
+                            appointmentScheduleViewModel.setSelectedAppointment(appointment)
+                            appointmentScheduleViewModel.openScheduleBuilder(null)
+                            navController.navigate(Screen.AppointmentSchedule.route)
+                        }
+                        
                     )
+                }
+            }
+            composable(Screen.AppointmentSchedule.route) { backStackEntry ->
+                // Gọi lại ViewModel dùng chung (cùng một instance với màn hình Appointment phía trên)
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
+                
+                // Bọc trong MainScaffold và sử dụng innerPadding để giải quyết lỗi paddingValues
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+	                AppointmentScheduleForm(
+	                    paddingValues = innerPadding,
+	                    viewModel = appointmentScheduleViewModel,
+	                    onBack = { navController.navigate(Screen.Appointment.route) }
+	                )
                 }
             }
             composable(Screen.ScheduleBuilder.route) {
@@ -210,11 +248,19 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onCompleteMapping = {
                             navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
                             }
                         },
                         onBack = {
-                            navController.popBackStack()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -222,18 +268,20 @@ fun PillMateApp(
             composable(
                 route = Screen.TaskAlarm.route,
                 arguments = listOf(
-                    androidx.navigation.navArgument("sourceId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("scheduleId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("details") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("type") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("instructions") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("time") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("rrule") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" },
-                    androidx.navigation.navArgument("dose") { type = androidx.navigation.NavType.FloatType; defaultValue = 1.0f }
+                    navArgument("sourceId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduleId") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("title") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("details") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("type") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("instructions") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("time") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("scheduledTimeIso") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("rrule") { type = NavType.StringType; nullable = true; defaultValue = "" },
+                    navArgument("dose") { type = NavType.FloatType; defaultValue = 1.0f },
+                    navArgument("isFromAlarm") { type = NavType.BoolType; defaultValue = false }
                 ),
                 deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&rrule={rrule}&dose={dose}" }
+                    androidx.navigation.navDeepLink { uriPattern = "pillmate://alarm?sourceId={sourceId}&scheduleId={scheduleId}&title={title}&details={details}&type={type}&instructions={instructions}&time={time}&scheduledTimeIso={scheduledTimeIso}&rrule={rrule}&dose={dose}&isFromAlarm={isFromAlarm}" }
                 )
             ) { backStackEntry ->
                 val viewModel: TaskLogViewModel = koinViewModel()
@@ -246,8 +294,10 @@ fun PillMateApp(
                     taskTypeString = backStackEntry.arguments?.getString("type") ?: "OTHER",
                     instructions = backStackEntry.arguments?.getString("instructions") ?: "",
                     startTimeStr = backStackEntry.arguments?.getString("time") ?: "",
+                    scheduledTimeIso = backStackEntry.arguments?.getString("scheduledTimeIso") ?: "",
                     rrule = backStackEntry.arguments?.getString("rrule") ?: "",
                     dose = backStackEntry.arguments?.getFloat("dose") ?: 1.0f,
+                    isFromAlarm = backStackEntry.arguments?.getBoolean("isFromAlarm") ?: false,
                     onDismiss = { navController.popBackStack() }
                 )
             }

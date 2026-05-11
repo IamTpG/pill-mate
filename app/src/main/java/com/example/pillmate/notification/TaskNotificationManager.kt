@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.example.pillmate.R
 import com.example.pillmate.receiver.TaskAlarmReceiver
 import com.example.pillmate.receiver.NotificationActionReceiver
 
@@ -74,7 +75,9 @@ class TaskNotificationManager(private val context: Context) {
         reminderType: String = "NOTIFICATION",
         rrule: String? = null,
         startTime: String? = null,
-        instructions: String? = null
+        instructions: String? = null,
+        scheduledTimeMillis: Long = System.currentTimeMillis(),
+        dose: Float = 1.0f
     ) {
         createNotificationChannel()
         val encTitle = android.net.Uri.encode(title.ifBlank { " " })
@@ -84,7 +87,7 @@ class TaskNotificationManager(private val context: Context) {
         val encTime = android.net.Uri.encode((startTime ?: "").ifBlank { " " })
         val encRrule = android.net.Uri.encode((rrule ?: "").ifBlank { " " })
 
-        val deepLinkUri = android.net.Uri.parse("pillmate://alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule")
+        val deepLinkUri = android.net.Uri.parse("pillmate://alarm?sourceId=$sourceId&scheduleId=$scheduleId&title=$encTitle&details=$encDetails&type=$encType&instructions=$encInstr&time=$encTime&rrule=$encRrule&isFromAlarm=true")
 
         val fullScreenIntent = Intent(context, com.example.pillmate.MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -108,6 +111,8 @@ class TaskNotificationManager(private val context: Context) {
             putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
             putExtra("TASK_TYPE", taskType)
+            putExtra("EXTRA_SCHEDULED_TIME", scheduledTimeMillis)
+            putExtra("EXTRA_DOSE", dose)
         }
         val primaryPendingIntent = PendingIntent.getBroadcast(
             context, 1, primaryIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -117,6 +122,8 @@ class TaskNotificationManager(private val context: Context) {
             action = "ACTION_SKIP"
             putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("EXTRA_SCHEDULED_TIME", scheduledTimeMillis)
+            putExtra("EXTRA_DOSE", dose)
         }
         val skipPendingIntent = PendingIntent.getBroadcast(
             context, 2, skipIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -129,16 +136,18 @@ class TaskNotificationManager(private val context: Context) {
             putExtra("TITLE", title)
             putExtra("DETAILS", details)
             putExtra("TASK_TYPE", taskType)
+            putExtra("EXTRA_SCHEDULED_TIME", scheduledTimeMillis)
+            putExtra("EXTRA_DOSE", dose)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
             context, 3, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val icon = when (taskType) {
-            "MEDICATION" -> android.R.drawable.ic_dialog_info
-            "APPOINTMENT" -> android.R.drawable.ic_menu_myplaces
-            "EXERCISE" -> android.R.drawable.ic_menu_directions
-            else -> android.R.drawable.ic_menu_agenda
+            "MEDICATION" -> R.drawable.ic_medication
+            "APPOINTMENT" -> R.drawable.ic_calendar
+            "EXERCISE" -> R.drawable.ic_vitals
+            else -> R.drawable.ic_reminder
         }
 
         val channelId = if (reminderType == "ALARM") ALARM_CHANNEL_ID else CHANNEL_ID
@@ -156,7 +165,13 @@ class TaskNotificationManager(private val context: Context) {
             .setOngoing(true)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(scheduleId.hashCode(), builder.build())
+        try {
+            android.util.Log.d("TaskNotificationManager", "Attempting to show notification for scheduleId=$scheduleId with requestCode=${scheduleId.hashCode()}")
+            notificationManager.notify(scheduleId.hashCode(), builder.build())
+            android.util.Log.d("TaskNotificationManager", "Notification shown successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("TaskNotificationManager", "CRASH in showTaskNotification: ${e.message}", e)
+        }
     }
 
     fun scheduleTaskNotification(
@@ -171,7 +186,9 @@ class TaskNotificationManager(private val context: Context) {
         reminderType: String = "NOTIFICATION",
         rrule: String? = null,
         startTime: String? = null,
-        instructions: String? = null
+        instructions: String? = null,
+        scheduledTimeMillis: Long = System.currentTimeMillis(),
+        dose: Float = 1.0f
     ): Boolean {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
@@ -185,6 +202,8 @@ class TaskNotificationManager(private val context: Context) {
             putExtra("EXTRA_RRULE", rrule)
             putExtra("EXTRA_START_TIME", startTime)
             putExtra("EXTRA_INSTRUCTIONS", instructions)
+            putExtra("EXTRA_SCHEDULED_TIME", scheduledTimeMillis)
+            putExtra("EXTRA_DOSE", dose)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -280,10 +299,10 @@ class TaskNotificationManager(private val context: Context) {
             else -> "Time for your health check-up."
         }
         val icon = when (type) {
-            "HYDRATION" -> android.R.drawable.ic_menu_edit // Reused icons or we could find better ones
-            "BLOOD_PRESSURE" -> android.R.drawable.ic_dialog_info
-            "WEIGHT" -> android.R.drawable.ic_menu_save
-            else -> android.R.drawable.ic_menu_agenda
+            "HYDRATION" -> com.example.pillmate.R.drawable.ic_water_drop // using ic_water_drop which should exist or fallback to valid
+            "BLOOD_PRESSURE" -> com.example.pillmate.R.drawable.ic_vitals
+            "WEIGHT" -> com.example.pillmate.R.drawable.ic_vitals
+            else -> com.example.pillmate.R.drawable.ic_reminder
         }
 
         val intent = Intent(context, com.example.pillmate.MainActivity::class.java).apply {
@@ -309,7 +328,7 @@ class TaskNotificationManager(private val context: Context) {
 
     fun showLowStockNotification(medName: String, remaining: Float) {
         val builder = NotificationCompat.Builder(context, LOW_STOCK_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setSmallIcon(com.example.pillmate.R.drawable.ic_medication)
             .setContentTitle("Low Stock Alert")
             .setContentText("You only have $remaining remaining of $medName.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

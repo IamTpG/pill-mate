@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
+import com.example.pillmate.data.repository.HybridMedicationRepositoryImpl
+import com.example.pillmate.data.repository.HybridRepositoryImpl
+import com.example.pillmate.data.repository.HybridSupplyLogRepositoryImpl
 import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.SyncAlarmsUseCase
 import com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
@@ -21,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private val syncFcmTokenUseCase: SyncFcmTokenUseCase by inject()
     private val syncManager: com.example.pillmate.util.SyncManager by inject()
     private val medicationRepository: MedicationRepository by inject()
+    private val supplyLogRepository: com.example.pillmate.domain.repository.SupplyLogRepository by inject()
     
     private val profileId: String by inject()
     private val db: FirebaseFirestore by inject()
@@ -30,6 +34,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request notification permissions for Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
 
         // Ensure FCM token and topic are synced for current profile
         if (profileId.isNotBlank()) {
@@ -43,9 +54,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Initialize SyncManager with Hybrid Repositories
-        if (medicationRepository is com.example.pillmate.data.repository.HybridMedicationRepositoryImpl) {
-            syncManager.register(medicationRepository as com.example.pillmate.data.repository.HybridMedicationRepositoryImpl)
+        val reposToRegister = mutableListOf<HybridRepositoryImpl<*>>()
+        
+        val medRepo = medicationRepository
+        if (medRepo is HybridMedicationRepositoryImpl) {
+            reposToRegister.add(medRepo)
         }
+        
+        val logRepo = supplyLogRepository
+        if (logRepo is HybridSupplyLogRepositoryImpl) {
+            reposToRegister.add(logRepo)
+        }
+        
+        syncManager.register(*reposToRegister.toTypedArray())
         syncManager.startMonitoring(this)
 
         // Setup Real-time Sync (with debounce to avoid clobbering ManageReminderUseCase)

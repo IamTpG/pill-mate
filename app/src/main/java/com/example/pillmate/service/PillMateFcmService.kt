@@ -28,6 +28,17 @@ class PillMateFcmService : FirebaseMessagingService() {
         // Handle both legacy "action" and new Cloud Function "type"
         when {
             type == "alarm_event" || type?.startsWith("schedule_") == true || action == "SYNC" -> {
+                // If this is a log event (alarm_event), dismiss the notification immediately
+                // so the other device stops ringing without waiting for the full sync.
+                if (type == "alarm_event") {
+                    val status = message.data["status"]
+                    val scheduleId = message.data["scheduleId"]
+                    if ((status == "COMPLETED" || status == "SKIPPED") && scheduleId != null) {
+                        Log.d("PillMateFcmService", "Dismissing notification for $scheduleId (status=$status)")
+                        notificationManager.dismissNotification(scheduleId)
+                    }
+                }
+
                 val inputData = workDataOf("profileId" to profileIdFromFcm)
                 val workRequest = OneTimeWorkRequestBuilder<AlarmSyncWorker>()
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)

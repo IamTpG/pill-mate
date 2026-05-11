@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun CabinetHeader(
-    healthScore: Int,
     activeCount: Int,
     lowStockCount: Int,
     onSearchClick: () -> Unit,
@@ -39,11 +38,6 @@ fun CabinetHeader(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E3D34)
-                )
-                Text(
-                    text = "Your cabinet is $healthScore% healthy today.",
-                    fontSize = 14.sp,
-                    color = Color(0xFF4A6B5D)
                 )
             }
 

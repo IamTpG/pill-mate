@@ -7,13 +7,18 @@ import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.MedicationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.pillmate.domain.model.SupplyLog
+import com.example.pillmate.domain.repository.SupplyLogRepository
 import com.example.pillmate.notification.TaskNotificationManager
 import java.util.Date
+import java.util.UUID
 
 class LogTaskUseCase(
     private val medicationRepository: MedicationRepository,
+    private val supplyLogRepository: SupplyLogRepository,
     private val logRepository: LogRepository,
-    private val notificationManager: TaskNotificationManager
+    private val notificationManager: TaskNotificationManager,
+    private val calculateDailyIntakeUseCase: CalculateDailyIntakeUseCase
 ) {
     suspend fun execute(
         profileId: String,
@@ -39,29 +44,32 @@ class LogTaskUseCase(
         val logResult = logRepository.add(profileId, log)
         if (logResult.isFailure) return logResult
 
-        // 2. If completed medication, deduct from inventory (Room + Firestore via CabinetRepository)
+        // 2. If completed medication, deduct from inventory
         if (status == LogStatus.COMPLETED && taskType == TaskType.MEDICATION) {
             withContext(Dispatchers.IO) {
-                medicationRepository.logInventoryChange(
+                supplyLogRepository.add(
                     profileId = profileId,
-                    medicationId = sourceId,
-                    amount = -dose.toInt(),
-                    reason = "Taken"
+                    item = SupplyLog(
+                        id = UUID.randomUUID().toString(),
+                        medId = sourceId,
+                        changeAmount = (-dose).toFloat(),
+                        reason = "Taken",
+                        createdAt = Date(),
+                        updatedAt = Date()
+                    )
                 )
             }
 
             // 3. IMMEDIATE LOW STOCK ALERT
             try {
-                val supplies = medicationRepository.getMedicationSupplies(profileId, sourceId).getOrNull() ?: emptyList()
-                val currentStock = if (supplyId != null) {
-                    supplies.find { it.id == supplyId }?.quantity ?: 0f
-                } else {
-                    // If no specific supply, check the lowest remaining batch
-                    supplies.filter { it.quantity > 0 }.minOfOrNull { it.quantity } ?: 0f
-                }
+                val med = medicationRepository.getById(profileId, sourceId).getOrNull()
+                val currentStock = med?.quantity ?: 0f
 
-                if (currentStock < 5.0f) {
-                    notificationManager.showLowStockNotification(sourceId, currentStock)
+                val todayIntake = calculateDailyIntakeUseCase.execute(profileId, Date())
+                val dailyRequirement = todayIntake[sourceId] ?: 0f
+
+                if (dailyRequirement > 0f && currentStock < dailyRequirement) {
+                    notificationManager.showLowStockNotification(med?.name ?: "Medication", currentStock)
                 }
             } catch (e: Exception) {
                 // Non-fatal

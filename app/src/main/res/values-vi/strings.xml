@@ -77,4 +77,19 @@
     <string name="delete_image_dialog_title">Xóa hình ảnh</string>
     <string name="delete_image_dialog_text">Bạn có chắc chắn muốn xóa hình ảnh này không? Hành động này không thể hoàn tác.</string>
     <string name="delete">Xóa</string>
+  
+    <string name="appointment_greeting">Chào! Hôm nay bạn thế nào?</string>
+    <string name="appointment_search">Tìm kiếm</string>
+    <string name="appointment_add">Thêm lịch hẹn</string>
+    <string name="appointment_searchbar_placeholder">Tìm tên lịch hẹn…</string>
+    <string name="appointment_location">Địa điểm</string>
+    <string name="appointment_doctor">Bác sĩ</string>
+    <string name="appointment_description">Mô tả</string>
+    <string name="appointment_add_options_header">Bạn muốn thêm gì?</string>
+    <string name="appointment_add_appointment">Thêm lịch hẹn</string>
+    <string name="appointment_cancel">Huỷ</string>
+    <string name="appointment_add_appointment_header">Chi tiết lịch hẹn</string>
+    <string name="appointment_name">Tên lịch hẹn</string>
+    <string name="appointment_doctor_name">Tên Bác sĩ</string>
+    <string name="appointment_submit">Tạo</string>
 </resources>

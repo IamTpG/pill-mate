@@ -3,6 +3,7 @@ package com.example.pillmate.presentation.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -11,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -21,103 +24,104 @@ import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 
 @Composable
-fun AppointmentHeader(completedCount: Int, totalCount: Int, onAddClick: () -> Unit, onSearchClick: () -> Unit) {
-	Column (modifier = Modifier.padding(horizontal = 16.dp).padding(top = 30.dp)) {
-		Row(verticalAlignment = Alignment.CenterVertically) {
-			Icon(
-				painter = painterResource(id = R.drawable.ic_user_profile), // Replace with your profile icon
-				contentDescription = null,
-				tint = Color.White,
-				modifier = Modifier.size(40.dp)
-			)
-			Spacer(modifier = Modifier.width(8.dp))
-			Text(
-				text = "Hi! How are you today ?",
-				color = Color.White,
-				fontSize = 24.sp,
-				fontWeight = FontWeight.Bold
-			)
-		}
+fun AppointmentHeader(totalCount: Int) {
+	
+	Column(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 0.dp)
+	) {
 		
-		Spacer(modifier = Modifier.height(20.dp))
+		Text(
+			"Appointments",
+			fontWeight = FontWeight.Bold,
+			fontSize = 24.sp,
+			color = Color.White
+		)
 		
-		Row(
+		Spacer(modifier = Modifier.height(16.dp))
+		
+		Card(
 			modifier = Modifier.fillMaxWidth(),
-			Arrangement.SpaceBetween,
-			Alignment.CenterVertically
+			shape = RoundedCornerShape(24.dp),
+			colors = CardDefaults.cardColors(containerColor = Color(0xFFF4FAF7))
 		) {
-			Box(
-				modifier = Modifier
-					.background(color = Color.White, shape = RoundedCornerShape(10.dp))
-					.padding(4.dp)
-			) {
+			// Bọc tất cả vào một Column tổng để các thành phần xếp hàng dọc
+			Column(modifier = Modifier.padding(24.dp)) {
 				
+				// Phần 1: Tiêu đề
+				Column {
+					Text(
+						text = "Your Cabinet",
+						fontSize = 20.sp,
+						fontWeight = FontWeight.Bold,
+						color = Color(0xFF1E3D34)
+					)
+					Text(
+						text = "Keep track your health journey",
+						fontSize = 14.sp,
+						color = Color(0xFF4A6B5D)
+					)
+				}
+				
+				Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách giữa tiêu đề và box bên dưới
+				
+				// Phần 2: Box chứa Calendar
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.clip(RoundedCornerShape(14.dp))
+						.background(Color(0xFFD8F3DC))
+						.padding(horizontal = 16.dp, vertical = 14.dp)
+				) {
 					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.Start,
 						verticalAlignment = Alignment.CenterVertically
 					) {
-						// Progress Badge (e.g., 3/10)
-						Surface(
-							color = Color.White,
-							shape = RoundedCornerShape(8.dp)
+						Box(
+							modifier = Modifier
+								.padding(5.dp)
+								.clip(CircleShape)
+								.background(Color(0xFF2D6A4F))
+								.padding(8.dp)
 						) {
-							Text(
-								text = "$completedCount/$totalCount",
-								modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-								fontSize = 16.sp,
-								fontWeight = FontWeight.Bold,
-								color = Color(0xFF1E5E52)
+							Icon(
+								painter = painterResource(id = R.drawable.ic_calendar),
+								contentDescription = null,
+								tint = Color.White,
+								modifier = Modifier.size(24.dp)
 							)
 						}
 						
-						//Spacer(modifier = Modifier.width(2.dp))
+						Spacer(modifier = Modifier.width(5.dp))
 						
-						
-						// Search Bar Placeholder
-						Row(
+						Column(
 							modifier = Modifier
-								.background(Color(0xFF1E5E52), RoundedCornerShape(6.dp)),
-							verticalAlignment = Alignment.CenterVertically
+								.fillMaxWidth()
 						) {
-							Button(
-								onClick = onSearchClick,
-								colors = ButtonDefaults.buttonColors(
-									containerColor = Color.Transparent,
-									contentColor = Color.Black
-								)
-							) {
-								Icon(
-									Icons.Default.Search,
-									contentDescription = null,
-									tint = Color.White,
-									modifier = Modifier.size(20.dp)
-								)
-								Spacer(modifier = Modifier.width(2.dp))
-								Text("Search", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-							}
+							Text(
+								"Overview",
+								fontWeight = FontWeight.Normal,
+								fontSize = 12.sp
+							)
+							
+							Text(
+								"Total Appointments: $totalCount",
+								fontWeight = FontWeight.Bold,
+								fontSize = 20.sp
+							)
+							
 						}
 					}
-					
-					
 				}
-				Button(
-					onClick = onAddClick,
-					colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E5E52)),
-					shape = RoundedCornerShape(24.dp),
-					//modifier = Modifier
-					//.fillMaxWidth(0.6f)
-					//.align(Alignment.CenterHorizontally)
-					//.padding(vertical = 24.dp)
-				) {
-					Text("Add more", color = Color.White)
-				}
+			}
 		}
-		
-		
 	}
 }
 
 @Preview
 @Composable
 fun PreviewAppointmentHeader() {
-	AppointmentHeader(3, 10, {},{})
+	AppointmentHeader(10)
 }

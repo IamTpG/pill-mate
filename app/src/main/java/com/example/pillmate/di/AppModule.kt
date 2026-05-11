@@ -44,10 +44,16 @@ import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
 import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
+import com.example.pillmate.data.repository.FirestoreSupplyLogRepositoryImpl
+import com.example.pillmate.data.repository.HybridSupplyLogRepositoryImpl
+import com.example.pillmate.data.repository.RoomSupplyLogRepositoryImpl
 import com.example.pillmate.domain.repository.HealthMetricRepository
+import com.example.pillmate.domain.repository.SupplyLogRepository
 import com.example.pillmate.notification.HealthReminderManager
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
+import com.example.pillmate.presentation.viewmodel.AppointmentScheduleViewModel
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
+import com.example.pillmate.util.NetworkChecker
 import com.google.firebase.functions.FirebaseFunctions
 
 val appModule = module {
@@ -59,27 +65,42 @@ val appModule = module {
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
-
+    
+    single<SupplyLogRepository> {
+        val roomRepo = RoomSupplyLogRepositoryImpl(get())
+        val firestoreRepo = FirestoreSupplyLogRepositoryImpl(get(), get())
+        HybridSupplyLogRepositoryImpl(
+            localLogRepo = roomRepo,
+            remoteLogRepo = firestoreRepo,
+            networkChecker = NetworkChecker(androidContext())
+        )
+    }
     single<MedicationRepository> {
         val roomRepo = RoomMedicationRepositoryImpl(get(), get())
         val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
         HybridMedicationRepositoryImpl(
-            localRepo = roomRepo,
-            remoteRepo = firestoreRepo,
-            supplyLogDao = get(),
-            firestore = get(),
+            localMedRepo = roomRepo,
+            remoteMedRepo = firestoreRepo,
             networkChecker = com.example.pillmate.util.NetworkChecker(androidContext())
         )
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
-    single<ScheduleRepository> { FirestoreScheduleRepositoryImpl(get()) }
+    single<ScheduleRepository> {
+        val roomRepo = com.example.pillmate.data.repository.RoomScheduleRepositoryImpl(get())
+        val firestoreRepo = FirestoreScheduleRepositoryImpl(get())
+        com.example.pillmate.data.repository.HybridScheduleRepositoryImpl(
+            localScheduleRepo = roomRepo,
+            remoteScheduleRepo = firestoreRepo,
+            networkChecker = NetworkChecker(androidContext())
+        )
+    }
     single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
     single { AlarmTracker(get()) }
     single { FcmTokenManager(get()) }
     single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get(), get(), get()) }
     factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
@@ -92,9 +113,10 @@ val appModule = module {
     factory { GetHealthMetricsUseCase(get()) }
     factory { UpdateHydrationGoalUseCase(get(), get()) }
     factory { GetWidgetDataUseCase(get(), get(), get()) }
+    factory { CalculateDailyIntakeUseCase(get(), get()) }
 
-    viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
-    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
+   // viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+    //viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
     single { HealthReminderManager(get(), get()) }
@@ -104,6 +126,7 @@ val appModule = module {
     single { get<AppDatabase>().supplyLogDao() }
     single { get<AppDatabase>().profileDao() }
     single { get<AppDatabase>().imageDao() }
+    single { get<AppDatabase>().scheduleDao() }
     single {
         Retrofit.Builder()
             .baseUrl("https://api.fda.gov/")
@@ -135,14 +158,17 @@ val appModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { CabinetViewModel(get(), get(), get(), get(), androidContext() as Application) }
+    viewModel { CabinetViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get(), get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }}
+    viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
+    viewModel { AppointmentScheduleViewModel(get(), get(), get()) }
+}

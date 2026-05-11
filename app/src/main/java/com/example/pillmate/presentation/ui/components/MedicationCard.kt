@@ -22,6 +22,7 @@ import com.example.pillmate.domain.model.Medication
 @Composable
 fun MedicationCard(
     medication: Medication,
+    isLowStock: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -70,8 +71,7 @@ fun MedicationCard(
                     )
                     
                     // Status Badge Logic
-                    val isExpired = medication.supply?.expirationDate?.before(java.util.Date()) == true
-                    val isLowStock = (medication.supply?.quantity ?: 0f) < 10f
+                    val isExpired = medication.expirationDate?.before(java.util.Date()) == true
                     when {
                         isExpired -> StatusBadge("Expired", Color(0xFFFFEBEE), Color(0xFFC62828))
                         isLowStock -> StatusBadge("Refill Soon", Color.Transparent, Color.Black)
@@ -88,7 +88,7 @@ fun MedicationCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "${(medication.supply?.quantity ?: 0f).toInt()} ${medication.unit} left", fontSize = 12.sp, color = Color.DarkGray)
+                    Text(text = "${medication.quantity.toInt()} ${medication.unit} left", fontSize = 12.sp, color = Color.DarkGray)
                 }
             }
 

@@ -42,7 +42,7 @@ fun DrugLibrarySearchScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(painter = painterResource(id = R.drawable.background), contentDescription = "Background", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)))
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize()) {
             CenterAlignedTopAppBar(
@@ -92,7 +92,7 @@ fun DrugLibrarySearchScreen(
                     
                     val scrollState = rememberScrollState()
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp).horizontalScroll(scrollState),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 8.dp).horizontalScroll(scrollState),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         uiState.recentSearches.forEach { search ->

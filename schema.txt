@@ -70,16 +70,17 @@
         │       ├── description: String
         │       ├── unit: String
         │       ├── photoUrl: String
-        │       ├── supply (Subcollection)
-        │           └── {supplyId}
-        │               ├── expirationDate: Timestamp
-        │               └── logs: (Subcollection)
-        │                   └── {logId}
-        │                       ├── changeAmount: int
-        │                       ├── reason: String
-        │                       └── timestamp: Timestamp
+        │       ├── expirationDate: Timestamp
         │       ├── createdAt: Timestamp
         │       └── deletedAt: Timestamp
+        │
+        ├── supplyLogs (Subcollection)
+        │   └── {logId}
+        │       ├── medId: String (Ref to medication)
+        │       ├── changeAmount: int
+        │       ├── reason: String
+        │       └── timestamp: Timestamp
+        │
         │
         ├── exercises (Subcollection) -- Custom User Exercises
         │   └── {exerciseId}

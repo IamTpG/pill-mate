@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,10 +34,11 @@ import java.util.Date
 
 @Composable
 fun HomeHeader(
-    onAddClick: () -> Unit,
+//    onAddClick: () -> Unit,
     onDebugClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onVaultClick: () -> Unit
+    onVaultClick: () -> Unit,
+    onMapClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -61,13 +63,6 @@ fun HomeHeader(
                     tint = Color.White
                 )
             }
-            IconButton(onClick = onAddClick) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add task",
-                    tint = Color.White
-                )
-            }
             IconButton(onClick = onVaultClick) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_gallery),
@@ -75,6 +70,20 @@ fun HomeHeader(
                     tint = Color.White
                 )
             }
+//            IconButton(onClick = onAddClick) {
+//                Icon(
+//                    imageVector = Icons.Default.Add,
+//                    contentDescription = "Add task",
+//                    tint = Color.White
+//                )
+//            }
+	        IconButton(onClick = onMapClick) {
+		        Icon(
+			        imageVector = Icons.Default.LocationOn,
+			        contentDescription = "Open Map",
+			        tint = Color.White
+		        )
+	        }
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Default.Settings,
@@ -212,13 +221,14 @@ fun CalendarDayItem(
 @Composable
 fun TaskItem(
     task: HomeTask,
+    isReadOnly: Boolean = false,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clickable(enabled = task.status != LogStatus.MISSED, onClick = onClick),
+            .clickable(enabled = !isReadOnly && task.status != LogStatus.COMPLETED, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)

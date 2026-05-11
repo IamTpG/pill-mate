@@ -7,6 +7,7 @@ data class HomeTask(
     val sourceId: String,
     val title: String,
     val time: String,
+    val scheduledTimeIso: String,
     val doseDescription: String,
     val dose: Float = 1.0f,
     val taskType: com.example.pillmate.domain.model.TaskType,
