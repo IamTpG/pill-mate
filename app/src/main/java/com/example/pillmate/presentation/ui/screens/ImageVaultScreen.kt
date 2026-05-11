@@ -1,6 +1,7 @@
 package com.example.pillmate.presentation.ui.screens
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -90,10 +91,10 @@ fun ImageVaultScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(images) { img ->
-                    val imageSource = if (!img.localUri.isNullOrEmpty() && !img.localUri.startsWith("content://")) {
-                        File(img.localUri)
-                    } else {
+                    val imageSource = if (!img.remoteUrl.isNullOrEmpty()) {
                         img.remoteUrl
+                    } else {
+                        img.localUri?.let { File(it) }
                     }
 
                     AsyncImage(
