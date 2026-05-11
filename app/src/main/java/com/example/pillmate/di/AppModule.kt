@@ -139,7 +139,20 @@ val appModule = module {
     single { get<AppDatabase>().chatDao() }
     single { AIChatRepository(get(), get(), get()) }
     
-    single<AppointmentRepository> { FirestoreAppointmentRepositoryImpl(get()) }
+    single { get<AppDatabase>().appointmentDao() }
+    
+    //single<AppointmentRepository> { FirestoreAppointmentRepositoryImpl(get()) }
+    single<AppointmentRepository> {
+        val roomRepo = com.example.pillmate.data.repository.RoomAppointmentRepositoryImpl(get())
+        
+        val firestoreRepo = FirestoreAppointmentRepositoryImpl(get())
+        
+        com.example.pillmate.data.repository.HybridAppointmentRepositoryImpl(
+            localAppointmentRepo = roomRepo,
+            remoteAppointmentRepo = firestoreRepo,
+            networkChecker = NetworkChecker(androidContext())
+        )
+    }
     factory { GetAppointmentsUseCase(get()) }
     factory { AddAppointmentUseCase(get()) }
     factory { UpdateAppointmentUseCase(get()) }
@@ -155,6 +168,8 @@ val appModule = module {
             networkChecker = { com.example.pillmate.util.NetworkChecker(androidContext()).isOnline() }
         )
     }
+    
+    factory { GetScheduleForAppointmentUseCase(get()) }
 }
 
 val viewModelModule = module {
@@ -170,5 +185,5 @@ val viewModelModule = module {
     viewModel { AIChatViewModel(get(), get(), get()) }
     viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }
     viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
-    viewModel { AppointmentScheduleViewModel(get(), get(), get()) }
+    viewModel { AppointmentScheduleViewModel(get(), get(), get(), get()) }
 }

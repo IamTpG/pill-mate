@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
-
+import com.example.pillmate.domain.usecase.GetScheduleForAppointmentUseCase
 // Tái sử dụng ReminderTime từ domain của bạn
 data class AppointmentReminderTime(val id: Int, val timeTitle: String, val note: String = "")
 
@@ -48,7 +48,8 @@ data class AppointmentScheduleUiState(
 class AppointmentScheduleViewModel(
 	private val scheduleRepository: ScheduleRepository,
 	private val profileDao: ProfileDao,
-	private val auth: FirebaseAuth
+	private val auth: FirebaseAuth,
+	private val getScheduleForAppointmentUseCase: GetScheduleForAppointmentUseCase
 ) : ViewModel() {
 	
 	private val _uiState = MutableStateFlow(AppointmentScheduleUiState())
@@ -64,7 +65,32 @@ class AppointmentScheduleViewModel(
 		return auth.currentUser?.uid?.takeIf { it.isNotBlank() }
 	}
 	
+//	fun setSelectedAppointment(appointment: Appointment) {
+//		_uiState.update { state ->
+//			state.copy(
+//				selectedAppointment = appointment,
+//				existingSchedules = emptyList(),
+//				existingScheduleId = null,
+//				readOnly = false,
+//				reminderTimes = emptyList(),
+//				startDate = null,
+//				endDate = null,
+//				repeatFrequency = "No Repeat",
+//				saveSuccess = false,
+//				error = null
+//			)
+//		}
+//		// Fetch existing schedules for this appointment if needed
+//		viewModelScope.launch {
+//			val userId = getEffectiveProfileId() ?: return@launch
+//			val result = scheduleRepository.getAllOnce(userId)
+//			val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == appointment.id } ?: emptyList()
+//			_uiState.update { it.copy(existingSchedules = existing) }
+//		}
+//	}
+	
 	fun setSelectedAppointment(appointment: Appointment) {
+		// 2. Clear state cũ trước khi load
 		_uiState.update { state ->
 			state.copy(
 				selectedAppointment = appointment,
@@ -79,12 +105,21 @@ class AppointmentScheduleViewModel(
 				error = null
 			)
 		}
-		// Fetch existing schedules for this appointment if needed
+		
+		// 3. Sử dụng UseCase để check xem đã có Schedule cho Appointment này chưa
 		viewModelScope.launch {
 			val userId = getEffectiveProfileId() ?: return@launch
-			val result = scheduleRepository.getAllOnce(userId)
-			val existing = result.getOrNull()?.filter { it.eventSnapshot.sourceId == appointment.id } ?: emptyList()
-			_uiState.update { it.copy(existingSchedules = existing) }
+			
+			val existingSchedule = getScheduleForAppointmentUseCase(userId, appointment.id)
+			
+			if (existingSchedule != null) {
+				// Nếu ĐÃ CÓ: Lưu vào state và gọi hàm openScheduleBuilder để đổ dữ liệu lên UI ở chế độ ReadOnly
+				_uiState.update { it.copy(existingSchedules = listOf(existingSchedule)) }
+				openScheduleBuilder(existingSchedule.id)
+			} else {
+				// Nếu CHƯA CÓ: Mở form trống để tạo mới
+				openScheduleBuilder(null)
+			}
 		}
 	}
 	

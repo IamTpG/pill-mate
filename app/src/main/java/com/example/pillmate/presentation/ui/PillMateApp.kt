@@ -219,7 +219,7 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onNavigateToScheduleBuilder = { appointment ->
                             appointmentScheduleViewModel.setSelectedAppointment(appointment)
-                            appointmentScheduleViewModel.openScheduleBuilder(null)
+                            //appointmentScheduleViewModel.openScheduleBuilder(null)
                             navController.navigate(Screen.AppointmentSchedule.route)
                         }
                         
