@@ -192,8 +192,11 @@ class AIChatRepository(
         sessionRef.delete().await()
     }
 
-    suspend fun askAssistant(userText: String): String {
-        val payload = hashMapOf("message" to userText)
+    suspend fun askAssistant(profileId: String, userText: String): String {
+        val payload = hashMapOf(
+            "message" to userText,
+            "profileId" to profileId
+        )
         val result = functions.getHttpsCallable("askMediCabinet").call(payload).await()
         val responseMap = result.data as? Map<*, *>
         return responseMap?.get("reply") as? String ?: "No response"
