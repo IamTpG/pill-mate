@@ -1,4 +1,4 @@
-package com.example.pillmate.utils
+package com.example.pillmate.util
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap

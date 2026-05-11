@@ -69,4 +69,18 @@
     <string name="phone_number_placeholder">e.g., 0912345678</string>
     <string name="call_sos">CALL SOS</string>
     <string name="sos_icon_desc">SOS Icon</string>
+    <string name="appointment_greeting">Hi! How are you today?</string>
+    <string name="appointment_search">Search</string>
+    <string name="appointment_add">Add more</string>
+    <string name="appointment_searchbar_placeholder">Search appointment name…</string>
+    <string name="appointment_location">Location</string>
+    <string name="appointment_doctor">Doctor</string>
+    <string name="appointment_description">Description</string>
+    <string name="appointment_add_options_header">What would you like to add?</string>
+    <string name="appointment_add_appointment">Add Appointment</string>
+    <string name="appointment_cancel">Cancel</string>
+    <string name="appointment_add_appointment_header">Appointment Details</string>
+    <string name="appointment_name">Appointment Name</string>
+    <string name="appointment_doctor_name">Doctor Name</string>
+    <string name="appointment_submit">Submit</string>
 </resources>

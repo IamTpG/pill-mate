@@ -6,6 +6,6 @@ import com.example.pillmate.domain.repository.AppointmentRepository
 class UpdateAppointmentUseCase(
 	private val repository: AppointmentRepository
 ) {
-	suspend operator fun invoke(profileId: String, appointmentId: String, appointment: Appointment) =
+	suspend operator fun invoke(profileId: String, appointment: Appointment) =
 		repository.update(profileId, appointment)
 }

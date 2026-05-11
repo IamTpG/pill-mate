@@ -1,10 +1,12 @@
 package com.example.pillmate.presentation.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
@@ -20,14 +23,22 @@ import com.example.pillmate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: String) -> Unit) {
+fun AppointmentCard(
+	log: AppointmentLog,
+	isCareGiver: Boolean,
+	onClickCard: () -> Unit,
+	onSwipeStartToEnd: () -> Unit,
+	onSwipeEndToStart: (appointmentId: String) -> Unit
+) {
 	//val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-
 	
 	val swipetoDismissBoxState = rememberSwipeToDismissBoxState(
 		confirmValueChange = {
 			if (it == SwipeToDismissBoxValue.EndToStart) {
 				onSwipeEndToStart(log.id)
+			}
+			if (it == SwipeToDismissBoxValue.StartToEnd) {
+				onSwipeStartToEnd()
 			}
 			
 			it != SwipeToDismissBoxValue.StartToEnd && it != SwipeToDismissBoxValue.EndToStart
@@ -41,24 +52,45 @@ fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: Stri
 			.padding(vertical = 8.dp),
 		backgroundContent = {
 			when (swipetoDismissBoxState.dismissDirection) {
-				SwipeToDismissBoxValue.StartToEnd -> { }
+				SwipeToDismissBoxValue.StartToEnd -> {
+					if (!isCareGiver) {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.background(
+									color = Color(0xFFD8F3DC),
+									shape = RoundedCornerShape(20.dp)
+								),
+							contentAlignment = Alignment.CenterStart
+						) {
+							Icon(
+								imageVector = Icons.Default.Edit,
+								contentDescription = "Edit item",
+								modifier = Modifier.padding(12.dp),
+								tint = Color.White
+							)
+						}
+					}
+				}
 				
 				SwipeToDismissBoxValue.EndToStart -> {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.background(
-								color = Color.Red,
-								shape = RoundedCornerShape(20.dp)
-							),
-						contentAlignment = Alignment.CenterEnd
-					) {
-						Icon(
-							imageVector = Icons.Default.Delete,
-							contentDescription = "Remove item",
-							modifier = Modifier.padding(12.dp),
-							tint = Color.White
-						)
+					if (!isCareGiver) {
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.background(
+									color = Color.Red,
+									shape = RoundedCornerShape(20.dp)
+								),
+							contentAlignment = Alignment.CenterEnd
+						) {
+							Icon(
+								imageVector = Icons.Default.Delete,
+								contentDescription = "Remove item",
+								modifier = Modifier.padding(12.dp),
+								tint = Color.White
+							)
+						}
 					}
 				}
 				
@@ -69,7 +101,7 @@ fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: Stri
 			Card(
 				shape = RoundedCornerShape(20.dp),
 				colors = CardDefaults.cardColors(containerColor = Color.White),
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth().clickable { onClickCard() }
 			) {
 				Row(
 					modifier = Modifier.fillMaxWidth(),
@@ -79,9 +111,9 @@ fun AppointmentCard(log: AppointmentLog, onSwipeEndToStart: (appointmentId: Stri
 					Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
 						Text(log.name, color = colorResource(R.color.primary_green),fontSize = 16.sp, fontWeight = FontWeight.Bold)
 						Spacer(modifier = Modifier.height(10.dp))
-						Text("Location: ${log.location}")
-						Text("Doctor: ${log.doctorName}")
-						Text("Description: ${log.description}")
+						Text(stringResource(R.string.appointment_location) + ": ${log.location}")
+						Text(stringResource(R.string.appointment_doctor) + ": ${log.doctorName}")
+						Text(stringResource(R.string.appointment_description) + ": ${log.description}")
 					}
 		
 					Icon(
@@ -103,5 +135,5 @@ fun PreviewAppointmentCard() {
 		"Doctor House",
 		"Mr. Thang",
 		"Don't be late"
-	), {})
+	), isCareGiver = false, {}, {}, {})
 }

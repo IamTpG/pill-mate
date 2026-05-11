@@ -22,6 +22,7 @@ import androidx.navigation.NavType
 import com.google.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import androidx.navigation.navArgument
+import com.example.pillmate.presentation.ui.components.AppointmentScheduleForm
 
 @Composable
 fun PillMateApp(
@@ -125,7 +126,8 @@ fun PillMateApp(
 
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onSettingsClick = { navController.navigate(Screen.Settings.route) },
-                        onAIClick = { navController.navigate(Screen.AIChat.route) }
+                        onAIClick = { navController.navigate(Screen.AIChat.route) },
+	                    onMapClick = { navController.navigate(Screen.Map.route)}
                     )
                 }
             }
@@ -151,15 +153,16 @@ fun PillMateApp(
                         navController.navigate("auth_graph")
                     }, onBack = {
                         navController.popBackStack()
-                    })
+                    }, onNavigateToSignIn = { email, password ->
+                        navController.navigate("signin?email=$email&password=$password")
+                    },
+                    
+                    )
                 }
             }
             composable(Screen.AIChat.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    AIChatScreen(
-                        paddingValues = innerPadding,
-                        onBack = { navController.popBackStack() }
-                    )
+                    AIChatScreen(paddingValues = innerPadding,  onBack = { navController.popBackStack() })
                 }
             }
             composable(Screen.DebugMenu.route) {
@@ -169,30 +172,63 @@ fun PillMateApp(
                     viewModel = viewModel
                 )
             }
-
-            composable(
-                route = Screen.Vitals.route,
-                deepLinks = listOf(
-                    androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
-                )
-            ) {
-                MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel()
-                    VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
-                }
-            }
-            composable(route = Screen.Appointment.route) {
+	        composable(route = Screen.Map.route) {
+		        MapScreen(
+			        navController = navController
+		        )
+	        }
+	        composable(
+		        route = Screen.Vitals.route,
+		        deepLinks = listOf(
+			        androidx.navigation.navDeepLink { uriPattern = "pillmate://vitals" }
+		        )
+	        ) {
+		        val auth: com.google.firebase.auth.FirebaseAuth = org.koin.compose.koinInject()
+		        val currentUserId = auth.currentUser?.uid ?: ""
+		        MainScaffold(navController, onSignOutComplete) { innerPadding ->
+			        val viewModel: VitalsViewModel = org.koin.androidx.compose.koinViewModel(
+				        parameters = { org.koin.core.parameter.parametersOf(currentUserId) }
+			        )
+			        VitalsScreen(viewModel = viewModel, paddingValues = innerPadding)
+		        }
+	        }
+           composable(route = Screen.Appointment.route) {backStackEntry ->
                 // Dynamically get the current user ID for the profileId
                 val currentUserId = auth.currentUser?.uid ?: ""
-
+               val parentEntry = remember(backStackEntry) {
+                   navController.getBackStackEntry("main_graph")
+               }
+               val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
                     val appointmentViewModel: AppointmentViewModel = koinViewModel()
-
+                    
                     AppointmentScreen(
                         viewModel = appointmentViewModel,
                         profileId = currentUserId,
-                        paddingValues = innerPadding // Pass the scaffold padding here
+                        paddingValues = innerPadding,
+                        onNavigateToScheduleBuilder = { appointment ->
+                            appointmentScheduleViewModel.setSelectedAppointment(appointment)
+                            appointmentScheduleViewModel.openScheduleBuilder(null)
+                            navController.navigate(Screen.AppointmentSchedule.route)
+                        }
+                        
                     )
+                }
+            }
+            composable(Screen.AppointmentSchedule.route) { backStackEntry ->
+                // Gọi lại ViewModel dùng chung (cùng một instance với màn hình Appointment phía trên)
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val appointmentScheduleViewModel: AppointmentScheduleViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
+                
+                // Bọc trong MainScaffold và sử dụng innerPadding để giải quyết lỗi paddingValues
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+	                AppointmentScheduleForm(
+	                    paddingValues = innerPadding,
+	                    viewModel = appointmentScheduleViewModel,
+	                    onBack = { navController.navigate(Screen.Appointment.route) }
+	                )
                 }
             }
             composable(Screen.ScheduleBuilder.route) {
@@ -201,11 +237,19 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onCompleteMapping = {
                             navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
                             }
                         },
                         onBack = {
-                            navController.popBackStack()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = false
+                                }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -265,9 +309,7 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.filter { screen -> 
-                    screen.route != Screen.Settings.route
-                }.forEach { screen -> NavigationBarItem(
+                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
@@ -277,19 +319,14 @@ fun MainScaffold(
                         },
                         label = null,
                         alwaysShowLabel = false,
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
-                                   (screen.route == Screen.Home.route && (currentDestination?.route == Screen.AIChat.route || currentDestination?.route == Screen.Settings.route)),
+                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
-                            if (screen.route == Screen.Home.route && (currentDestination?.route == Screen.AIChat.route || currentDestination?.route == Screen.Settings.route)) {
-                                navController.popBackStack()
-                                return@NavigationBarItem
-                            }
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
-                                restoreState = screen.route != Screen.Home.route
+                                restoreState = true
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(

@@ -42,9 +42,9 @@ class AppointmentViewModel(
 		}
 	}
 	
-	fun updateAppointment(profileId: String, appointmentId: String, appointment: Appointment) {
+	fun updateAppointment(profileId: String, appointment: Appointment) {
 		viewModelScope.launch {
-			val result = updateAppointmentUseCase(profileId, appointmentId, appointment)
+			val result = updateAppointmentUseCase(profileId, appointment)
 			
 			result.onSuccess {
 			
