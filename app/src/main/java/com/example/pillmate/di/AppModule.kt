@@ -45,7 +45,9 @@ import com.example.pillmate.util.FcmTokenManager
 import com.example.pillmate.data.repository.AIChatRepository
 import com.example.pillmate.data.repository.FirestoreHealthMetricRepositoryImpl
 import com.example.pillmate.data.repository.FirestoreSupplyLogRepositoryImpl
+import com.example.pillmate.data.repository.HybridScheduleRepositoryImpl
 import com.example.pillmate.data.repository.HybridSupplyLogRepositoryImpl
+import com.example.pillmate.data.repository.RoomScheduleRepositoryImpl
 import com.example.pillmate.data.repository.RoomSupplyLogRepositoryImpl
 import com.example.pillmate.domain.repository.HealthMetricRepository
 import com.example.pillmate.domain.repository.SupplyLogRepository
@@ -87,13 +89,14 @@ val appModule = module {
     }
     single<LogRepository> { FirestoreLogRepositoryImpl(get()) }
     single<ScheduleRepository> {
-        val roomRepo = com.example.pillmate.data.repository.RoomScheduleRepositoryImpl(get())
+        val roomRepo = RoomScheduleRepositoryImpl(get())
         val firestoreRepo = FirestoreScheduleRepositoryImpl(get())
-        com.example.pillmate.data.repository.HybridScheduleRepositoryImpl(
-            localScheduleRepo = roomRepo,
-            remoteScheduleRepo = firestoreRepo,
-            networkChecker = NetworkChecker(androidContext())
-        )
+//        HybridScheduleRepositoryImpl(
+//            localScheduleRepo = roomRepo,
+//            remoteScheduleRepo = firestoreRepo,
+//            networkChecker = NetworkChecker(androidContext())
+//        )
+        firestoreRepo
     }
     single<HealthMetricRepository> { FirestoreHealthMetricRepositoryImpl(get()) }
     
