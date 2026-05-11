@@ -34,7 +34,6 @@ fun HomeScreen(
     paddingValues: PaddingValues,
     onDebugClick: () -> Unit,
     onTaskClick: (HomeTask) -> Unit,
-    onSettingsClick: () -> Unit,
     onVaultClick: () -> Unit,
     onAIClick: () -> Unit,
     onMapClick: () -> Unit,
@@ -72,7 +71,7 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick, onVaultClick = onVaultClick, onMapClick = onMapClick, onSuggestionClick)
+            HomeHeader(onDebugClick = onDebugClick, onVaultClick = onVaultClick, onMapClick = onMapClick, onSuggestionClick)
 
             LazyColumn(
                 modifier = Modifier

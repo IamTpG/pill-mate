@@ -125,10 +125,9 @@ fun PillMateApp(
                         },
 
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
-                        onSettingsClick = { navController.navigate(Screen.Settings.route) },
                         onVaultClick = { navController.navigate(Screen.ImageVault.route) },
                         onAIClick = { navController.navigate(Screen.AIChat.route) },
-	                      onMapClick = { navController.navigate(Screen.Map.route) },
+                        onMapClick = { navController.navigate(Screen.Map.route) },
                         onSuggestionClick = { navController.navigate(Screen.Suggestion.route)}
                     )
                 }
@@ -328,7 +327,8 @@ fun MainScaffold(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.filter { it.route != Screen.Settings.route }.forEach { screen ->                    NavigationBarItem(
+                bottomNavItems.forEach { screen ->
+                    NavigationBarItem(
                         icon = {
                             Icon(
                                 painter = painterResource(id = screen.icon),
