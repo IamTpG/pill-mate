@@ -247,4 +247,18 @@
     <string name="interval_weekly">Hàng tuần</string>
     <string name="interval_2weeks">2 tuần</string>
     <string name="interval_monthly">Hàng tháng</string>
+
+    <string name="switch_account">Chuyển tài khoản</string>
+    <string name="switch_account_title">Chuyển tài khoản</string>
+    <string name="switch_account_subtitle">Chọn tài khoản bạn muốn đăng nhập</string>
+    <string name="no_saved_accounts">Chưa có tài khoản nào được lưu</string>
+    <string name="google_login">Google</string>
+    <string name="email_login">Email</string>
+
+    <string name="invalid_qr_code">Mã QR không hợp lệ!</string>
+    <string name="invalid_code_length">Mã phải có đúng 6 ký tự.</string>
+    <string name="scan_qr_code">Quét mã QR</string>
+    <string name="scan_qr_prompt">Hướng camera về phía mã QR của người bệnh</string>
+    <string name="link_account">Liên kết</string>
+    <string name="close_label">Đóng</string>
 </resources>

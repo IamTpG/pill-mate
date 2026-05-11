@@ -246,4 +246,18 @@
     <string name="interval_weekly">Weekly</string>
     <string name="interval_2weeks">2 Weeks</string>
     <string name="interval_monthly">Monthly</string>
+
+    <string name="switch_account">Switch Account</string>
+    <string name="switch_account_title">Switch Account</string>
+    <string name="switch_account_subtitle">Choose an account to sign in</string>
+    <string name="no_saved_accounts">No saved accounts</string>
+    <string name="google_login">Google</string>
+    <string name="email_login">Email</string>
+
+    <string name="invalid_qr_code">Invalid QR Code!</string>
+    <string name="invalid_code_length">Code must be exactly 6 characters.</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="scan_qr_prompt">Point camera at the patient\'s QR code</string>
+    <string name="link_account">Link</string>
+    <string name="close_label">Close</string>
 </resources>
