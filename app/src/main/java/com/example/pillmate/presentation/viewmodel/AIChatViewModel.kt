@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -119,7 +120,7 @@ class AIChatViewModel(
                     runCatching { repository.updateSessionTitle(profileId, sessionId, textToSend.take(60)) }
                 }
 
-                runCatching { repository.askAssistant(textToSend) }
+                runCatching { repository.askAssistant(profileId, textToSend) }
                     .onSuccess { reply ->
                         repository.addMessage(
                             profileId = profileId,
@@ -158,9 +159,16 @@ class AIChatViewModel(
         }
     }
 
+    /**
+     * Must match [com.example.pillmate.presentation.viewmodel.CabinetViewModel.getEffectiveProfileId]:
+     * if nothing marked current in Room, Cabinet uses first local profile, not Auth UID.
+     * AI previously fell back only to uid → wrong Firestore path vs cabinet.
+     */
     private suspend fun resolveProfileId(): String {
         val active = profileDao.getActiveProfile()?.id?.takeIf { it.isNotBlank() }
         if (active != null) return active
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id?.takeIf { it.isNotBlank() }
+        if (anyLocal != null) return anyLocal
         return firebaseAuth.currentUser?.uid ?: ""
     }
 }

@@ -9,19 +9,52 @@ if (!admin.apps.length) {
 
 const groqApiKey = defineSecret("GROQ_API_KEY");
 
+function hasDeletedAtField(data: admin.firestore.DocumentData | undefined): boolean {
+    return data?.deletedAt != null;
+}
+
+async function assertCallerAccessToProfile(profileId: string, authUid: string): Promise<void> {
+    if (profileId === authUid) {
+        return;
+    }
+    const doc = await admin.firestore().collection("profiles").doc(profileId).get();
+    if (!doc.exists) {
+        throw new HttpsError("not-found", "Profile not found.");
+    }
+    const accountId = doc.data()?.accountId;
+    if (typeof accountId === "string" && accountId === authUid) {
+        return;
+    }
+    const caregiverSnap = await admin
+        .firestore()
+        .collection("profiles")
+        .doc(profileId)
+        .collection("caregiverLinks")
+        .where("caregiverAccountId", "==", authUid)
+        .limit(1)
+        .get();
+    if (!caregiverSnap.empty) {
+        return;
+    }
+    throw new HttpsError("permission-denied", "Cannot access this profile.");
+}
+
 // Tool: The Database Fetcher
-async function fetchUserCabinetData(uid: string): Promise<string> {
-    const profileRef = admin.firestore().collection("profiles").doc(uid);
+async function fetchUserCabinetData(profileId: string): Promise<string> {
+    const profileRef = admin.firestore().collection("profiles").doc(profileId);
     const [profileDoc, medicationsSnapshot, schedulesSnapshot] = await Promise.all([
         profileRef.get(),
         profileRef.collection("medications").get(),
         profileRef.collection("schedules").get(),
     ]);
 
-    if (!profileDoc.exists) return "No profile found.";
+    if (!profileDoc.exists) {
+        return "DATABASE RESULT: User profile does not exist yet. Cabinet is empty.";
+    }
 
     // 1. Detailed Medication Mapping
     const medications = medicationsSnapshot.docs
+        .filter((doc) => !hasDeletedAtField(doc.data()))
         .map((doc) => {
             const data = doc.data();
             const name = typeof data.name === "string" ? data.name : "";
@@ -38,6 +71,7 @@ async function fetchUserCabinetData(uid: string): Promise<string> {
 
     // 2. Detailed Schedule & Dose Mapping
     const schedules = schedulesSnapshot.docs
+        .filter((doc) => !hasDeletedAtField(doc.data()))
         .map((doc) => {
             const data = doc.data();
             const scheduleName = typeof data.name === "string" ? data.name : "";
@@ -69,11 +103,15 @@ async function fetchUserCabinetData(uid: string): Promise<string> {
             ].filter(Boolean).join(" | ");
         })
         .filter(Boolean);
+    if (medications.length === 0 && schedules.length === 0) {
+        return "DATABASE RESULT: The user's cabinet is completely empty. No medications or schedules found.";
+    }
 
     return [
+        "DATABASE RESULT:",
         medications.length > 0 ? `Cabinet medications: ${medications.join("; ")}.` : "Cabinet medications: none.",
         schedules.length > 0 ? `Medication schedules: ${schedules.join("; ")}.` : "Medication schedules: none."
-    ].join(" ");
+    ].join("\n");
 }
 
 // Main Function
@@ -83,9 +121,16 @@ export const askMediCabinet = onCall(
         if (!request.auth) {
             throw new HttpsError("unauthenticated", "You must be logged in.");
         }
-
-        const uid = request.auth.uid;
-        const userMessage = request.data.message;
+        const rawPid = request.data?.profileId;
+        const trimmed = typeof rawPid === "string" ? rawPid.trim() : "";
+        const requestedProfileId = trimmed || request.auth.uid;
+        await assertCallerAccessToProfile(requestedProfileId, request.auth.uid);
+        const activeProfileId = requestedProfileId;
+        const userMessage = request.data?.message;
+        if (typeof userMessage !== "string" || !userMessage.trim()) {
+            throw new HttpsError("invalid-argument", "Message is required.");
+        }
+        const trimmedMessage = userMessage.trim();
 
         try {
             const groq = new Groq({ apiKey: groqApiKey.value() });
@@ -120,11 +165,12 @@ export const askMediCabinet = onCall(
                     - NEVER use the words "routing rule", "tool", "get_user_cabinet_data", or "APP INSTRUCTION MANUAL" in your replies to the user.
                     - NEVER say "I have called the tool" or "Based on the information retrieved".
                     - Just answer the question directly, naturally, and conversationally.
-                    - If the user asks what is in their cabinet, ACTUALLY LIST the items found in the data!`
+                    - If the user asks what is in their cabinet, ACTUALLY LIST the items found in the data!
+                    - ESCAPE HATCH: If the database tool returns that the cabinet is EMPTY or has no medications, DO NOT invent duplicates or say the data is unclear. Simply tell the user their cabinet is empty, and politely offer to help them add a medication using the App Manual steps.`
                 },
                 {
                     role: "user",
-                    content: userMessage
+                    content: trimmedMessage
                 }
             ];
 
@@ -156,8 +202,8 @@ export const askMediCabinet = onCall(
 
                 if (toolCall.function.name === "get_user_cabinet_data") {
 
-                    console.log("AI requested database. Fetching now...");
-                    const realDatabaseData = await fetchUserCabinetData(uid);
+                    console.log(`AI requested database for profile: ${activeProfileId}. Fetching now...`);
+                    const realDatabaseData = await fetchUserCabinetData(activeProfileId);
 
                     messages.push({
                         role: "tool",
