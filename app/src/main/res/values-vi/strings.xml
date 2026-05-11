@@ -151,4 +151,22 @@
     <string name="refill_med_title">Bổ sung thuốc</string>
     <string name="current_stock_info">Hiện có: %1$d %2$s</string>
     <string name="amount_to_add_label">Số lượng bổ sung</string>
+
+    <string name="med_detail_title">Chi tiết thuốc</string>
+    <string name="take_as_prescribed">Dùng theo chỉ định</string>
+    <string name="status_active_prescription">Đơn thuốc hiện tại</string>
+    <string name="label_amount">SỐ LƯỢNG</string>
+    <string name="label_expiry">HẠN DÙNG</string>
+    <string name="expiry_unknown">Không rõ</string>
+    <string name="no_logs_yet">Chưa có lịch sử</string>
+    <string name="log_taken">Đã dùng %1$d %2$s</string>
+    <string name="log_refilled">Đã bổ sung +%1$d %2$s</string>
+    <string name="log_initial">Số lượng ban đầu +%1$d %2$s</string>
+    <string name="log_adjusted">Điều chỉnh +%1$d %2$s</string>
+    <string name="status_out_of_stock">Hết hàng</string>
+    <string name="action_log_dose">Ghi liều dùng</string>
+    <string name="action_refill_plus">+ Bổ sung</string>
+    <string name="delete_med_title">Xóa thuốc</string>
+    <string name="delete_med_confirm">Bạn có chắc chắn muốn xóa thuốc này không?</string>
+    <string name="auto_log">Tự động ghi</string>
 </resources>

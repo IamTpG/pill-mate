@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,10 +72,10 @@ fun MedicationDetailScreen(
         ) {
             // Top Bar
             CenterAlignedTopAppBar(
-                title = { Text("Medication Details", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(id = R.string.med_detail_title), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = R.string.back_desc), tint = Color.White)
                     }
                 },
                 actions = {
@@ -137,7 +138,7 @@ fun MedicationDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = medication.description?.takeIf { it.isNotBlank() } ?: "Take as prescribed",
+                                text = medication.description?.takeIf { it.isNotBlank() } ?: stringResource(R.string.take_as_prescribed),
                                 fontSize = 14.sp,
                                 color = Color.Gray
                             )
@@ -145,8 +146,9 @@ fun MedicationDetailScreen(
                             val isExpired = medication.expirationDate?.before(java.util.Date()) == true
                             val badgeColor = if (isExpired) Color(0xFFFFEBEE) else Color(0xFFFCF4F4)
                             val textColor = if (isExpired) Color(0xFFD32F2F) else Color(0xFF333333)
-                            val badgeText = if (isExpired) "Expired" else "Active Prescription"
-                            
+                            val badgeText = if (isExpired) stringResource(id = R.string.status_expired)
+                                            else stringResource(id = R.string.status_active_prescription)
+
                             Box(
                                 modifier = Modifier.background(badgeColor, RoundedCornerShape(16.dp)).padding(horizontal = 16.dp, vertical = 6.dp)
                             ) {
@@ -166,16 +168,16 @@ fun MedicationDetailScreen(
                         val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                         InfoCard(
                             modifier = Modifier.weight(1f),
-                            label = "AMOUNT",
+                            label = stringResource(id = R.string.label_amount),
                             value = "$qty $unitLabel",
                             icon = Icons.Outlined.Info
                         )
                         val expiryDate = medication.expirationDate?.let {
                             SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it)
-                        } ?: "Unknown"
+                        } ?: stringResource(id = R.string.expiry_unknown)
                         InfoCard(
                             modifier = Modifier.weight(1f),
-                            label = "EXPIRY",
+                            label = stringResource(id = R.string.label_expiry),
                             value = expiryDate,
                             icon = Icons.Outlined.DateRange
                         )
@@ -185,20 +187,20 @@ fun MedicationDetailScreen(
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
                     if (logs.isEmpty()) {
-                        Text("No logs yet", modifier = Modifier.padding(horizontal = 16.dp), color = Color.Gray)
+                        Text(stringResource(id = R.string.no_logs_yet), modifier = Modifier.padding(horizontal = 16.dp), color = Color.Gray)
                     } else {
                         logs.sortedByDescending { it.createdAt }.forEach { log ->
                             val status = if (log.changeAmount <= 0) {
                                 val qty = kotlin.math.abs(log.changeAmount).toInt()
                                 val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
-                                "Taken $qty $unitLabel"
+                                stringResource(id = R.string.log_taken, qty, unitLabel)
                             } else {
                                 val qty = log.changeAmount.toInt()
                                 val unitLabel = if (qty == 1) medication.unit.removeSuffix("s") else medication.unit
                                 when (log.reason) {
-                                    "REFILL" -> "Refilled +$qty $unitLabel"
-                                    "INITIAL_STOCK" -> "Initial +$qty $unitLabel"
-                                    else -> "Adjusted +$qty $unitLabel"
+                                    "REFILL" -> stringResource(id = R.string.log_refilled, qty, unitLabel)
+                                    "INITIAL_STOCK" -> stringResource(id = R.string.log_initial, qty, unitLabel)
+                                    else -> stringResource(id = R.string.log_adjusted, qty, unitLabel)
                                 }
                             }
                             val timestampStr = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(log.createdAt)
@@ -213,9 +215,9 @@ fun MedicationDetailScreen(
             val isOutOfStock = medication.quantity.toInt() <= 0
             val isLogDisabled = isExpired || isOutOfStock
             val logLabel = when {
-                isExpired -> "Expired"
-                isOutOfStock -> "Out of Stock"
-                else -> "Log Dose"
+                isExpired -> stringResource(id = R.string.status_expired)
+                isOutOfStock -> stringResource(id = R.string.status_out_of_stock)
+                else -> stringResource(id = R.string.action_log_dose)
             }
 
             Row(
@@ -245,7 +247,7 @@ fun MedicationDetailScreen(
                         containerColor = Color(0xFF2E8B6E)
                     )
                 ) {
-                    Text("+ Refill", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.action_refill_plus), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -254,8 +256,8 @@ fun MedicationDetailScreen(
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
                 containerColor = Color.White,
-                title = { Text("Delete Medication", color = Color.Black) },
-                text = { Text("Are you sure you want to delete this medication?", color = Color.Gray) },
+                title = { Text(stringResource(id = R.string.delete_med_title), color = Color.Black) },
+                text = { Text(stringResource(id = R.string.delete_med_confirm), color = Color.Gray) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -264,12 +266,12 @@ fun MedicationDetailScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
                     ) {
-                        Text("Delete", color = Color.White)
+                        Text(stringResource(id = R.string.delete), color = Color.White)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Cancel", color = Color.Gray)
+                        Text(stringResource(id = R.string.cancel), color = Color.Gray)
                     }
                 }
             )
@@ -331,7 +333,7 @@ fun HistoryCard(status: String, timestamp: String, isSkipped: Boolean, reason: S
             Box(
                 modifier = Modifier.background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp).widthIn(max = 100.dp)
             ) {
-                Text(reason.takeIf { it.isNotBlank() } ?: "Auto-Log", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(reason.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.auto_log), fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
     }
