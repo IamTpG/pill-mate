@@ -52,6 +52,7 @@ import com.example.pillmate.domain.repository.SupplyLogRepository
 import com.example.pillmate.notification.HealthReminderManager
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
 import com.example.pillmate.presentation.viewmodel.AppointmentScheduleViewModel
+import com.example.pillmate.presentation.viewmodel.SuggestionViewModel
 import com.example.pillmate.presentation.viewmodel.VitalsViewModel
 import com.example.pillmate.util.NetworkChecker
 import com.google.firebase.functions.FirebaseFunctions
@@ -186,4 +187,5 @@ val viewModelModule = module {
     viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }
     viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
     viewModel { AppointmentScheduleViewModel(get(), get(), get(), get()) }
+    viewModel { SuggestionViewModel() }
 }
