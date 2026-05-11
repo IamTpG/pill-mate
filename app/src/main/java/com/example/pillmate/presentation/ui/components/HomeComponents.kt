@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,7 +52,7 @@ fun HomeHeader(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Home",
+            text = stringResource(R.string.home_title),
             color = Color.White,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
@@ -67,14 +68,14 @@ fun HomeHeader(
             IconButton(onClick = onDebugClick) {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = "Debug Menu",
+                    contentDescription = stringResource(R.string.debug_menu_desc),
                     tint = Color.White
                 )
             }
             IconButton(onClick = onVaultClick) {
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                    contentDescription = "Medical Vault",
+                    contentDescription = stringResource(R.string.medical_vault_desc),
                     tint = Color.White
                 )
             }
@@ -88,7 +89,7 @@ fun HomeHeader(
 	        IconButton(onClick = onMapClick) {
 		        Icon(
 			        imageVector = Icons.Default.LocationOn,
-			        contentDescription = "Open Map",
+			        contentDescription = stringResource(R.string.open_map_desc),
 			        tint = Color.White
 		        )
 	        }
@@ -111,7 +112,7 @@ fun ProgressCard(
         Box(modifier = Modifier.padding(20.dp)) {
             Column {
                 Text(
-                    text = if (isToday) "TODAY'S PROGRESS" else "DAILY PROGRESS",
+                    text = if (isToday) stringResource(R.string.todays_progress) else stringResource(R.string.daily_progress),
                     color = colorResource(id = R.color.primary_green),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -128,7 +129,7 @@ fun ProgressCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "tasks completed",
+                        text = stringResource(R.string.tasks_completed),
                         color = colorResource(id = R.color.status_upcoming),
                         fontSize = 16.sp
                     )
@@ -289,12 +290,12 @@ fun TaskItem(
 @Composable
 fun StatusBadge(status: LogStatus?) {
     val (statusText, textColorRes, bgColor) = when (status) {
-        LogStatus.COMPLETED -> Triple("Done", R.color.status_done, Color(0xFFD5F5E3))
-        LogStatus.MISSED -> Triple("Missed", R.color.status_missed, Color(0xFFFADBD8))
-        LogStatus.SKIPPED -> Triple("Skipped", R.color.status_upcoming, Color(0xFFEBEDEF))
-        LogStatus.SNOOZED -> Triple("Snoozed", R.color.status_snoozed, Color(0xFFFCF3CF))
-        LogStatus.LATE -> Triple("Late", R.color.status_missed, Color(0xFFFADBD8))
-        null -> Triple("Upcoming", R.color.status_upcoming, Color(0xFFEBF5FB))
+        LogStatus.COMPLETED -> Triple(stringResource(R.string.status_done), R.color.status_done, Color(0xFFD5F5E3))
+        LogStatus.MISSED -> Triple(stringResource(R.string.status_missed), R.color.status_missed, Color(0xFFFADBD8))
+        LogStatus.SKIPPED -> Triple(stringResource(R.string.status_skipped), R.color.status_upcoming, Color(0xFFEBEDEF))
+        LogStatus.SNOOZED -> Triple(stringResource(R.string.status_snoozed), R.color.status_snoozed, Color(0xFFFCF3CF))
+        LogStatus.LATE -> Triple(stringResource(R.string.status_late), R.color.status_missed, Color(0xFFFADBD8))
+        null -> Triple(stringResource(R.string.status_upcoming), R.color.status_upcoming, Color(0xFFEBF5FB))
     }
 
     Surface(

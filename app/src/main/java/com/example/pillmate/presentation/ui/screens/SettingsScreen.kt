@@ -356,7 +356,7 @@ fun ProfileOptionsScreen(
 
         if (!isCaregiver) {
             SettingsButton(
-                text = "Switch Account",
+                text = stringResource(R.string.switch_account),
                 icon = ImageVector.vectorResource(R.drawable.ic_switch_account),
                 onClick = onShowSwitchAccountDialog
             )
@@ -840,6 +840,8 @@ fun CaregiverHubScreen(
 
 @Composable
 fun FollowedTabContent(viewModel: ProfileViewModel) {
+    val context = LocalContext.current
+
     val followedProfiles by viewModel.followedProfiles.collectAsState()
     val currentProfile by viewModel.currentLocalProfile.collectAsState()
 
@@ -861,7 +863,7 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
                     if (success) shareCodeInput = ""
                 }
             } else {
-                linkMessage = "Mã QR không hợp lệ!"
+                linkMessage = "Invalid QR Code"
             }
         }
     }
@@ -937,7 +939,7 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
                         onClick = {
                             val options = ScanOptions()
                             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                            options.setPrompt("Hướng camera về phía mã QR của người bệnh")
+                            options.setPrompt("QR")
                             options.setCameraId(0)
                             options.setBeepEnabled(true)
                             options.setOrientationLocked(false)
@@ -948,7 +950,7 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
                     ) {
                         Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Quét mã QR", color = Color.White)
+                        Text(stringResource(R.string.scan_qr_code), color = Color.White)
                     }
 
                     if (linkMessage.isNotEmpty()) {
@@ -965,17 +967,17 @@ fun FollowedTabContent(viewModel: ProfileViewModel) {
                             if (success) { shareCodeInput = "" }
                         }
                     } else {
-                        linkMessage = "Mã phải có đúng 6 ký tự."
+                        linkMessage = "Must be 6 characters"
                     }
                 }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)) {
-                    Text("Liên kết")
+                    Text(stringResource(R.string.link_account))
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showLinkDialog = false
                     linkMessage = ""
-                }) { Text("Đóng", color = Color.Gray) }
+                }) { Text(stringResource(R.string.close_label), color = Color.Gray) }
             }
         )
     }
@@ -1006,7 +1008,7 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(stringResource(id = R.string.access_code_label), color = Color.Gray, fontSize = 14.sp)
-            Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
+            Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = Color.White, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
         }

@@ -111,11 +111,11 @@ fun AppointmentCard(
 					Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
 						Text(log.name, color = colorResource(R.color.primary_green),fontSize = 16.sp, fontWeight = FontWeight.Bold)
 						Spacer(modifier = Modifier.height(10.dp))
-						Text(stringResource(R.string.appointment_location) + ": ${log.location}")
-						Text(stringResource(R.string.appointment_doctor) + ": ${log.doctorName}")
-						Text(stringResource(R.string.appointment_description) + ": ${log.description}")
+						Text(stringResource(R.string.appointment_location_value, log.location))
+						Text(stringResource(R.string.appointment_doctor_value, log.doctorName))
+						Text(stringResource(R.string.appointment_description_value, log.description))
 					}
-		
+
 					Icon(
 						painter = painterResource(R.drawable.ic_person_clock),
 						contentDescription = "Appointment Card Icon"

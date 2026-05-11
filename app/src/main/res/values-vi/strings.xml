@@ -92,4 +92,173 @@
     <string name="appointment_name">Tên lịch hẹn</string>
     <string name="appointment_doctor_name">Tên Bác sĩ</string>
     <string name="appointment_submit">Tạo</string>
+
+    <string name="home_title">Trang chủ</string>
+    <string name="debug_menu_desc">Menu gỡ lỗi</string>
+    <string name="medical_vault_desc">Thư viện y tế</string>
+    <string name="open_map_desc">Mở bản đồ</string>
+    <string name="suggestion_desc">Gợi ý</string>
+    <string name="todays_progress">TIẾN ĐỘ HÔM NAY</string>
+    <string name="daily_progress">TIẾN ĐỘ HÀNG NGÀY</string>
+    <string name="tasks_completed">nhiệm vụ hoàn thành</string>
+    <string name="todays_schedule">Lịch trình hôm nay</string>
+    <string name="schedule_for">Lịch trình ngày %1$s</string>
+    <string name="ai_chat_desc">Trò chuyện AI</string>
+
+    <string name="status_done">Xong</string>
+    <string name="status_missed">Bỏ lỡ</string>
+    <string name="status_skipped">Bỏ qua</string>
+    <string name="status_snoozed">Tạm dừng</string>
+    <string name="status_late">Muộn</string>
+    <string name="status_upcoming">Sắp tới</string>
+
+    <string name="cabinet_title">Tủ thuốc của bạn</string>
+    <string name="active_meds_label">THUỐC ĐANG DÙNG</string>
+    <string name="low_stock_label">SẮP HẾT</string>
+    <string name="search_library_title">Tra cứu thư viện thuốc</string>
+    <string name="search_library_desc">Duyệt thông tin thuốc từ FDA</string>
+    <string name="search_cabinet_placeholder">Tìm trong tủ thuốc…</string>
+    <string name="your_medications">Thuốc của bạn</string>
+    <string name="tab_active">Hiện tại</string>
+    <string name="tab_expired">Hết hạn</string>
+    <string name="no_active_meds">Không có thuốc nào đang dùng</string>
+    <string name="no_expired_meds">Không có thuốc hết hạn</string>
+    <string name="add_med_fab_desc">Thêm thuốc</string>
+
+    <string name="status_expired">Hết hạn</string>
+    <string name="status_refill_soon">Cần mua thêm</string>
+    <string name="status_in_stock">Còn hàng</string>
+    <string name="med_qty_left">Còn %1$d %2$s</string>
+
+    <string name="add_medication_title">Thêm thuốc mới</string>
+    <string name="edit_medication_title">Chỉnh sửa thuốc</string>
+    <string name="med_name_hint">Tên thuốc (VD: Ibuprofen)</string>
+    <string name="med_desc_hint">Mô tả (VD: Hàng ngày, khi cần)</string>
+    <string name="med_unit_hint">Đơn vị (VD: Viên, mg)</string>
+    <string name="med_inventory_hint">Số lượng tồn kho hiện tại</string>
+    <string name="expires_label">Hết hạn: %1$s</string>
+    <string name="select_exp_date">Chọn ngày hết hạn</string>
+    <string name="error_name_req">Vui lòng nhập tên thuốc</string>
+    <string name="error_unit_req">Vui lòng nhập đơn vị</string>
+    <string name="error_invalid_num">Số lượng không hợp lệ</string>
+
+    <string name="action_add">Thêm</string>
+    <string name="action_refill">Thêm</string>
+
+    <string name="log_dose_title">Ghi nhận liều dùng</string>
+    <string name="amount_taken_label">Số lượng đã dùng</string>
+    <string name="reason_note_label">Lý do / Ghi chú</string>
+    <string name="refill_med_title">Bổ sung thuốc</string>
+    <string name="current_stock_info">Hiện có: %1$d %2$s</string>
+    <string name="amount_to_add_label">Số lượng bổ sung</string>
+
+    <string name="med_detail_title">Chi tiết thuốc</string>
+    <string name="take_as_prescribed">Dùng theo chỉ định</string>
+    <string name="status_active_prescription">Đơn thuốc hiện tại</string>
+    <string name="label_amount">SỐ LƯỢNG</string>
+    <string name="label_expiry">HẠN DÙNG</string>
+    <string name="expiry_unknown">Không rõ</string>
+    <string name="no_logs_yet">Chưa có lịch sử</string>
+    <string name="log_taken">Đã dùng %1$d %2$s</string>
+    <string name="log_refilled">Đã bổ sung +%1$d %2$s</string>
+    <string name="log_initial">Số lượng ban đầu +%1$d %2$s</string>
+    <string name="log_adjusted">Điều chỉnh +%1$d %2$s</string>
+    <string name="status_out_of_stock">Hết hàng</string>
+    <string name="action_log_dose">Ghi liều dùng</string>
+    <string name="action_refill_plus">+ Bổ sung</string>
+    <string name="delete_med_title">Xóa thuốc</string>
+    <string name="delete_med_confirm">Bạn có chắc chắn muốn xóa thuốc này không?</string>
+    <string name="auto_log">Tự động ghi</string>
+
+    <string name="ai_chat_history">Lịch sử trò chuyện</string>
+    <string name="ai_new_chat">Trò chuyện mới</string>
+    <string name="ai_chats_label">Danh sách trò chuyện</string>
+    <string name="ai_delete_chat_desc">Xóa trò chuyện</string>
+    <string name="ai_greeting">Xin chào! Tôi là Trợ lý PillMate. Tôi có thể giúp gì cho việc quản lý thuốc của bạn hôm nay?</string>
+    <string name="ai_menu_desc">Menu</string>
+    <string name="ai_chat_title">PillMate AI</string>
+    <string name="ai_back_desc">Quay lại</string>
+    <string name="ai_now_label">Bây giờ</string>
+    <string name="ai_disclaimer">PillMate AI cung cấp thông tin, không phải lời khuyên y tế. Hãy tham khảo ý kiến bác sĩ trong trường hợp khẩn cấp.</string>
+    <string name="ai_input_placeholder">Hỏi về các loại thuốc…</string>
+    <string name="ai_send_desc">Gửi</string>
+    <string name="ai_delete_confirm_title">Xóa cuộc trò chuyện?</string>
+    <string name="ai_delete_confirm_text">Bạn có chắc chắn muốn xóa cuộc trò chuyện này không? Hành động này không thể hoàn tác.</string>
+
+    <string name="vitals_title">Chỉ số sức khỏe</string>
+    <string name="hydration_goal">Mục tiêu uống nước</string>
+    <string name="completed_percent">Hoàn thành %1$d%%</string>
+    <string name="remaining_ml">Còn lại %1$dml</string>
+    <string name="blood_pressure_label">HUYẾT ÁP</string>
+    <string name="body_weight_label">CÂN NẶNG</string>
+    <string name="recent_activity">HOẠT ĐỘNG GẦN ĐÂY</string>
+    <string name="view_all">Xem tất cả</string>
+    <string name="settings_desc">Cài đặt</string>
+
+    <string name="metric_water">Nước</string>
+    <string name="metric_blood_pressure">Huyết áp</string>
+    <string name="metric_weight">Cân nặng</string>
+    <string name="metric_heart_rate">Nhịp tim</string>
+
+    <string name="weekly_insights">Phân tích hàng tuần</string>
+    <string name="weekly_summary">Tổng hợp trong 7 ngày qua</string>
+    <string name="avg_bp">Huyết áp TB</string>
+    <string name="total_water">Tổng lượng nước</string>
+    <string name="avg_weight">Cân nặng TB</string>
+    <string name="activity_overview">Biểu đồ hoạt động</string>
+    <string name="logs_count">%1$d lượt ghi</string>
+    <string name="close_report">Đóng báo cáo</string>
+
+    <string name="select_medication_title">Chọn thuốc</string>
+    <string name="no_active_meds_found">Không tìm thấy thuốc nào đang dùng trong tủ thuốc của bạn.</string>
+    <string name="active_medications_label">THUỐC ĐANG DÙNG</string>
+
+    <string name="appointment_title">Lịch hẹn</string>
+    <string name="cabinet_header_title">Tủ thuốc của bạn</string>
+    <string name="cabinet_header_sub">Theo dõi hành trình sức khỏe của bạn</string>
+    <string name="overview_label">Tổng quan</string>
+    <string name="total_appointments">Tổng lịch hẹn: %1$d</string>
+    <string name="add_appointment_label">Thêm lịch hẹn</string>
+    <string name="edit_appointment_label">Sửa lịch hẹn</string>
+    <string name="btn_create">Tạo</string>
+    <string name="btn_save">Lưu</string>
+    <string name="btn_cancel">Hủy</string>
+    <string name="appointment_location_value">Địa điểm: %1$s</string>
+    <string name="appointment_doctor_value">Bác sĩ: %1$s</string>
+    <string name="appointment_description_value">Mô tả: %1$s</string>
+
+    <string name="search_desc">Tìm kiếm</string>
+    <string name="clear_search_desc">Xóa / Đóng tìm kiếm</string>
+    <string name="edit_item_desc">Chỉnh sửa</string>
+    <string name="remove_item_desc">Xóa</string>
+    <string name="appointment_card_icon_desc">Biểu tượng lịch hẹn</string>
+
+    <string name="health_notif_title">Thông báo sức khỏe</string>
+    <string name="health_notif_sub">Cài đặt được đồng bộ với hồ sơ của bạn.</string>
+    <string name="reminder_freq_label">Tần suất nhắc nhở:</string>
+    <string name="label_hydration">Nhắc uống nước</string>
+    <string name="label_bp">Nhắc đo huyết áp</string>
+    <string name="label_weight">Nhắc cân nặng</string>
+    <string name="interval_1h">1 giờ</string>
+    <string name="interval_4h">4 giờ</string>
+    <string name="interval_8h">8 giờ</string>
+    <string name="interval_daily">Hàng ngày</string>
+    <string name="interval_2days">2 ngày</string>
+    <string name="interval_weekly">Hàng tuần</string>
+    <string name="interval_2weeks">2 tuần</string>
+    <string name="interval_monthly">Hàng tháng</string>
+
+    <string name="switch_account">Chuyển tài khoản</string>
+    <string name="switch_account_title">Chuyển tài khoản</string>
+    <string name="switch_account_subtitle">Chọn tài khoản bạn muốn đăng nhập</string>
+    <string name="no_saved_accounts">Chưa có tài khoản nào được lưu</string>
+    <string name="google_login">Google</string>
+    <string name="email_login">Email</string>
+
+    <string name="invalid_qr_code">Mã QR không hợp lệ!</string>
+    <string name="invalid_code_length">Mã phải có đúng 6 ký tự.</string>
+    <string name="scan_qr_code">Quét mã QR</string>
+    <string name="scan_qr_prompt">Hướng camera về phía mã QR của người bệnh</string>
+    <string name="link_account">Liên kết</string>
+    <string name="close_label">Đóng</string>
 </resources>

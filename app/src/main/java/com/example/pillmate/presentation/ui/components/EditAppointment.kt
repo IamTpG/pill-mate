@@ -1,8 +1,10 @@
 package com.example.pillmate.presentation.ui.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.pillmate.domain.model.Appointment
+import com.example.pillmate.R
 
 @Composable
 fun EditAppointment(
@@ -11,8 +13,8 @@ fun EditAppointment(
 	onDismissRequest: () -> Unit
 ) {
 	AppointmentForm(
-		"Edit Appointment",
-		"Save",
+		stringResource(R.string.edit_appointment_label),
+		stringResource(R.string.save),
 		appointment,
 		onSave,
 		onDismissRequest

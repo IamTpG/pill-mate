@@ -10,10 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
+import com.example.pillmate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,27 +39,26 @@ fun HealthRemindersBottomSheet(
                 .padding(bottom = 40.dp, start = 24.dp, end = 24.dp)
         ) {
             Text(
-                text = "Health Notifications",
+                text = stringResource(R.string.health_notif_title),
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
-                text = "Settings are synced with your profile.",
+                text = stringResource(R.string.health_notif_sub),
                 color = Color.Gray,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             // Dynamic options per type
-            val hydrationOptions = listOf(60 to "1h", 240 to "4h", 480 to "8h", 1440 to "Daily")
-            val bpOptions = listOf(1440 to "Daily", 2880 to "2 Days", 10080 to "Weekly")
-            val weightOptions = listOf(10080 to "Weekly", 20160 to "2 Weeks", 43200 to "Monthly")
-
+            val hydrationOptions = listOf(60 to R.string.interval_1h, 240 to R.string.interval_4h, 480 to R.string.interval_8h, 1440 to R.string.interval_daily)
+            val bpOptions = listOf(1440 to R.string.interval_daily, 2880 to R.string.interval_2days, 10080 to R.string.interval_weekly)
+            val weightOptions = listOf(10080 to R.string.interval_weekly, 20160 to R.string.interval_2weeks, 43200 to R.string.interval_monthly)
             profile?.let { p ->
                 HealthReminderItem(
-                    label = "Hydration",
+                    label = stringResource(R.string.label_hydration),
                     initEnabled = p.hydrationReminderEnabled,
                     initInterval = p.hydrationInterval,
                     options = hydrationOptions,
@@ -66,7 +67,7 @@ fun HealthRemindersBottomSheet(
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
                 HealthReminderItem(
-                    label = "Blood Pressure",
+                    label = stringResource(R.string.blood_pressure_label),
                     initEnabled = p.bpReminderEnabled,
                     initInterval = p.bpInterval,
                     options = bpOptions,
@@ -75,7 +76,7 @@ fun HealthRemindersBottomSheet(
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
                 HealthReminderItem(
-                    label = "Body Weight",
+                    label = stringResource(R.string.body_weight_label),
                     initEnabled = p.weightReminderEnabled,
                     initInterval = p.weightInterval,
                     options = weightOptions,
@@ -92,7 +93,7 @@ fun HealthReminderItem(
     label: String,
     initEnabled: Boolean,
     initInterval: Int,
-    options: List<Pair<Int, String>>,
+    options: List<Pair<Int, Int>>,
     primaryGreen: Color,
     onUpdate: (Boolean, Int) -> Unit
 ) {
@@ -129,7 +130,7 @@ fun HealthReminderItem(
         
         if (enabled) {
             Text(
-                text = "Reminder frequency:",
+                text = stringResource(R.string.reminder_freq_label),
                 color = Color.Gray,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
@@ -153,7 +154,7 @@ fun HealthReminderItem(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = text,
+                            text = stringResource(text),
                             color = if (isSelected) Color.White else Color.LightGray,
                             fontSize = 13.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal

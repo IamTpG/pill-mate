@@ -33,7 +33,7 @@ fun AppointmentHeader(totalCount: Int) {
 	) {
 		
 		Text(
-			"Appointments",
+			stringResource(R.string.appointment_title),
 			fontWeight = FontWeight.Bold,
 			fontSize = 24.sp,
 			color = Color.White
@@ -52,13 +52,13 @@ fun AppointmentHeader(totalCount: Int) {
 				// Phần 1: Tiêu đề
 				Column {
 					Text(
-						text = "Your Cabinet",
+						text = stringResource(R.string.cabinet_header_title),
 						fontSize = 20.sp,
 						fontWeight = FontWeight.Bold,
 						color = Color(0xFF1E3D34)
 					)
 					Text(
-						text = "Keep track your health journey",
+						text = stringResource(R.string.cabinet_header_sub),
 						fontSize = 14.sp,
 						color = Color(0xFF4A6B5D)
 					)
@@ -101,13 +101,13 @@ fun AppointmentHeader(totalCount: Int) {
 								.fillMaxWidth()
 						) {
 							Text(
-								"Overview",
+								stringResource(R.string.overview_label),
 								fontWeight = FontWeight.Normal,
 								fontSize = 12.sp
 							)
 							
 							Text(
-								"Total Appointments: $totalCount",
+								stringResource(R.string.total_appointments, totalCount),
 								fontWeight = FontWeight.Bold,
 								fontSize = 20.sp
 							)

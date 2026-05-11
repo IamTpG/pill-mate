@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.example.pillmate.R
 import com.example.pillmate.presentation.viewmodel.AIChatViewModel
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ fun AIChatScreen(
     val sessions by viewModel.sessions.collectAsState()
     val messages by viewModel.messages.collectAsState()
     val hasRealMessages = messages.isNotEmpty()
-    val defaultGreeting = "Hello! I'm your PillMate Assistant. How can I help you manage your medications today?"
+    val defaultGreeting = stringResource(R.string.ai_greeting)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -66,7 +67,7 @@ fun AIChatScreen(
             ) {
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    "Chat History",
+                    stringResource(R.string.ai_chat_history),
                     modifier = Modifier.padding(16.dp),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -75,7 +76,7 @@ fun AIChatScreen(
                 Spacer(Modifier.height(4.dp))
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    label = { Text("New Chat") },
+                    label = { Text(stringResource(R.string.ai_new_chat)) },
                     selected = false,
                     onClick = {
                         viewModel.createNewChat()
@@ -89,7 +90,7 @@ fun AIChatScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    "Chats",
+                    stringResource(R.string.ai_chats_label),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -116,7 +117,7 @@ fun AIChatScreen(
                             IconButton(onClick = { pendingDeleteSessionId = chatSession.id }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete chat",
+                                    contentDescription = stringResource(R.string.ai_delete_chat_desc),
                                     tint = Color(0xFF1E6C54)
                                 )
                             }
@@ -174,7 +175,7 @@ fun AIChatScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.ai_back_desc),
                             tint = Color.White
                         )
                     }
@@ -192,7 +193,7 @@ fun AIChatScreen(
                             ChatBubble(
                                 text = defaultGreeting,
                                 isBot = true,
-                                timestamp = "Now"
+                                timestamp = stringResource(R.string.ai_now_label)
                             )
                         }
                     }
@@ -202,6 +203,24 @@ fun AIChatScreen(
                             isBot = msg.isBot,
                             timestamp = formatTimestamp(msg.createdAt)
                         )
+                    }
+                    if (uiState.isThinking) {
+                        item {
+                            ChatBubble(
+                                text = "Thinking…",
+                                isBot = true,
+                                timestamp = "Now"
+                            )
+                        }
+                    }
+                    if (uiState.error != null) {
+                        item {
+                            ChatBubble(
+                                text = "⚠️ ${uiState.error}",
+                                isBot = true,
+                                timestamp = "Now"
+                            )
+                        }
                     }
                 }
 
@@ -214,7 +233,7 @@ fun AIChatScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "PillMate AI provides info, not medical advice. Consult a professional for emergencies.",
+                            text = stringResource(R.string.ai_disclaimer),
                             fontSize = 10.sp,
                             color = Color.Gray,
                             modifier = Modifier
@@ -236,7 +255,7 @@ fun AIChatScreen(
                                         false
                                     }
                                 },
-                            placeholder = { Text("Ask about medications...") },
+                            placeholder = { Text(stringResource(R.string.ai_input_placeholder)) },
                             shape = RoundedCornerShape(24.dp),
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = ImeAction.Send),
                             keyboardActions = androidx.compose.foundation.text.KeyboardActions(
@@ -269,8 +288,8 @@ fun AIChatScreen(
     if (pendingDeleteSessionId != null) {
         AlertDialog(
             onDismissRequest = { pendingDeleteSessionId = null },
-            title = { Text("Delete chat?") },
-            text = { Text("Are you sure you want to delete this chat? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.ai_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.ai_delete_confirm_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     val target = pendingDeleteSessionId
@@ -279,12 +298,12 @@ fun AIChatScreen(
                         viewModel.deleteChat(target)
                     }
                 }) {
-                    Text("Delete")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteSessionId = null }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

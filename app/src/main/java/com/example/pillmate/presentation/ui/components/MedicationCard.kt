@@ -13,11 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.R
 
 @Composable
 fun MedicationCard(
@@ -73,9 +75,9 @@ fun MedicationCard(
                     // Status Badge Logic
                     val isExpired = medication.expirationDate?.before(java.util.Date()) == true
                     when {
-                        isExpired -> StatusBadge("Expired", Color(0xFFFFEBEE), Color(0xFFC62828))
-                        isLowStock -> StatusBadge("Refill Soon", Color.Transparent, Color.Black)
-                        else -> StatusBadge("In Stock", Color.Transparent, Color.Black)
+                        isExpired -> StatusBadge(stringResource(R.string.status_expired), Color(0xFFFFEBEE), Color(0xFFC62828))
+                        isLowStock -> StatusBadge(stringResource(R.string.status_refill_soon), Color.Transparent, Color.Black)
+                        else -> StatusBadge(stringResource(R.string.status_in_stock), Color.Transparent, Color.Black)
                     }
                 }
 
@@ -88,7 +90,11 @@ fun MedicationCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "${medication.quantity.toInt()} ${medication.unit} left", fontSize = 12.sp, color = Color.DarkGray)
+                    Text(
+                        text = stringResource(R.string.med_qty_left, medication.quantity.toInt(), medication.unit),
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
                 }
             }
 

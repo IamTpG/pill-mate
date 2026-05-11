@@ -46,8 +46,8 @@ fun AddAppointment(
 ) {
 	
 	AppointmentForm(
-		"Add Appointment",
-		"Create",
+		stringResource(R.string.add_appointment_label),
+		stringResource(R.string.btn_create),
 		Appointment(),
 		onSubmit,
 		onDismissRequest

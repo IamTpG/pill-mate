@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -104,38 +105,45 @@ class AIChatViewModel(
             if (profileId.isBlank() || sessionId.isBlank() || textToSend.isBlank() || state.isThinking) return@launch
 
             _uiState.update { it.copy(isThinking = true, inputText = "", error = null) }
-            val now = System.currentTimeMillis()
-            repository.addMessage(
-                profileId = profileId,
-                sessionId = sessionId,
-                text = textToSend,
-                isBot = false,
-                createdAt = now
-            )
 
-            if (messages.value.count { !it.isBot } <= 1) {
-                repository.updateSessionTitle(profileId, sessionId, textToSend.take(60))
+            try {
+                val now = System.currentTimeMillis()
+                repository.addMessage(
+                    profileId = profileId,
+                    sessionId = sessionId,
+                    text = textToSend,
+                    isBot = false,
+                    createdAt = now
+                )
+
+                if (messages.value.count { !it.isBot } <= 1) {
+                    runCatching { repository.updateSessionTitle(profileId, sessionId, textToSend.take(60)) }
+                }
+
+                runCatching { repository.askAssistant(profileId, textToSend) }
+                    .onSuccess { reply ->
+                        repository.addMessage(
+                            profileId = profileId,
+                            sessionId = sessionId,
+                            text = reply,
+                            isBot = true
+                        )
+                        _uiState.update { it.copy(isThinking = false) }
+                    }
+                    .onFailure { err ->
+                        android.util.Log.e("AIChatVM", "askAssistant failed", err)
+                        repository.addMessage(
+                            profileId = profileId,
+                            sessionId = sessionId,
+                            text = "Sorry, I encountered an error: ${err.message}",
+                            isBot = true
+                        )
+                        _uiState.update { it.copy(isThinking = false, error = err.message) }
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("AIChatVM", "sendMessage failed", e)
+                _uiState.update { it.copy(isThinking = false, error = e.message) }
             }
-
-            runCatching { repository.askAssistant(textToSend) }
-                .onSuccess { reply ->
-                    repository.addMessage(
-                        profileId = profileId,
-                        sessionId = sessionId,
-                        text = reply,
-                        isBot = true
-                    )
-                    _uiState.update { it.copy(isThinking = false) }
-                }
-                .onFailure { err ->
-                    repository.addMessage(
-                        profileId = profileId,
-                        sessionId = sessionId,
-                        text = "Sorry, I encountered an error: ${err.message}",
-                        isBot = true
-                    )
-                    _uiState.update { it.copy(isThinking = false, error = err.message) }
-                }
         }
     }
 
@@ -151,9 +159,16 @@ class AIChatViewModel(
         }
     }
 
+    /**
+     * Must match [com.example.pillmate.presentation.viewmodel.CabinetViewModel.getEffectiveProfileId]:
+     * if nothing marked current in Room, Cabinet uses first local profile, not Auth UID.
+     * AI previously fell back only to uid → wrong Firestore path vs cabinet.
+     */
     private suspend fun resolveProfileId(): String {
         val active = profileDao.getActiveProfile()?.id?.takeIf { it.isNotBlank() }
         if (active != null) return active
+        val anyLocal = profileDao.getAllProfiles().firstOrNull()?.firstOrNull()?.id?.takeIf { it.isNotBlank() }
+        if (anyLocal != null) return anyLocal
         return firebaseAuth.currentUser?.uid ?: ""
     }
 }

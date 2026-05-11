@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import com.example.pillmate.R
 import java.util.Locale
@@ -81,7 +82,7 @@ fun AddMedicationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
-        title = { Text(if (medicationToEdit != null) "Edit Medication" else "Add Medication", color = Color.Black) },
+        title = { Text(if (medicationToEdit != null) stringResource(R.string.edit_medication_title) else stringResource(R.string.add_medication_title), color = Color.Black) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
@@ -140,7 +141,7 @@ fun AddMedicationDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it; nameError = null },
-                    label = { Text("Medication Name (e.g., Ibuprofen)") },
+                    label = { Text(stringResource(R.string.med_name_hint)) },
                     isError = nameError != null,
                     supportingText = nameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
@@ -149,14 +150,14 @@ fun AddMedicationDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description (e.g., Daily, As needed)") },
+                    label = { Text(stringResource(R.string.med_desc_hint)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = unit,
                     onValueChange = { newVal -> unit = newVal.filter { it.isLetter() || it == ' ' }; unitError = null },
-                    label = { Text("Unit (e.g., Tablets, mg)") },
+                    label = { Text(stringResource(R.string.med_unit_hint)) },
                     isError = unitError != null,
                     supportingText = unitError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
@@ -165,7 +166,7 @@ fun AddMedicationDialog(
                 OutlinedTextField(
                     value = countText,
                     onValueChange = { newVal -> countText = newVal.filter { it.isDigit() }; countError = null },
-                    label = { Text("Current Inventory Count") },
+                    label = { Text(stringResource(R.string.med_inventory_hint)) },
                     isError = countError != null,
                     supportingText = countError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -177,7 +178,7 @@ fun AddMedicationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     colors = if (dateError != null) ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error) else ButtonDefaults.outlinedButtonColors()
                 ) {
-                    Text(if (formattedDate.isNotBlank()) "Expires: $formattedDate" else "Select Expiration Date")
+                    Text(if (formattedDate.isNotBlank()) stringResource(R.string.expires_label, formattedDate) else stringResource(R.string.select_exp_date))
                 }
                 if (dateError != null) {
                     Text(dateError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(start = 16.dp))
@@ -200,12 +201,12 @@ fun AddMedicationDialog(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1c5f55)) // Brand Green
             ) {
-                Text(if (medicationToEdit != null) "Save" else "Add", color = Color.White)
+                Text(if (medicationToEdit != null) stringResource(R.string.save) else stringResource(R.string.action_add), color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.Gray)
+                Text(stringResource(R.string.cancel), color = Color.Gray)
             }
         }
     )
@@ -220,7 +221,7 @@ fun AddMedicationDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text(stringResource(R.string.cancel), color = Color.Gray)
                 }
             }
         ) {

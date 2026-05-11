@@ -42,6 +42,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,6 +51,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.pillmate.data.local.entity.SavedAccountEntity
 import com.example.pillmate.presentation.ui.screens.PrimaryGreen
 import com.example.pillmate.presentation.viewmodel.AuthViewModel
+import com.example.pillmate.R
 
 // ─────────────────────────────────────────────────────────────
 // SwitchAccountDialog
@@ -80,14 +82,14 @@ fun SwitchAccountDialog(
 				
 				// ── Header ──
 				Text(
-					text = "Chuyển tài khoản",
+					text = stringResource(R.string.switch_account_title),
 					fontSize = 20.sp,
 					fontWeight = FontWeight.Bold,
 					color = PrimaryGreen,
 					modifier = Modifier.padding(bottom = 4.dp)
 				)
 				Text(
-					text = "Chọn tài khoản bạn muốn đăng nhập",
+					text = stringResource(R.string.switch_account_subtitle),
 					fontSize = 13.sp,
 					color = Color.Gray,
 					modifier = Modifier.padding(bottom = 20.dp)
@@ -114,7 +116,7 @@ fun SwitchAccountDialog(
 							)
 							Spacer(modifier = Modifier.height(12.dp))
 							Text(
-								text = "Chưa có tài khoản nào được lưu",
+								text = stringResource(R.string.no_saved_accounts),
 								color = Color.Gray,
 								fontSize = 14.sp
 							)
@@ -152,7 +154,7 @@ fun SwitchAccountDialog(
 					modifier = Modifier.align(Alignment.End)
 				) {
 					Text(
-						text = "Huỷ",
+						text = stringResource(R.string.cancel),
 						color = Color.Gray,
 						fontWeight = FontWeight.Medium,
 						fontSize = 15.sp
