@@ -203,6 +203,24 @@ fun AIChatScreen(
                             timestamp = formatTimestamp(msg.createdAt)
                         )
                     }
+                    if (uiState.isThinking) {
+                        item {
+                            ChatBubble(
+                                text = "Thinking…",
+                                isBot = true,
+                                timestamp = "Now"
+                            )
+                        }
+                    }
+                    if (uiState.error != null) {
+                        item {
+                            ChatBubble(
+                                text = "⚠️ ${uiState.error}",
+                                isBot = true,
+                                timestamp = "Now"
+                            )
+                        }
+                    }
                 }
 
                 Surface(

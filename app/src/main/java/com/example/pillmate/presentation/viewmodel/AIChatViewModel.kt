@@ -104,38 +104,45 @@ class AIChatViewModel(
             if (profileId.isBlank() || sessionId.isBlank() || textToSend.isBlank() || state.isThinking) return@launch
 
             _uiState.update { it.copy(isThinking = true, inputText = "", error = null) }
-            val now = System.currentTimeMillis()
-            repository.addMessage(
-                profileId = profileId,
-                sessionId = sessionId,
-                text = textToSend,
-                isBot = false,
-                createdAt = now
-            )
 
-            if (messages.value.count { !it.isBot } <= 1) {
-                repository.updateSessionTitle(profileId, sessionId, textToSend.take(60))
+            try {
+                val now = System.currentTimeMillis()
+                repository.addMessage(
+                    profileId = profileId,
+                    sessionId = sessionId,
+                    text = textToSend,
+                    isBot = false,
+                    createdAt = now
+                )
+
+                if (messages.value.count { !it.isBot } <= 1) {
+                    runCatching { repository.updateSessionTitle(profileId, sessionId, textToSend.take(60)) }
+                }
+
+                runCatching { repository.askAssistant(textToSend) }
+                    .onSuccess { reply ->
+                        repository.addMessage(
+                            profileId = profileId,
+                            sessionId = sessionId,
+                            text = reply,
+                            isBot = true
+                        )
+                        _uiState.update { it.copy(isThinking = false) }
+                    }
+                    .onFailure { err ->
+                        android.util.Log.e("AIChatVM", "askAssistant failed", err)
+                        repository.addMessage(
+                            profileId = profileId,
+                            sessionId = sessionId,
+                            text = "Sorry, I encountered an error: ${err.message}",
+                            isBot = true
+                        )
+                        _uiState.update { it.copy(isThinking = false, error = err.message) }
+                    }
+            } catch (e: Exception) {
+                android.util.Log.e("AIChatVM", "sendMessage failed", e)
+                _uiState.update { it.copy(isThinking = false, error = e.message) }
             }
-
-            runCatching { repository.askAssistant(textToSend) }
-                .onSuccess { reply ->
-                    repository.addMessage(
-                        profileId = profileId,
-                        sessionId = sessionId,
-                        text = reply,
-                        isBot = true
-                    )
-                    _uiState.update { it.copy(isThinking = false) }
-                }
-                .onFailure { err ->
-                    repository.addMessage(
-                        profileId = profileId,
-                        sessionId = sessionId,
-                        text = "Sorry, I encountered an error: ${err.message}",
-                        isBot = true
-                    )
-                    _uiState.update { it.copy(isThinking = false, error = err.message) }
-                }
         }
     }
 

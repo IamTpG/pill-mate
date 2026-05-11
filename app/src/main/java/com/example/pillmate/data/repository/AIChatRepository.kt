@@ -51,16 +51,20 @@ class AIChatRepository(
             )
         )
 
-        db.collection("profiles").document(profileId)
-            .collection("aiChats").document(sessionId)
-            .set(
-                mapOf(
-                    "title" to title,
-                    "createdAt" to now,
-                    "updatedAt" to now
+        try {
+            db.collection("profiles").document(profileId)
+                .collection("aiChats").document(sessionId)
+                .set(
+                    mapOf(
+                        "title" to title,
+                        "createdAt" to now,
+                        "updatedAt" to now
+                    )
                 )
-            )
-            .await()
+                .await()
+        } catch (e: Exception) {
+            android.util.Log.w("AIChatRepo", "Firestore sync failed for session $sessionId", e)
+        }
 
         return sessionId
     }
@@ -127,19 +131,24 @@ class AIChatRepository(
         )
         chatDao.upsertMessage(message)
 
-        val sessionRef = db.collection("profiles").document(profileId)
-            .collection("aiChats").document(sessionId)
-        sessionRef.collection("messages")
-            .document(messageId)
-            .set(
-                mapOf(
-                    "text" to text,
-                    "isBot" to isBot,
-                    "createdAt" to createdAt
+        // Best-effort Firestore sync — Room is source of truth
+        try {
+            val sessionRef = db.collection("profiles").document(profileId)
+                .collection("aiChats").document(sessionId)
+            sessionRef.collection("messages")
+                .document(messageId)
+                .set(
+                    mapOf(
+                        "text" to text,
+                        "isBot" to isBot,
+                        "createdAt" to createdAt
+                    )
                 )
-            )
-            .await()
-        sessionRef.update("updatedAt", createdAt).await()
+                .await()
+            sessionRef.update("updatedAt", createdAt).await()
+        } catch (e: Exception) {
+            android.util.Log.w("AIChatRepo", "Firestore sync failed for message $messageId", e)
+        }
         return message
     }
 
@@ -154,15 +163,19 @@ class AIChatRepository(
             updatedAt = now
         )
         chatDao.upsertSession(session)
-        db.collection("profiles").document(profileId)
-            .collection("aiChats").document(sessionId)
-            .update(
-                mapOf(
-                    "title" to title,
-                    "updatedAt" to now
+        try {
+            db.collection("profiles").document(profileId)
+                .collection("aiChats").document(sessionId)
+                .update(
+                    mapOf(
+                        "title" to title,
+                        "updatedAt" to now
+                    )
                 )
-            )
-            .await()
+                .await()
+        } catch (e: Exception) {
+            android.util.Log.w("AIChatRepo", "Firestore title sync failed for session $sessionId", e)
+        }
     }
 
     suspend fun deleteSession(profileId: String, sessionId: String) {
