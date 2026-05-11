@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun CabinetHeader(
@@ -34,7 +35,7 @@ fun CabinetHeader(
         Column(modifier = Modifier.padding(24.dp)) {
             Column {
                 Text(
-                    text = "Your Cabinet",
+                    text = stringResource(R.string.cabinet_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E3D34)
@@ -47,13 +48,13 @@ fun CabinetHeader(
                 StatBox(
                     modifier = Modifier.weight(1f),
                     number = activeCount.toString(),
-                    label = "ACTIVE MEDS",
+                    label = stringResource(R.string.active_meds_label),
                     numberColor = Color(0xFF2E7D32)
                 )
                 StatBox(
                     modifier = Modifier.weight(1f),
                     number = lowStockCount.toString(),
-                    label = "LOW STOCK",
+                    label = stringResource(R.string.low_stock_label),
                     numberColor = Color(0xFFD32F2F)
                 )
             }
@@ -86,13 +87,13 @@ fun CabinetHeader(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Search Drug Library",
+                        text = stringResource(R.string.search_library_title),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "Browse FDA drug information",
+                        text = stringResource(R.string.search_library_desc),
                         fontSize = 11.sp,
                         color = Color.White.copy(alpha = 0.7f)
                     )

@@ -111,4 +111,44 @@
     <string name="status_snoozed">Tạm dừng</string>
     <string name="status_late">Muộn</string>
     <string name="status_upcoming">Sắp tới</string>
+
+    <string name="cabinet_title">Tủ thuốc của bạn</string>
+    <string name="active_meds_label">THUỐC ĐANG DÙNG</string>
+    <string name="low_stock_label">SẮP HẾT</string>
+    <string name="search_library_title">Tra cứu thư viện thuốc</string>
+    <string name="search_library_desc">Duyệt thông tin thuốc từ FDA</string>
+    <string name="search_cabinet_placeholder">Tìm trong tủ thuốc…</string>
+    <string name="your_medications">Thuốc của bạn</string>
+    <string name="tab_active">Hiện tại</string>
+    <string name="tab_expired">Hết hạn</string>
+    <string name="no_active_meds">Không có thuốc nào đang dùng</string>
+    <string name="no_expired_meds">Không có thuốc hết hạn</string>
+    <string name="add_med_fab_desc">Thêm thuốc</string>
+
+    <string name="status_expired">Hết hạn</string>
+    <string name="status_refill_soon">Cần mua thêm</string>
+    <string name="status_in_stock">Còn hàng</string>
+    <string name="med_qty_left">Còn %1$d %2$s</string>
+
+    <string name="add_medication_title">Thêm thuốc mới</string>
+    <string name="edit_medication_title">Chỉnh sửa thuốc</string>
+    <string name="med_name_hint">Tên thuốc (VD: Ibuprofen)</string>
+    <string name="med_desc_hint">Mô tả (VD: Hàng ngày, khi cần)</string>
+    <string name="med_unit_hint">Đơn vị (VD: Viên, mg)</string>
+    <string name="med_inventory_hint">Số lượng tồn kho hiện tại</string>
+    <string name="expires_label">Hết hạn: %1$s</string>
+    <string name="select_exp_date">Chọn ngày hết hạn</string>
+    <string name="error_name_req">Vui lòng nhập tên thuốc</string>
+    <string name="error_unit_req">Vui lòng nhập đơn vị</string>
+    <string name="error_invalid_num">Số lượng không hợp lệ</string>
+
+    <string name="action_add">Thêm</string>
+    <string name="action_refill">Thêm</string>
+
+    <string name="log_dose_title">Ghi nhận liều dùng</string>
+    <string name="amount_taken_label">Số lượng đã dùng</string>
+    <string name="reason_note_label">Lý do / Ghi chú</string>
+    <string name="refill_med_title">Bổ sung thuốc</string>
+    <string name="current_stock_info">Hiện có: %1$d %2$s</string>
+    <string name="amount_to_add_label">Số lượng bổ sung</string>
 </resources>

@@ -110,4 +110,44 @@
     <string name="status_snoozed">Snoozed</string>
     <string name="status_late">Late</string>
     <string name="status_upcoming">Upcoming</string>
+
+    <string name="cabinet_title">Your Cabinet</string>
+    <string name="active_meds_label">ACTIVE MEDS</string>
+    <string name="low_stock_label">LOW STOCK</string>
+    <string name="search_library_title">Search Drug Library</string>
+    <string name="search_library_desc">Browse FDA drug information</string>
+    <string name="search_cabinet_placeholder">Search your cabinet…</string>
+    <string name="your_medications">Your Medications</string>
+    <string name="tab_active">Active</string>
+    <string name="tab_expired">Expired</string>
+    <string name="no_active_meds">No active medications</string>
+    <string name="no_expired_meds">No expired medications</string>
+    <string name="add_med_fab_desc">Log Medicine</string>
+
+    <string name="status_expired">Expired</string>
+    <string name="status_refill_soon">Refill Soon</string>
+    <string name="status_in_stock">In Stock</string>
+    <string name="med_qty_left">%1$d %2$s left</string>
+
+    <string name="add_medication_title">Add Medication</string>
+    <string name="edit_medication_title">Edit Medication</string>
+    <string name="med_name_hint">Medication Name (e.g., Ibuprofen)</string>
+    <string name="med_desc_hint">Description (e.g., Daily, As needed)</string>
+    <string name="med_unit_hint">Unit (e.g., Tablets, mg)</string>
+    <string name="med_inventory_hint">Current Inventory Count</string>
+    <string name="expires_label">Expires: %1$s</string>
+    <string name="select_exp_date">Select Expiration Date</string>
+    <string name="error_name_req">Name is required</string>
+    <string name="error_unit_req">Unit is required</string>
+    <string name="error_invalid_num">Enter a valid number</string>
+
+    <string name="action_add">Add</string>
+    <string name="action_refill">Refill</string>
+
+    <string name="log_dose_title">Log Dose</string>
+    <string name="amount_taken_label">Amount Taken</string>
+    <string name="reason_note_label">Reason / Note</string>
+    <string name="refill_med_title">Refill Medication</string>
+    <string name="current_stock_info">Current stock: %1$d %2$s</string>
+    <string name="amount_to_add_label">Amount to add</string>
 </resources>
