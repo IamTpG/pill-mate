@@ -126,8 +126,9 @@ fun PillMateApp(
 
                         onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                        onVaultClick = { navController.navigate(Screen.ImageVault.route) },
                         onAIClick = { navController.navigate(Screen.AIChat.route) },
-	                    onMapClick = { navController.navigate(Screen.Map.route)}
+	                      onMapClick = { navController.navigate(Screen.Map.route) }
                     )
                 }
             }
@@ -157,6 +158,16 @@ fun PillMateApp(
                         navController.navigate("signin?email=$email&password=$password")
                     },
                     
+                    )
+                }
+            }
+            composable(Screen.ImageVault.route) {
+                MainScaffold(navController, onSignOutComplete) { innerPadding ->
+                    val vaultViewModel: com.example.pillmate.presentation.viewmodel.ImageVaultViewModel = koinViewModel()
+                    com.example.pillmate.presentation.ui.screens.ImageVaultScreen(
+                        viewModel = vaultViewModel,
+                        paddingValues = innerPadding,
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }

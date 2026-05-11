@@ -37,6 +37,7 @@ fun HomeHeader(
 //    onAddClick: () -> Unit,
     onDebugClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onVaultClick: () -> Unit,
     onMapClick: () -> Unit
 ) {
     Row(
@@ -59,6 +60,13 @@ fun HomeHeader(
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = "Debug Menu",
+                    tint = Color.White
+                )
+            }
+            IconButton(onClick = onVaultClick) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                    contentDescription = "Medical Vault",
                     tint = Color.White
                 )
             }

@@ -12,6 +12,7 @@ import com.example.pillmate.presentation.viewmodel.HomeViewModel
 import com.example.pillmate.presentation.viewmodel.TaskLogViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import com.example.pillmate.data.local.database.AppDatabase
@@ -59,6 +60,7 @@ val appModule = module {
     single { FirebaseAuth.getInstance() }
     single { FirebaseFirestore.getInstance() }
     single { FirebaseFunctions.getInstance() }
+    single { FirebaseStorage.getInstance() }
     
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
@@ -123,6 +125,7 @@ val appModule = module {
     single { get<AppDatabase>().medicationDao() }
     single { get<AppDatabase>().supplyLogDao() }
     single { get<AppDatabase>().profileDao() }
+    single { get<AppDatabase>().imageDao() }
     single { get<AppDatabase>().scheduleDao() }
     single {
         Retrofit.Builder()
@@ -141,6 +144,17 @@ val appModule = module {
     factory { AddAppointmentUseCase(get()) }
     factory { UpdateAppointmentUseCase(get()) }
     factory { DeleteAppointmentUseCase(get()) }
+
+    single<com.example.pillmate.domain.repository.ImageRepository> {
+        val roomRepo = com.example.pillmate.data.repository.RoomImageRepositoryImpl(get())
+        val firestoreRepo = com.example.pillmate.data.repository.FirestoreImageRepositoryImpl(get())
+        com.example.pillmate.data.repository.HybridImageRepositoryImpl(
+            localRepo = roomRepo,
+            remoteRepo = firestoreRepo,
+            storage = get(),
+            networkChecker = { com.example.pillmate.util.NetworkChecker(androidContext()).isOnline() }
+        )
+    }
 }
 
 val viewModelModule = module {
@@ -154,6 +168,7 @@ val viewModelModule = module {
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }
+    viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }
     viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
     viewModel { AppointmentScheduleViewModel(get(), get(), get()) }
 }

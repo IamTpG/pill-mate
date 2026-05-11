@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -36,6 +35,7 @@ fun HomeScreen(
     onDebugClick: () -> Unit,
     onTaskClick: (HomeTask) -> Unit,
     onSettingsClick: () -> Unit,
+    onVaultClick: () -> Unit,
     onAIClick: () -> Unit,
     onMapClick: () -> Unit,
     profileViewModel: ProfileViewModel = koinViewModel()
@@ -71,7 +71,7 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick, onMapClick = onMapClick)
+            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick, onVaultClick = onVaultClick, onMapClick = onMapClick)
 
             LazyColumn(
                 modifier = Modifier

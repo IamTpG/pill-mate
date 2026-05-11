@@ -70,6 +70,14 @@
     <string name="phone_number_placeholder">VD: 0912345678</string>
     <string name="call_sos">GỌI SOS</string>
     <string name="sos_icon_desc">Biểu tượng SOS</string>
+
+    <string name="medical_vault_title">Thư viện y tế</string>
+    <string name="no_images_yet">Chưa có hình ảnh nào.</string>
+    <string name="add_image_desc">Thêm ảnh</string>
+    <string name="delete_image_dialog_title">Xóa hình ảnh</string>
+    <string name="delete_image_dialog_text">Bạn có chắc chắn muốn xóa hình ảnh này không? Hành động này không thể hoàn tác.</string>
+    <string name="delete">Xóa</string>
+  
     <string name="appointment_greeting">Chào! Hôm nay bạn thế nào?</string>
     <string name="appointment_search">Tìm kiếm</string>
     <string name="appointment_add">Thêm lịch hẹn</string>
