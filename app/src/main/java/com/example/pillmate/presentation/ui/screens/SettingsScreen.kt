@@ -353,13 +353,15 @@ fun ProfileOptionsScreen(
                 }
             }
         }
-        
-        SettingsButton(
-            text = "Switch Account",
-            icon = ImageVector.vectorResource(R.drawable.ic_switch_account),
-            onClick = onShowSwitchAccountDialog
-        )
-        
+
+        if (!isCaregiver) {
+            SettingsButton(
+                text = "Switch Account",
+                icon = ImageVector.vectorResource(R.drawable.ic_switch_account),
+                onClick = onShowSwitchAccountDialog
+            )
+        }
+
         if (!isCaregiver) {
             SettingsButton(
                 text = stringResource(id = R.string.log_out),
