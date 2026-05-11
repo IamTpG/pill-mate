@@ -10,8 +10,12 @@ import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.ReminderType
+import com.example.pillmate.domain.model.Medication
+import com.example.pillmate.domain.model.DoseTime
+import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.model.HealthMetric
 import com.example.pillmate.domain.model.MetricType
+import com.example.pillmate.domain.repository.MedicationRepository
 import com.example.pillmate.domain.usecase.LogHealthMetricUseCase
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.notification.TaskNotificationManager
@@ -35,7 +39,8 @@ class DebugViewModel(
     private val notificationManager: TaskNotificationManager,
     private val alarmTracker: AlarmTracker,
     private val syncFcmTokenUseCase: com.example.pillmate.domain.usecase.SyncFcmTokenUseCase,
-    private val logHealthMetricUseCase: LogHealthMetricUseCase
+    private val logHealthMetricUseCase: LogHealthMetricUseCase,
+    private val medicationRepository: MedicationRepository
 ) : ViewModel() {
 
     fun copyFcmTokenToClipboard(context: Context) {
@@ -228,7 +233,7 @@ class DebugViewModel(
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
                 val doseTimeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                val futureTime = Date(System.currentTimeMillis() + 60000) // 20s in future
+                val futureTime = Date(System.currentTimeMillis() + 60000)
                 val startTime = dateFormat.format(futureTime)
                 val doseTimeStr = doseTimeFormat.format(futureTime)
 
@@ -236,26 +241,40 @@ class DebugViewModel(
                 val min = SimpleDateFormat("m", Locale.getDefault()).format(futureTime)
                 val rrule = "FREQ=DAILY;BYHOUR=$hour;BYMINUTE=$min"
 
-                // Try to find a real medication to link to
-                val medsSnapshot = db.collection("profiles").document(profileId)
-                    .collection("medications").limit(1).get().await()
-                val realMedId = if (!medsSnapshot.isEmpty) medsSnapshot.documents[0].id else "debug_med_id"
+                val medication = findValidMedication()
+                    ?: throw IllegalStateException("No active, unexpired medication with stock found.")
+
+                val doseAmount = 1f
+                val doseContext = formatDose(doseAmount, medication.unit)
+                val stockText = formatDose(medication.quantity, medication.unit)
+                val now = Date()
 
                 val newSchedule = Schedule(
                     id = "debug_test_1m_alarm",
-                    doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = doseTimeStr, dose = 1.0f, doseContext = "")),
+                    name = "debug ${medication.name}",
+                    type = TaskType.MEDICATION,
+                    doseTimes = listOf(
+                        DoseTime(
+                            time = doseTimeStr,
+                            doseContext = doseContext,
+                            dose = doseAmount
+                        )
+                    ),
                     startTime = startTime,
                     frequency = "Daily",
                     recurrenceRule = rrule,
+                    enabled = true,
                     reminders = listOf(
                         Reminder(minutesBefore = 0, type = ReminderType.ALARM)
                     ),
+                    createdAt = now,
+                    updatedAt = now,
                     eventSnapshot = ScheduleEvent(
-                        sourceId = realMedId,
-                        title = "Test Medicine",
-                        instructions = "Take 1.0 pills now",
+                        sourceId = medication.id,
+                        title = medication.name,
+                        instructions = stockText,
                         dose = 1.0f,
-                        unit = "pills"
+                        unit = null
                     )
                 )
 
@@ -270,6 +289,23 @@ class DebugViewModel(
                 onError(e)
             }
         }
+    }
+
+    private suspend fun findValidMedication(): Medication? {
+        val now = Date()
+        return medicationRepository.getAllOnce(profileId).getOrThrow()
+            .filter { medication ->
+                medication.id.isNotBlank() &&
+                    medication.deletedAt == null &&
+                    medication.quantity > 0f &&
+                    medication.expirationDate?.before(now) != true
+            }
+            .maxByOrNull { it.updatedAt }
+    }
+
+    private fun formatDose(amount: Float, unit: String): String {
+        val number = if (amount % 1f == 0f) amount.toInt().toString() else String.format(Locale.US, "%.2f", amount)
+        return "$number $unit".trim()
     }
 
     fun getSchedulesList(onSuccess: (List<Schedule>) -> Unit, onError: (Exception) -> Unit) {

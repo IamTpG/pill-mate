@@ -181,7 +181,7 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { TaskLogViewModel(get(), get(), get()) }
     viewModel { AppointmentViewModel(get(), get(), get(), get()) }
-    viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
     viewModel { ScheduleBuilderViewModel(get(), get(), get(), get(), get()) }
