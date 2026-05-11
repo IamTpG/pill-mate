@@ -10,10 +10,14 @@ import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.model.ReminderType
+import com.example.pillmate.domain.model.HealthMetric
+import com.example.pillmate.domain.model.MetricType
+import com.example.pillmate.domain.usecase.LogHealthMetricUseCase
 import com.example.pillmate.util.DataGenerator
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -30,7 +34,8 @@ class DebugViewModel(
     private val syncAlarmsUseCase: com.example.pillmate.domain.usecase.SyncAlarmsUseCase,
     private val notificationManager: TaskNotificationManager,
     private val alarmTracker: AlarmTracker,
-    private val syncFcmTokenUseCase: com.example.pillmate.domain.usecase.SyncFcmTokenUseCase
+    private val syncFcmTokenUseCase: com.example.pillmate.domain.usecase.SyncFcmTokenUseCase,
+    private val logHealthMetricUseCase: LogHealthMetricUseCase
 ) : ViewModel() {
 
     fun copyFcmTokenToClipboard(context: Context) {
@@ -89,6 +94,76 @@ class DebugViewModel(
         viewModelScope.launch {
             try {
                 generator.generateSampleData(profileId)
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
+
+    fun generateSampleVitals(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val base = Calendar.getInstance().apply {
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val bpSamples = listOf(
+                    118 to 76,
+                    122 to 78,
+                    129 to 82,
+                    136 to 86,
+                    124 to 79,
+                    116 to 74,
+                    130 to 84
+                )
+                val weightSamples = listOf(72.4, 72.2, 72.1, 71.9)
+                val waterSamples = listOf(1800, 2200, 2500, 1650, 2800, 2100, 2600)
+
+                for (dayOffset in 6 downTo 0) {
+                    val dayIndex = 6 - dayOffset
+
+                    val bpTime = base.withDayOffset(dayOffset, hour = 8, minute = 15)
+                    val (sys, dia) = bpSamples[dayIndex]
+                    logHealthMetricUseCase.execute(
+                        profileId,
+                        HealthMetric(
+                            type = MetricType.BLOOD_PRESSURE,
+                            valuePrimary = sys.toDouble(),
+                            valueSecondary = dia.toDouble(),
+                            unit = "mmHg",
+                            recordedAt = bpTime
+                        )
+                    )
+
+                    if (dayIndex % 2 == 0) {
+                        val weightTime = base.withDayOffset(dayOffset, hour = 7, minute = 45)
+                        logHealthMetricUseCase.execute(
+                            profileId,
+                            HealthMetric(
+                                type = MetricType.WEIGHT,
+                                valuePrimary = weightSamples[dayIndex / 2],
+                                unit = "kg",
+                                recordedAt = weightTime
+                            )
+                        )
+                    }
+
+                    val waterTotal = waterSamples[dayIndex]
+                    listOf(0.35, 0.30, 0.20, 0.15).forEachIndexed { index, share ->
+                        val waterTime = base.withDayOffset(dayOffset, hour = 9 + (index * 3), minute = 0)
+                        logHealthMetricUseCase.execute(
+                            profileId,
+                            HealthMetric(
+                                type = MetricType.WATER,
+                                valuePrimary = waterTotal * share,
+                                unit = "ml",
+                                recordedAt = waterTime
+                            )
+                        )
+                    }
+                }
+
                 onSuccess()
             } catch (e: Exception) {
                 onError(e)
@@ -244,5 +319,13 @@ class DebugViewModel(
                 onError(e)
             }
         }
+    }
+
+    private fun Calendar.withDayOffset(daysAgo: Int, hour: Int, minute: Int): Date {
+        return (clone() as Calendar).apply {
+            add(Calendar.DAY_OF_YEAR, -daysAgo)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+        }.time
     }
 }

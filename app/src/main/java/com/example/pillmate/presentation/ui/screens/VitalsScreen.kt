@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -31,6 +33,7 @@ import com.example.pillmate.presentation.ui.components.LogVitalsBottomSheet
 import com.example.pillmate.presentation.ui.components.HydrationGoalDialog
 import com.example.pillmate.presentation.ui.components.HealthRemindersBottomSheet
 import com.example.pillmate.presentation.viewmodel.ProfileViewModel
+import com.example.pillmate.presentation.viewmodel.DailyHydration
 import com.example.pillmate.presentation.viewmodel.WeeklyStats
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
@@ -327,38 +330,75 @@ fun WeeklyReportBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
             Text("Weekly Insights", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("Summary for the last 7 days", color = Color.Gray, fontSize = 14.sp)
+            Text(stats.dateRange.ifBlank { "Summary for the last 7 days" }, color = Color.Gray, fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Stats Row
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                WeeklyStatItem(Modifier.weight(1f), "Avg BP", stats.avgBP, Color(0xFFFF708D))
-                WeeklyStatItem(Modifier.weight(1f), "Total Water", stats.totalWater, Color(0xFF5D5DFF))
-                WeeklyStatItem(Modifier.weight(1f), "Avg Weight", stats.avgWeight, Color(0xFF2ECC71))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                WeeklyStatItem(Modifier.weight(1f), "Logs", stats.totalLogs.toString(), Color(0xFF1ABC9C))
+                WeeklyStatItem(Modifier.weight(1f), "Water Avg", stats.avgWaterPerDay, Color(0xFF5D5DFF))
+                WeeklyStatItem(Modifier.weight(1f), "Goal Days", stats.hydrationGoalSummary, Color(0xFF2ECC71))
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
-            Text("Activity Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportSectionTitle("Hydration")
+            Text("Total intake: ${stats.totalWater}", color = Color.Gray, fontSize = 13.sp)
             Spacer(modifier = Modifier.height(16.dp))
-            
-            // Mock Graph / Bars
+
+            WeeklyHydrationTrend(stats.dailyHydration)
+
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportSectionTitle("Blood Pressure")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                WeeklyStatItem(Modifier.weight(1f), "Average", stats.avgBP, Color(0xFFFF708D))
+                WeeklyStatItem(Modifier.weight(1f), "Latest", stats.latestBpStatus, Color(0xFFFF708D))
+                WeeklyStatItem(Modifier.weight(1f), "Above Normal", "${stats.highBpReadings}/${stats.bpReadings}", Color(0xFFFF708D))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportSectionTitle("Weight")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                WeeklyStatItem(Modifier.weight(1f), "Average", if (stats.weightReadings > 0) stats.avgWeight else "--", Color(0xFF2ECC71))
+                WeeklyStatItem(Modifier.weight(1f), "Change", stats.weightChange, Color(0xFF2ECC71))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportSectionTitle("Activity")
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                val maxLogs = (stats.activityCounts.values.maxOrNull() ?: 1).coerceAtLeast(1)
                 listOf(MetricType.BLOOD_PRESSURE, MetricType.WATER, MetricType.WEIGHT).forEach { type ->
                     val count = stats.activityCounts[type] ?: 0
                     ActivityBar(
-                        label = type.name.replace("_", " "),
+                        label = type.readableName(),
                         count = count,
-                        max = 14, // Assuming 2 logs per day max
+                        max = maxLogs,
                         color = when(type) {
                             MetricType.BLOOD_PRESSURE -> Color(0xFFFF708D)
                             MetricType.WATER -> Color(0xFF5D5DFF)
                             else -> Color(0xFF2ECC71)
                         }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            ReportSectionTitle("Takeaways")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                stats.insights.ifEmpty { listOf("Start logging vitals to build a weekly trend.") }.forEach { insight ->
+                    Text(
+                        text = insight,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFFAFAFA))
+                            .padding(12.dp),
+                        color = Color(0xFF333333),
+                        fontSize = 13.sp
                     )
                 }
             }
@@ -391,8 +431,51 @@ fun WeeklyStatItem(modifier: Modifier, label: String, value: String, color: Colo
 }
 
 @Composable
+fun ReportSectionTitle(text: String) {
+    Text(text, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF222222))
+}
+
+@Composable
+fun WeeklyHydrationTrend(days: List<DailyHydration>) {
+    if (days.isEmpty()) {
+        Text("No hydration logs this week.", color = Color.Gray, fontSize = 13.sp)
+        return
+    }
+
+    val maxAmount = days.maxOf { it.amountMl }.coerceAtLeast(1)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        days.forEach { day ->
+            val barHeight = ((day.amountMl.toFloat() / maxAmount.toFloat()).coerceIn(0.05f, 1f) * 72).dp
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Text("${day.amountMl}", fontSize = 10.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(barHeight)
+                        .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                        .background(if (day.goalMet) Color(0xFF2ECC71) else Color(0xFF5D5DFF))
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(day.label, fontSize = 11.sp, color = Color.DarkGray)
+            }
+        }
+    }
+}
+
+@Composable
 fun ActivityBar(label: String, count: Int, max: Int, color: Color) {
-    val progress = (count.toFloat() / max.toFloat()).coerceIn(0.1f, 1f)
+    val progress = if (count == 0) 0f else (count.toFloat() / max.toFloat()).coerceIn(0.08f, 1f)
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, fontSize = 12.sp, color = Color.DarkGray)
@@ -405,5 +488,14 @@ fun ActivityBar(label: String, count: Int, max: Int, color: Color) {
             color = color,
             trackColor = Color(0xFFF5F5F5)
         )
+    }
+}
+
+private fun MetricType.readableName(): String {
+    return when (this) {
+        MetricType.BLOOD_PRESSURE -> "Blood pressure"
+        MetricType.WATER -> "Water"
+        MetricType.WEIGHT -> "Weight"
+        MetricType.HEART_RATE -> "Heart rate"
     }
 }
