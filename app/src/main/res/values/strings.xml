@@ -91,4 +91,23 @@
     <string name="appointment_name">Appointment Name</string>
     <string name="appointment_doctor_name">Doctor Name</string>
     <string name="appointment_submit">Submit</string>
+
+    <string name="home_title">Home</string>
+    <string name="debug_menu_desc">Debug Menu</string>
+    <string name="medical_vault_desc">Medical Vault</string>
+    <string name="open_map_desc">Open Map</string>
+    <string name="suggestion_desc">Suggestions</string>
+    <string name="todays_progress">TODAY\'S PROGRESS</string>
+    <string name="daily_progress">DAILY PROGRESS</string>
+    <string name="tasks_completed">tasks completed</string>
+    <string name="todays_schedule">Today\'s Schedule</string>
+    <string name="schedule_for">Schedule for %1$s</string>
+    <string name="ai_chat_desc">AI Chat</string>
+
+    <string name="status_done">Done</string>
+    <string name="status_missed">Missed</string>
+    <string name="status_skipped">Skipped</string>
+    <string name="status_snoozed">Snoozed</string>
+    <string name="status_late">Late</string>
+    <string name="status_upcoming">Upcoming</string>
 </resources>

@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,8 +98,11 @@ fun HomeScreen(
 
                 item {
                     val isToday = isSameDay(uiState.selectedDate, Date())
-                    val title = if (isToday) "Today's Schedule" else {
-                        "Schedule for " + SimpleDateFormat("MMM dd", Locale.getDefault()).format(uiState.selectedDate)
+                    val formattedDate = SimpleDateFormat("MMM dd", Locale.getDefault()).format(uiState.selectedDate)
+                    val title = if (isToday) {
+                        stringResource(R.string.todays_schedule)
+                    } else {
+                        stringResource(R.string.schedule_for, formattedDate)
                     }
                     Text(
                         text = title,
@@ -140,7 +144,7 @@ fun HomeScreen(
             ) {
                 androidx.compose.material3.Icon(
                     painter = painterResource(id = R.drawable.ic_chat),
-                    contentDescription = "AI Chat",
+                    contentDescription = stringResource(R.string.ai_chat_desc),
                     modifier = Modifier.size(24.dp)
                 )
             }

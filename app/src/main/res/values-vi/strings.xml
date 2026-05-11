@@ -92,4 +92,23 @@
     <string name="appointment_name">Tên lịch hẹn</string>
     <string name="appointment_doctor_name">Tên Bác sĩ</string>
     <string name="appointment_submit">Tạo</string>
+
+    <string name="home_title">Trang chủ</string>
+    <string name="debug_menu_desc">Menu gỡ lỗi</string>
+    <string name="medical_vault_desc">Thư viện y tế</string>
+    <string name="open_map_desc">Mở bản đồ</string>
+    <string name="suggestion_desc">Gợi ý</string>
+    <string name="todays_progress">TIẾN ĐỘ HÔM NAY</string>
+    <string name="daily_progress">TIẾN ĐỘ HÀNG NGÀY</string>
+    <string name="tasks_completed">nhiệm vụ hoàn thành</string>
+    <string name="todays_schedule">Lịch trình hôm nay</string>
+    <string name="schedule_for">Lịch trình ngày %1$s</string>
+    <string name="ai_chat_desc">Trò chuyện AI</string>
+
+    <string name="status_done">Xong</string>
+    <string name="status_missed">Bỏ lỡ</string>
+    <string name="status_skipped">Bỏ qua</string>
+    <string name="status_snoozed">Tạm dừng</string>
+    <string name="status_late">Muộn</string>
+    <string name="status_upcoming">Sắp tới</string>
 </resources>
