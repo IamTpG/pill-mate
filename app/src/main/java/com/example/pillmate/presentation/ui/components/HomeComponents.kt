@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,7 +39,8 @@ fun HomeHeader(
     onDebugClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onVaultClick: () -> Unit,
-    onMapClick: () -> Unit
+    onMapClick: () -> Unit,
+    onSuggestionClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -56,6 +58,13 @@ fun HomeHeader(
             fontWeight = FontWeight.Bold
         )
         Row {
+            IconButton(onClick = onSuggestionClick) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "",
+                    tint = Color.White
+                )
+            }
             IconButton(onClick = onDebugClick) {
                 Icon(
                     imageVector = Icons.Default.Info,

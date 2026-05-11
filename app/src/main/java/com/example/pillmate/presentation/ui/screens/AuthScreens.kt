@@ -123,7 +123,28 @@ fun SignUpOptionsScreen(
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(top = 16.dp, bottom = 32.dp)
             )
-
+            
+            Button(
+                onClick = { onNavigateToSignIn("", "") },
+                modifier = Modifier.width(350.dp).height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+            ) {
+                Text(text = stringResource(id = R.string.sign_in_with_email), fontSize = 18.sp)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            OutlinedButton(
+                onClick = { launchGoogleSignIn() },
+                modifier = Modifier.width(350.dp).height(60.dp),
+                shape = RoundedCornerShape(15.dp),
+                border = BorderStroke(1.5.dp, Color.White),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+            ) {
+                Text(text = stringResource(id = R.string.continue_with_google), fontSize = 18.sp)
+            }
+            
 //            if (savedAccounts.isNotEmpty()) {
 //                // GIAO DIỆN KHI ĐÃ CÓ TÀI KHOẢN LƯU
 //                Text(

@@ -38,6 +38,7 @@ fun HomeScreen(
     onVaultClick: () -> Unit,
     onAIClick: () -> Unit,
     onMapClick: () -> Unit,
+    onSuggestionClick: () -> Unit,
     profileViewModel: ProfileViewModel = koinViewModel()
 ) {
     LaunchedEffect(Unit) {
@@ -71,7 +72,7 @@ fun HomeScreen(
         Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)))
 
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick, onVaultClick = onVaultClick, onMapClick = onMapClick)
+            HomeHeader(onDebugClick = onDebugClick, onSettingsClick = onSettingsClick, onVaultClick = onVaultClick, onMapClick = onMapClick, onSuggestionClick)
 
             LazyColumn(
                 modifier = Modifier

@@ -128,7 +128,8 @@ fun PillMateApp(
                         onSettingsClick = { navController.navigate(Screen.Settings.route) },
                         onVaultClick = { navController.navigate(Screen.ImageVault.route) },
                         onAIClick = { navController.navigate(Screen.AIChat.route) },
-	                      onMapClick = { navController.navigate(Screen.Map.route) }
+	                      onMapClick = { navController.navigate(Screen.Map.route) },
+                        onSuggestionClick = { navController.navigate(Screen.Suggestion.route)}
                     )
                 }
             }
@@ -188,6 +189,13 @@ fun PillMateApp(
 			        navController = navController
 		        )
 	        }
+            composable(route = Screen.Suggestion.route) {
+                val suggestionViewModel: SuggestionViewModel = koinViewModel()
+                SuggestionScreen(
+                    viewModel = suggestionViewModel,
+                    navController = navController
+                )
+            }
 	        composable(
 		        route = Screen.Vitals.route,
 		        deepLinks = listOf(
@@ -219,7 +227,7 @@ fun PillMateApp(
                         paddingValues = innerPadding,
                         onNavigateToScheduleBuilder = { appointment ->
                             appointmentScheduleViewModel.setSelectedAppointment(appointment)
-                            appointmentScheduleViewModel.openScheduleBuilder(null)
+                            //appointmentScheduleViewModel.openScheduleBuilder(null)
                             navController.navigate(Screen.AppointmentSchedule.route)
                         }
                         
