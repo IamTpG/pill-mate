@@ -152,8 +152,14 @@ class DebugViewModel(
         viewModelScope.launch {
             try {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                val futureTime = Date(System.currentTimeMillis() + 20000) // 10s in future
+                val doseTimeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                val futureTime = Date(System.currentTimeMillis() + 60000) // 20s in future
                 val startTime = dateFormat.format(futureTime)
+                val doseTimeStr = doseTimeFormat.format(futureTime)
+
+                val hour = SimpleDateFormat("H", Locale.getDefault()).format(futureTime)
+                val min = SimpleDateFormat("m", Locale.getDefault()).format(futureTime)
+                val rrule = "FREQ=DAILY;BYHOUR=$hour;BYMINUTE=$min"
 
                 // Try to find a real medication to link to
                 val medsSnapshot = db.collection("profiles").document(profileId)
@@ -162,17 +168,18 @@ class DebugViewModel(
 
                 val newSchedule = Schedule(
                     id = "debug_test_1m_alarm",
-                    doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = startTime)),
+                    doseTimes = listOf(com.example.pillmate.domain.model.DoseTime(time = doseTimeStr, dose = 1.0f, doseContext = "")),
                     startTime = startTime,
-                    recurrenceRule = "FREQ=DAILY;COUNT=10",
+                    frequency = "Daily",
+                    recurrenceRule = rrule,
                     reminders = listOf(
                         Reminder(minutesBefore = 0, type = ReminderType.ALARM)
                     ),
                     eventSnapshot = ScheduleEvent(
                         sourceId = realMedId,
                         title = "Test Medicine",
-                        instructions = "Take 2.0 pills now",
-                        dose = 2.0f,
+                        instructions = "Take 1.0 pills now",
+                        dose = 1.0f,
                         unit = "pills"
                     )
                 )
