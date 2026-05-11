@@ -341,7 +341,7 @@ fun WeeklyReportBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(stringResource(R.string.weekly_insights), fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text(stats.dateRange.ifBlank { stringResource(R.string.weekly_summary }, color = Color.Gray, fontSize = 14.sp)
+            Text(stats.dateRange.ifBlank { stringResource(R.string.weekly_summary) }, color = Color.Gray, fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(24.dp))
             
