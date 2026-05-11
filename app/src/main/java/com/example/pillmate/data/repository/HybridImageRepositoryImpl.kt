@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 
-// --- 1. LỚP LOCAL ---
 class RoomImageRepositoryImpl(private val dao: ImageDao) : RoomRepositoryImpl<MedicalImage, MedicalImageEntity>(
     getAllFlow = { dao.getAllImages(it) },
     getAllOnceFunc = { dao.getAllImagesOnce(it) },
@@ -27,14 +26,12 @@ class RoomImageRepositoryImpl(private val dao: ImageDao) : RoomRepositoryImpl<Me
     getId = { it.id }
 )
 
-// --- 2. LỚP REMOTE (Firestore Metadata) ---
 class FirestoreImageRepositoryImpl(firestore: FirebaseFirestore) : FirestoreRepositoryImpl<MedicalImage>(
     getCollectionReference = { firestore.collection("profiles").document(it).collection("medical_images") },
     modelClass = MedicalImage::class.java,
     setId = { item, id -> item.copy(id = id) }
 ) { override fun getId(item: MedicalImage) = item.id }
 
-// --- 3. LỚP HYBRID (Gắn thêm logic upload Firebase Storage) ---
 class HybridImageRepositoryImpl(
     localRepo: LocalRepository<MedicalImage>,
     remoteRepo: RemoteRepository<MedicalImage>,
@@ -55,7 +52,7 @@ class HybridImageRepositoryImpl(
                 val uri = if (item.localUri.startsWith("content://") || item.localUri.startsWith("file://")) {
                     android.net.Uri.parse(item.localUri)
                 } else {
-                    android.net.Uri.fromFile(java.io.File(item.localUri)) // Ép đường dẫn thô thành file://
+                    android.net.Uri.fromFile(java.io.File(item.localUri))
                 }
 
                 val storageRef = storage.reference.child("profiles/$profileId/images/${item.id}.jpg")

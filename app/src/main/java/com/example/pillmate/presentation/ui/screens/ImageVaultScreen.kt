@@ -1,10 +1,9 @@
 package com.example.pillmate.presentation.ui.screens
 
+import com.example.pillmate.R
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,13 +23,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.pillmate.presentation.viewmodel.ImageVaultViewModel
 import org.koin.androidx.compose.koinViewModel
-import java.io.File
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +74,7 @@ fun ImageVaultScreen(
             containerColor = Color(0xFF1B1B1B),
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Thư viện y tế", color = Color.White, fontWeight = FontWeight.Bold) },
+                    title = { Text(stringResource(id = R.string.medical_vault_title), color = Color.White, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -94,7 +94,7 @@ fun ImageVaultScreen(
         ) { innerPadding ->
             if (images.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Chưa có hình ảnh nào.", color = Color.Gray, fontSize = 16.sp)
+                    Text(stringResource(id = R.string.no_images_yet), color = Color.Gray, fontSize = 16.sp)
                 }
             } else {
                 LazyVerticalGrid(
@@ -184,8 +184,8 @@ fun FullScreenImageScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Xóa hình ảnh", fontWeight = FontWeight.Bold) },
-            text = { Text("Bạn có chắc chắn muốn xóa hình ảnh này không? Hành động này không thể hoàn tác.") },
+            title = { Text(stringResource(id = R.string.delete_image_dialog_title), fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(id = R.string.delete_image_dialog_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -193,11 +193,11 @@ fun FullScreenImageScreen(
                         onDelete(image)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
-                ) { Text("Xóa", color = Color.White) }
+                ) { Text(stringResource(id = R.string.delete), color = Color.White) }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Hủy", color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
                 }
             }
         )
