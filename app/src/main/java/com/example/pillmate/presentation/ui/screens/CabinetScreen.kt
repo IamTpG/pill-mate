@@ -28,14 +28,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pillmate.R
 import com.example.pillmate.presentation.ui.components.CabinetHeader
-import org.koin.androidx.compose.koinViewModel
 import com.example.pillmate.presentation.ui.components.MedicationCard
 import com.example.pillmate.presentation.ui.components.SearchBar
 import com.example.pillmate.presentation.ui.components.AddMedicationDialog
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
+import org.koin.androidx.compose.koinViewModel
 
 import com.example.pillmate.domain.model.Medication
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.pillmate.domain.model.SupplyLog
 import com.example.pillmate.presentation.viewmodel.DrugLibraryViewModel
@@ -163,7 +164,7 @@ fun CabinetScreen(
                 // --- YOUR MEDICATIONS SECTION ---
                 item {
                     SectionTitle(
-                        title = "Your Medications",
+                        title = stringResource(R.string.your_medications),
                         showActiveTab = showActiveTab,
                         onToggle = { showActiveTab = it }
                     )
@@ -173,7 +174,7 @@ fun CabinetScreen(
                 if (currentMeds.isEmpty()) {
                     item {
                         Text(
-                            text = if (showActiveTab) "No active medications" else "No expired medications",
+                            text = if (showActiveTab) stringResource(R.string.no_active_meds) else stringResource(R.string.no_expired_meds),
                             color = Color.Gray,
                             modifier = Modifier.padding(vertical = 16.dp)
                         )
@@ -239,13 +240,13 @@ fun CabinetScreen(
             AlertDialog(
                 onDismissRequest = { showLogDoseDialog = false },
                 containerColor = Color.White,
-                title = { Text("Log Dose", color = Color.Black) },
+                title = { Text(stringResource(R.string.log_dose_title), color = Color.Black) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = amountText,
                             onValueChange = { newVal -> amountText = newVal.filter { it.isDigit() } },
-                            label = { Text("Amount Taken") },
+                            label = { Text(stringResource(R.string.amount_taken_label)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -253,7 +254,7 @@ fun CabinetScreen(
                         OutlinedTextField(
                             value = reasonText,
                             onValueChange = { reasonText = it },
-                            label = { Text("Reason / Note") },
+                            label = { Text(stringResource(R.string.reason_note_label)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -267,12 +268,12 @@ fun CabinetScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E6C54))
                     ) {
-                        Text("Save", color = Color.White)
+                        Text(stringResource(R.string.action_add), color = Color.White)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showLogDoseDialog = false }) {
-                        Text("Cancel", color = Color.Gray)
+                        Text(stringResource(R.string.save), color = Color.Gray)
                     }
                 }
             )
@@ -283,18 +284,17 @@ fun CabinetScreen(
             AlertDialog(
                 onDismissRequest = { showRefillDialog = false },
                 containerColor = Color.White,
-                title = { Text("Refill Medication", color = Color.Black) },
+                title = { Text(stringResource(R.string.refill_med_title), color = Color.Black) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Current stock: ${selectedMedication!!.quantity.toInt()} ${selectedMedication!!.unit}",
-                            fontSize = 14.sp,
+                            text = stringResource(R.string.current_stock_info, selectedMedication!!.quantity.toInt(), selectedMedication!!.unit),                            fontSize = 14.sp,
                             color = Color.Gray
                         )
                         OutlinedTextField(
                             value = refillAmountText,
                             onValueChange = { newVal -> refillAmountText = newVal.filter { it.isDigit() } },
-                            label = { Text("Amount to add") },
+                            label = { stringResource(R.string.amount_to_add_label) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -312,12 +312,12 @@ fun CabinetScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E8B6E))
                     ) {
-                        Text("Refill", color = Color.White)
+                        Text(stringResource(R.string.action_refill), color = Color.White)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showRefillDialog = false }) {
-                        Text("Cancel", color = Color.Gray)
+                        Text(stringResource(R.string.cancel), color = Color.Gray)
                     }
                 }
             )
@@ -356,7 +356,7 @@ private fun SectionTitle(title: String, showActiveTab: Boolean, onToggle: (Boole
                         .clickable { onToggle(true) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("Active", color = if (showActiveTab) Color.White else Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(stringResource(R.string.tab_active), color = if (showActiveTab) Color.White else Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
                 Box(
                     modifier = Modifier
@@ -365,7 +365,7 @@ private fun SectionTitle(title: String, showActiveTab: Boolean, onToggle: (Boole
                         .clickable { onToggle(false) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("Expired", color = if (!showActiveTab) Color.White else Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(stringResource(R.string.tab_expired), color = if (!showActiveTab) Color.White else Color.LightGray, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }

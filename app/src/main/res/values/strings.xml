@@ -91,4 +91,173 @@
     <string name="appointment_name">Appointment Name</string>
     <string name="appointment_doctor_name">Doctor Name</string>
     <string name="appointment_submit">Submit</string>
+
+    <string name="home_title">Home</string>
+    <string name="debug_menu_desc">Debug Menu</string>
+    <string name="medical_vault_desc">Medical Vault</string>
+    <string name="open_map_desc">Open Map</string>
+    <string name="suggestion_desc">Suggestions</string>
+    <string name="todays_progress">TODAY\'S PROGRESS</string>
+    <string name="daily_progress">DAILY PROGRESS</string>
+    <string name="tasks_completed">tasks completed</string>
+    <string name="todays_schedule">Today\'s Schedule</string>
+    <string name="schedule_for">Schedule for %1$s</string>
+    <string name="ai_chat_desc">AI Chat</string>
+
+    <string name="status_done">Done</string>
+    <string name="status_missed">Missed</string>
+    <string name="status_skipped">Skipped</string>
+    <string name="status_snoozed">Snoozed</string>
+    <string name="status_late">Late</string>
+    <string name="status_upcoming">Upcoming</string>
+
+    <string name="cabinet_title">Your Cabinet</string>
+    <string name="active_meds_label">ACTIVE MEDS</string>
+    <string name="low_stock_label">LOW STOCK</string>
+    <string name="search_library_title">Search Drug Library</string>
+    <string name="search_library_desc">Browse FDA drug information</string>
+    <string name="search_cabinet_placeholder">Search your cabinet…</string>
+    <string name="your_medications">Your Medications</string>
+    <string name="tab_active">Active</string>
+    <string name="tab_expired">Expired</string>
+    <string name="no_active_meds">No active medications</string>
+    <string name="no_expired_meds">No expired medications</string>
+    <string name="add_med_fab_desc">Log Medicine</string>
+
+    <string name="status_expired">Expired</string>
+    <string name="status_refill_soon">Refill Soon</string>
+    <string name="status_in_stock">In Stock</string>
+    <string name="med_qty_left">%1$d %2$s left</string>
+
+    <string name="add_medication_title">Add Medication</string>
+    <string name="edit_medication_title">Edit Medication</string>
+    <string name="med_name_hint">Medication Name (e.g., Ibuprofen)</string>
+    <string name="med_desc_hint">Description (e.g., Daily, As needed)</string>
+    <string name="med_unit_hint">Unit (e.g., Tablets, mg)</string>
+    <string name="med_inventory_hint">Current Inventory Count</string>
+    <string name="expires_label">Expires: %1$s</string>
+    <string name="select_exp_date">Select Expiration Date</string>
+    <string name="error_name_req">Name is required</string>
+    <string name="error_unit_req">Unit is required</string>
+    <string name="error_invalid_num">Enter a valid number</string>
+
+    <string name="action_add">Add</string>
+    <string name="action_refill">Refill</string>
+
+    <string name="log_dose_title">Log Dose</string>
+    <string name="amount_taken_label">Amount Taken</string>
+    <string name="reason_note_label">Reason / Note</string>
+    <string name="refill_med_title">Refill Medication</string>
+    <string name="current_stock_info">Current stock: %1$d %2$s</string>
+    <string name="amount_to_add_label">Amount to add</string>
+
+    <string name="med_detail_title">Medication Details</string>
+    <string name="take_as_prescribed">Take as prescribed</string>
+    <string name="status_active_prescription">Active Prescription</string>
+    <string name="label_amount">AMOUNT</string>
+    <string name="label_expiry">EXPIRY</string>
+    <string name="expiry_unknown">Unknown</string>
+    <string name="no_logs_yet">No logs yet</string>
+    <string name="log_taken">Taken %1$d %2$s</string>
+    <string name="log_refilled">Refilled +%1$d %2$s</string>
+    <string name="log_initial">Initial +%1$d %2$s</string>
+    <string name="log_adjusted">Adjusted +%1$d %2$s</string>
+    <string name="status_out_of_stock">Out of Stock</string>
+    <string name="action_log_dose">Log Dose</string>
+    <string name="action_refill_plus">+ Refill</string>
+    <string name="delete_med_title">Delete Medication</string>
+    <string name="delete_med_confirm">Are you sure you want to delete this medication?</string>
+    <string name="auto_log">Auto-Log</string>
+
+    <string name="ai_chat_history">Chat History</string>
+    <string name="ai_new_chat">New Chat</string>
+    <string name="ai_chats_label">Chats</string>
+    <string name="ai_delete_chat_desc">Delete chat</string>
+    <string name="ai_greeting">Hello! I\'m your PillMate Assistant. How can I help you manage your medications today?</string>
+    <string name="ai_menu_desc">Menu</string>
+    <string name="ai_chat_title">PillMate AI</string>
+    <string name="ai_back_desc">Back</string>
+    <string name="ai_now_label">Now</string>
+    <string name="ai_disclaimer">PillMate AI provides info, not medical advice. Consult a professional for emergencies.</string>
+    <string name="ai_input_placeholder">Ask about medications…</string>
+    <string name="ai_send_desc">Send</string>
+    <string name="ai_delete_confirm_title">Delete chat?</string>
+    <string name="ai_delete_confirm_text">Are you sure you want to delete this chat? This action cannot be undone.</string>
+
+    <string name="vitals_title">Daily Vitals</string>
+    <string name="hydration_goal">Hydration Goal</string>
+    <string name="completed_percent">%1$d%% Completed</string>
+    <string name="remaining_ml">%1$dml remaining</string>
+    <string name="blood_pressure_label">BLOOD PRESSURE</string>
+    <string name="body_weight_label">BODY WEIGHT</string>
+    <string name="recent_activity">RECENT ACTIVITY</string>
+    <string name="view_all">View All</string>
+    <string name="settings_desc">Settings</string>
+
+    <string name="metric_water">Water</string>
+    <string name="metric_blood_pressure">Blood Pressure</string>
+    <string name="metric_weight">Weight</string>
+    <string name="metric_heart_rate">Heart Rate</string>
+
+    <string name="weekly_insights">Weekly Insights</string>
+    <string name="weekly_summary">Summary for the last 7 days</string>
+    <string name="avg_bp">Avg BP</string>
+    <string name="total_water">Total Water</string>
+    <string name="avg_weight">Avg Weight</string>
+    <string name="activity_overview">Activity Overview</string>
+    <string name="logs_count">%1$d logs</string>
+    <string name="close_report">Close Report</string>
+
+    <string name="select_medication_title">Select Medication</string>
+    <string name="no_active_meds_found">No active medications found in your cabinet.</string>
+    <string name="active_medications_label">ACTIVE MEDICATIONS</string>
+
+    <string name="appointment_title">Appointments</string>
+    <string name="cabinet_header_title">Your Cabinet</string>
+    <string name="cabinet_header_sub">Keep track your health journey</string>
+    <string name="overview_label">Overview</string>
+    <string name="total_appointments">Total Appointments: %1$d</string>
+    <string name="add_appointment_label">Add Appointment</string>
+    <string name="edit_appointment_label">Edit Appointment</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="appointment_location_value">Location: %1$s</string>
+    <string name="appointment_doctor_value">Doctor: %1$s</string>
+    <string name="appointment_description_value">Description: %1$s</string>
+
+    <string name="search_desc">Search</string>
+    <string name="clear_search_desc">Clear / Close search</string>
+    <string name="edit_item_desc">Edit item</string>
+    <string name="remove_item_desc">Remove item</string>
+    <string name="appointment_card_icon_desc">Appointment Card Icon</string>
+
+    <string name="health_notif_title">Health Notifications</string>
+    <string name="health_notif_sub">Settings are synced with your profile.</string>
+    <string name="reminder_freq_label">Reminder frequency:</string>
+    <string name="label_hydration">Hydration</string>
+    <string name="label_bp">Blood Pressure</string>
+    <string name="label_weight">Body Weight</string>
+    <string name="interval_1h">1h</string>
+    <string name="interval_4h">4h</string>
+    <string name="interval_8h">8h</string>
+    <string name="interval_daily">Daily</string>
+    <string name="interval_2days">2 Days</string>
+    <string name="interval_weekly">Weekly</string>
+    <string name="interval_2weeks">2 Weeks</string>
+    <string name="interval_monthly">Monthly</string>
+
+    <string name="switch_account">Switch Account</string>
+    <string name="switch_account_title">Switch Account</string>
+    <string name="switch_account_subtitle">Choose an account to sign in</string>
+    <string name="no_saved_accounts">No saved accounts</string>
+    <string name="google_login">Google</string>
+    <string name="email_login">Email</string>
+
+    <string name="invalid_qr_code">Invalid QR Code!</string>
+    <string name="invalid_code_length">Code must be exactly 6 characters.</string>
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="scan_qr_prompt">Point camera at the patient\'s QR code</string>
+    <string name="link_account">Link</string>
+    <string name="close_label">Close</string>
 </resources>

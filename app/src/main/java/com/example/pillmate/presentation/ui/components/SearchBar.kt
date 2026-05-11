@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.example.pillmate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +24,7 @@ fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Search your cabinet...", color = Color.Gray) },
+        placeholder = { Text(stringResource(R.string.search_cabinet_placeholder), color = Color.Gray) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
         shape = RoundedCornerShape(50),
         colors = TextFieldDefaults.colors(
