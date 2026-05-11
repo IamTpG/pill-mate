@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,7 +87,7 @@ fun VitalsScreen(
                     ) {
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            title = "BLOOD PRESSURE",
+                            title = stringResource(R.string.blood_pressure_label),
                             value = uiState.latestBloodPressure,
                             unit = "mmHg",
                             status = uiState.bloodPressureStatus,
@@ -94,7 +95,7 @@ fun VitalsScreen(
                         )
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            title = "BODY WEIGHT",
+                            title = stringResource(R.string.body_weight_label),
                             value = uiState.latestWeight,
                             unit = "kg",
                             status = uiState.weightStatus,
@@ -109,8 +110,8 @@ fun VitalsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("RECENT ACTIVITY", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        Text("View All", color = colorResource(id = R.color.primary_green), fontSize = 14.sp)
+                        Text(stringResource(R.string.recent_activity), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.view_all), color = colorResource(id = R.color.primary_green), fontSize = 14.sp)
                     }
                 }
 
@@ -172,7 +173,7 @@ fun VitalsHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Daily Vitals", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.vitals_title), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
@@ -230,7 +231,7 @@ fun HydrationCard(current: Int, target: Int, onClick: () -> Unit) {
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Hydration Goal", color = Color(0xFF2ECC71), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.hydration_goal), color = Color(0xFF2ECC71), fontWeight = FontWeight.Bold)
             }
             
             Text(
@@ -248,8 +249,8 @@ fun HydrationCard(current: Int, target: Int, onClick: () -> Unit) {
             )
             
             Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("${(progress * 100).toInt()}% Completed", fontSize = 12.sp, color = Color.Gray)
-                Text("${target - current}ml remaining", fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.completed_percent, (progress * 100).toInt()), fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.remaining_ml, target - current), fontSize = 12.sp, color = Color.Gray)
             }
         }
     }
@@ -301,8 +302,13 @@ fun RecentActivityItem(metric: HealthMetric) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault()).format(metric.recordedAt), fontSize = 12.sp, color = Color.Gray)
-                Text(metric.type.name.lowercase().replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold)
-            }
+                val typeLabel = when(metric.type) {
+                    MetricType.WATER -> stringResource(R.string.metric_water)
+                    MetricType.BLOOD_PRESSURE -> stringResource(R.string.metric_blood_pressure)
+                    MetricType.WEIGHT -> stringResource(R.string.metric_weight)
+                    MetricType.HEART_RATE -> stringResource(R.string.metric_heart_rate)
+                }
+                Text(typeLabel, fontWeight = FontWeight.Bold)            }
             Text(
                 text = if (metric.type == MetricType.BLOOD_PRESSURE) "${metric.valuePrimary.toInt()}/${metric.valueSecondary?.toInt() ?: "--"}" 
                        else "${metric.valuePrimary.toInt()} ${metric.unit}",
@@ -330,20 +336,20 @@ fun WeeklyReportBottomSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text("Weekly Insights", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("Summary for the last 7 days", color = Color.Gray, fontSize = 14.sp)
+            Text(stringResource(R.string.weekly_insights), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.weekly_summary), color = Color.Gray, fontSize = 14.sp)
             
             Spacer(modifier = Modifier.height(24.dp))
             
             // Stats Row
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                WeeklyStatItem(Modifier.weight(1f), "Avg BP", stats.avgBP, Color(0xFFFF708D))
-                WeeklyStatItem(Modifier.weight(1f), "Total Water", stats.totalWater, Color(0xFF5D5DFF))
-                WeeklyStatItem(Modifier.weight(1f), "Avg Weight", stats.avgWeight, Color(0xFF2ECC71))
+                WeeklyStatItem(Modifier.weight(1f), stringResource(R.string.avg_bp), stats.avgBP, Color(0xFFFF708D))
+                WeeklyStatItem(Modifier.weight(1f), stringResource(R.string.total_water), stats.totalWater, Color(0xFF5D5DFF))
+                WeeklyStatItem(Modifier.weight(1f), stringResource(R.string.avg_weight), stats.avgWeight, Color(0xFF2ECC71))
             }
             
             Spacer(modifier = Modifier.height(32.dp))
-            Text("Activity Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(stringResource(R.string.activity_overview), fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Spacer(modifier = Modifier.height(16.dp))
             
             // Mock Graph / Bars
@@ -351,7 +357,12 @@ fun WeeklyReportBottomSheet(
                 listOf(MetricType.BLOOD_PRESSURE, MetricType.WATER, MetricType.WEIGHT).forEach { type ->
                     val count = stats.activityCounts[type] ?: 0
                     ActivityBar(
-                        label = type.name.replace("_", " "),
+                        label = when(type) {
+                            MetricType.BLOOD_PRESSURE -> stringResource(R.string.metric_blood_pressure)
+                            MetricType.WATER -> stringResource(R.string.metric_water)
+                            MetricType.WEIGHT -> stringResource(R.string.metric_weight)
+                            MetricType.HEART_RATE -> stringResource(R.string.metric_heart_rate)
+                        },
                         count = count,
                         max = 14, // Assuming 2 logs per day max
                         color = when(type) {
@@ -370,7 +381,7 @@ fun WeeklyReportBottomSheet(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1ABC9C))
             ) {
-                Text("Close Report", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.close_report), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -396,7 +407,7 @@ fun ActivityBar(label: String, count: Int, max: Int, color: Color) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, fontSize = 12.sp, color = Color.DarkGray)
-            Text("$count logs", fontSize = 12.sp, color = Color.Gray)
+            Text(stringResource(R.string.logs_count, count), fontSize = 12.sp, color = Color.Gray)
         }
         Spacer(modifier = Modifier.height(4.dp))
         LinearProgressIndicator(

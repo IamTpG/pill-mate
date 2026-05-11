@@ -183,4 +183,29 @@
     <string name="ai_send_desc">Send</string>
     <string name="ai_delete_confirm_title">Delete chat?</string>
     <string name="ai_delete_confirm_text">Are you sure you want to delete this chat? This action cannot be undone.</string>
+
+    <string name="vitals_title">Daily Vitals</string>
+    <string name="hydration_goal">Hydration Goal</string>
+    <string name="completed_percent">%1$d%% Completed</string>
+    <string name="remaining_ml">%1$dml remaining</string>
+    <string name="blood_pressure_label">BLOOD PRESSURE</string>
+    <string name="body_weight_label">BODY WEIGHT</string>
+    <string name="recent_activity">RECENT ACTIVITY</string>
+    <string name="view_all">View All</string>
+    <string name="settings_desc">Settings</string>
+
+    <string name="metric_water">Water</string>
+    <string name="metric_blood_pressure">Blood Pressure</string>
+    <string name="metric_weight">Weight</string>
+    <string name="metric_heart_rate">Heart Rate</string>
+
+    <string name="weekly_insights">Weekly Insights</string>
+    <string name="weekly_summary">Summary for the last 7 days</string>
+    <string name="avg_bp">Avg BP</string>
+    <string name="total_water">Total Water</string>
+    <string name="avg_weight">Avg Weight</string>
+    <string name="activity_overview">Activity Overview</string>
+    <string name="logs_count">%1$d logs</string>
+    <string name="close_report">Close Report</string>
+
 </resources>

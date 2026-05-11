@@ -184,4 +184,28 @@
     <string name="ai_send_desc">Gửi</string>
     <string name="ai_delete_confirm_title">Xóa cuộc trò chuyện?</string>
     <string name="ai_delete_confirm_text">Bạn có chắc chắn muốn xóa cuộc trò chuyện này không? Hành động này không thể hoàn tác.</string>
+
+    <string name="vitals_title">Chỉ số sức khỏe</string>
+    <string name="hydration_goal">Mục tiêu uống nước</string>
+    <string name="completed_percent">Hoàn thành %1$d%%</string>
+    <string name="remaining_ml">Còn lại %1$dml</string>
+    <string name="blood_pressure_label">HUYẾT ÁP</string>
+    <string name="body_weight_label">CÂN NẶNG</string>
+    <string name="recent_activity">HOẠT ĐỘNG GẦN ĐÂY</string>
+    <string name="view_all">Xem tất cả</string>
+    <string name="settings_desc">Cài đặt</string>
+
+    <string name="metric_water">Nước</string>
+    <string name="metric_blood_pressure">Huyết áp</string>
+    <string name="metric_weight">Cân nặng</string>
+    <string name="metric_heart_rate">Nhịp tim</string>
+
+    <string name="weekly_insights">Phân tích hàng tuần</string>
+    <string name="weekly_summary">Tổng hợp trong 7 ngày qua</string>
+    <string name="avg_bp">Huyết áp TB</string>
+    <string name="total_water">Tổng lượng nước</string>
+    <string name="avg_weight">Cân nặng TB</string>
+    <string name="activity_overview">Biểu đồ hoạt động</string>
+    <string name="logs_count">%1$d lượt ghi</string>
+    <string name="close_report">Đóng báo cáo</string>
 </resources>
