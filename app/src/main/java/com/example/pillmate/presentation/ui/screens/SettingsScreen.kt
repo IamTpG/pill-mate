@@ -1008,7 +1008,7 @@ fun GrantAccessTabContent(viewModel: ProfileViewModel) {
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(stringResource(id = R.string.access_code_label), color = Color.Gray, fontSize = 14.sp)
-            Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = PrimaryGreen, letterSpacing = 8.sp)
+            Text(shareCode!!, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold, color = Color.White, letterSpacing = 8.sp)
         } else {
             CircularProgressIndicator(color = PrimaryGreen)
         }
