@@ -69,6 +69,7 @@ fun TaskAlarmScreen(
     // Time calculations
     val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
     val displayFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val nextDisplayFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
     val fallbackFormat = SimpleDateFormat("H:m", Locale.getDefault())
 
     val parsedStart: Date? = try {
@@ -97,7 +98,7 @@ fun TaskAlarmScreen(
             doseTime = startTimeStr
         )
         if (nextOccurrence != null) {
-            nextTimeStr = "Next: ${displayFormat.format(nextOccurrence)}"
+            nextTimeStr = "Next: ${nextDisplayFormat.format(nextOccurrence)}"
         }
     }
 

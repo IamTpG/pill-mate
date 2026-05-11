@@ -122,6 +122,7 @@ class TaskNotificationManager(private val context: Context) {
             action = "ACTION_SKIP"
             putExtra("SOURCE_ID", sourceId)
             putExtra("SCHEDULE_ID", scheduleId)
+            putExtra("TASK_TYPE", taskType)
             putExtra("EXTRA_SCHEDULED_TIME", scheduledTimeMillis)
             putExtra("EXTRA_DOSE", dose)
         }

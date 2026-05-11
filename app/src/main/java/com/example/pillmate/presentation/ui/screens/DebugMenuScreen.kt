@@ -67,6 +67,17 @@ fun DebugMenuScreen(
 
             Button(
                 onClick = {
+                    viewModel.generateSampleVitals(
+                        onSuccess = { Toast.makeText(context, "Vitals Samples Generated!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            ) { Text("Generate Sample Vitals Report Data") }
+
+            Button(
+                onClick = {
                     viewModel.clearUserData(
                         onSuccess = { Toast.makeText(context, "Data Cleared!", Toast.LENGTH_SHORT).show() },
                         onError = { Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_LONG).show() }
