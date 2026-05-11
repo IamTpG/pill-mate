@@ -169,4 +169,19 @@
     <string name="delete_med_title">Xóa thuốc</string>
     <string name="delete_med_confirm">Bạn có chắc chắn muốn xóa thuốc này không?</string>
     <string name="auto_log">Tự động ghi</string>
+
+    <string name="ai_chat_history">Lịch sử trò chuyện</string>
+    <string name="ai_new_chat">Trò chuyện mới</string>
+    <string name="ai_chats_label">Danh sách trò chuyện</string>
+    <string name="ai_delete_chat_desc">Xóa trò chuyện</string>
+    <string name="ai_greeting">Xin chào! Tôi là Trợ lý PillMate. Tôi có thể giúp gì cho việc quản lý thuốc của bạn hôm nay?</string>
+    <string name="ai_menu_desc">Menu</string>
+    <string name="ai_chat_title">PillMate AI</string>
+    <string name="ai_back_desc">Quay lại</string>
+    <string name="ai_now_label">Bây giờ</string>
+    <string name="ai_disclaimer">PillMate AI cung cấp thông tin, không phải lời khuyên y tế. Hãy tham khảo ý kiến bác sĩ trong trường hợp khẩn cấp.</string>
+    <string name="ai_input_placeholder">Hỏi về các loại thuốc…</string>
+    <string name="ai_send_desc">Gửi</string>
+    <string name="ai_delete_confirm_title">Xóa cuộc trò chuyện?</string>
+    <string name="ai_delete_confirm_text">Bạn có chắc chắn muốn xóa cuộc trò chuyện này không? Hành động này không thể hoàn tác.</string>
 </resources>

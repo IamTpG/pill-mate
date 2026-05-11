@@ -168,4 +168,19 @@
     <string name="delete_med_title">Delete Medication</string>
     <string name="delete_med_confirm">Are you sure you want to delete this medication?</string>
     <string name="auto_log">Auto-Log</string>
+
+    <string name="ai_chat_history">Chat History</string>
+    <string name="ai_new_chat">New Chat</string>
+    <string name="ai_chats_label">Chats</string>
+    <string name="ai_delete_chat_desc">Delete chat</string>
+    <string name="ai_greeting">Hello! I\'m your PillMate Assistant. How can I help you manage your medications today?</string>
+    <string name="ai_menu_desc">Menu</string>
+    <string name="ai_chat_title">PillMate AI</string>
+    <string name="ai_back_desc">Back</string>
+    <string name="ai_now_label">Now</string>
+    <string name="ai_disclaimer">PillMate AI provides info, not medical advice. Consult a professional for emergencies.</string>
+    <string name="ai_input_placeholder">Ask about medications…</string>
+    <string name="ai_send_desc">Send</string>
+    <string name="ai_delete_confirm_title">Delete chat?</string>
+    <string name="ai_delete_confirm_text">Are you sure you want to delete this chat? This action cannot be undone.</string>
 </resources>
