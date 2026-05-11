@@ -123,6 +123,8 @@ fun PillMateApp(
                                 )
                             )
                         },
+
+                        onDebugClick = { navController.navigate(Screen.DebugMenu.route) },
                         onSettingsClick = { navController.navigate(Screen.Settings.route) },
                         onAIClick = { navController.navigate(Screen.AIChat.route) },
 	                    onMapClick = { navController.navigate(Screen.Map.route)}

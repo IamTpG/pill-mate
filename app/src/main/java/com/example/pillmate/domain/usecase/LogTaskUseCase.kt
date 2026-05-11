@@ -17,7 +17,8 @@ class LogTaskUseCase(
     private val medicationRepository: MedicationRepository,
     private val supplyLogRepository: SupplyLogRepository,
     private val logRepository: LogRepository,
-    private val notificationManager: TaskNotificationManager
+    private val notificationManager: TaskNotificationManager,
+    private val calculateDailyIntakeUseCase: CalculateDailyIntakeUseCase
 ) {
     suspend fun execute(
         profileId: String,
@@ -64,8 +65,11 @@ class LogTaskUseCase(
                 val med = medicationRepository.getById(profileId, sourceId).getOrNull()
                 val currentStock = med?.quantity ?: 0f
 
-                if (currentStock < 5.0f) {
-                    notificationManager.showLowStockNotification(sourceId, currentStock)
+                val todayIntake = calculateDailyIntakeUseCase.execute(profileId, Date())
+                val dailyRequirement = todayIntake[sourceId] ?: 0f
+
+                if (dailyRequirement > 0f && currentStock < dailyRequirement) {
+                    notificationManager.showLowStockNotification(med?.name ?: "Medication", currentStock)
                 }
             } catch (e: Exception) {
                 // Non-fatal

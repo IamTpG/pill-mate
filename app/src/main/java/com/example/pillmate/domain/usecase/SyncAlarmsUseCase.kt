@@ -48,13 +48,26 @@ class SyncAlarmsUseCase(
                 schedule.reminders.forEach { reminder ->
                     val requestCode = "${schedule.id}_${doseTime.time}_${reminder.minutesBefore}_${reminder.type.name}".hashCode()
 
-                    // ROBUST TIME PARSING (Matches TaskAlarmScreen)
-                    val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                    val displayFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                    val fallbackFormat = SimpleDateFormat("H:m", java.util.Locale.getDefault())
+                    // Parse dose time for comparison
+                    val timeParts = doseTime.time.split(":")
+                    val targetHour = if (doseTime.time.contains("PM", ignoreCase = true)) {
+                        (timeParts[0].trim().toIntOrNull() ?: 0).let { if (it < 12) it + 12 else it }
+                    } else if (doseTime.time.contains("AM", ignoreCase = true)) {
+                        (timeParts[0].trim().toIntOrNull() ?: 0).let { if (it == 12) 0 else it }
+                    } else {
+                        timeParts[0].trim().toIntOrNull() ?: 0
+                    }
+                    val targetMinute = timeParts.getOrNull(1)?.filter { it.isDigit() }?.toIntOrNull() ?: 0
 
-                    if (completedScheduleIds.contains(schedule.id)) {
-                        Log.d("SyncAlarmsUseCase", "Cancelling completed schedule: ${schedule.id}")
+                    val isDoseCompleted = todayLogsSnapshot.any { log ->
+                        log.scheduleId == schedule.id && (log.status == LogStatus.COMPLETED || log.status == LogStatus.SKIPPED) &&
+                        Calendar.getInstance().apply { time = log.scheduledTime }.let { 
+                            it.get(Calendar.HOUR_OF_DAY) == targetHour && it.get(Calendar.MINUTE) == targetMinute
+                        }
+                    }
+
+                    if (isDoseCompleted) {
+                        Log.d("SyncAlarmsUseCase", "Cancelling completed dose: ${schedule.id} at ${doseTime.time}")
                         notificationManager.cancelNotification(requestCode)
                         notificationManager.dismissNotification(schedule.id)
                     } else {
@@ -91,7 +104,9 @@ class SyncAlarmsUseCase(
                                 reminderType = reminder.type.name,
                                 rrule = schedule.recurrenceRule,
                                 startTime = doseTime.time,
-                                instructions = schedule.eventSnapshot.instructions
+                                instructions = schedule.eventSnapshot.instructions,
+                                scheduledTimeMillis = nextOccurrence.time,
+                                dose = doseTime.dose.toFloat()
                             )
 
                             if (scheduled) {

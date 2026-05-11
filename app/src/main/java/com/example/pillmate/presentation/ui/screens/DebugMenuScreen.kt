@@ -7,6 +7,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.pillmate.domain.model.Schedule
 import com.example.pillmate.presentation.viewmodel.DebugViewModel
@@ -48,7 +51,8 @@ fun DebugMenuScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
@@ -178,11 +182,25 @@ fun DebugMenuScreen(
 
             Button(
                 onClick = {
-                    viewModel.copyFcmTokenToClipboard(context)
+                    viewModel.triggerLowStockWorker(context)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-            ) { Text("Copy FCM Token for Direct Test") }
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) { Text("Trigger Low Stock Check Now") }
+
+            Text("Health Notification Triggers:", style = MaterialTheme.typography.titleMedium)
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { viewModel.triggerHealthNotification("HYDRATION") }, modifier = Modifier.weight(1f)) {
+                    Text("Water", fontSize = 12.sp)
+                }
+                Button(onClick = { viewModel.triggerHealthNotification("BLOOD_PRESSURE") }, modifier = Modifier.weight(1f)) {
+                    Text("BP", fontSize = 12.sp)
+                }
+                Button(onClick = { viewModel.triggerHealthNotification("WEIGHT") }, modifier = Modifier.weight(1f)) {
+                    Text("Weight", fontSize = 12.sp)
+                }
+            }
         }
 
         if (showScheduleDialog) {

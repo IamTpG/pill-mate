@@ -35,7 +35,7 @@ import java.util.Date
 @Composable
 fun HomeHeader(
 //    onAddClick: () -> Unit,
-//    onDebugClick: () -> Unit,
+    onDebugClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMapClick: () -> Unit
 ) {
@@ -55,13 +55,13 @@ fun HomeHeader(
             fontWeight = FontWeight.Bold
         )
         Row {
-//            IconButton(onClick = onDebugClick) {
-//                Icon(
-//                    imageVector = Icons.Default.Info,
-//                    contentDescription = "Debug Menu",
-//                    tint = Color.White
-//                )
-//            }
+            IconButton(onClick = onDebugClick) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Debug Menu",
+                    tint = Color.White
+                )
+            }
 //            IconButton(onClick = onAddClick) {
 //                Icon(
 //                    imageVector = Icons.Default.Add,

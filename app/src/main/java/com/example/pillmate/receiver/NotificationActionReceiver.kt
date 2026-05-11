@@ -33,6 +33,8 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
         val scheduleId = intent.getStringExtra("SCHEDULE_ID") ?: sourceId
         val taskTypeString = intent.getStringExtra("TASK_TYPE") ?: "OTHER"
         val taskType = try { TaskType.valueOf(taskTypeString) } catch (e: Exception) { TaskType.OTHER }
+        val scheduledTimeMillis = intent.getLongExtra("EXTRA_SCHEDULED_TIME", System.currentTimeMillis())
+        val dose = intent.getFloatExtra("EXTRA_DOSE", 1.0f)
         
         val status = when (action) {
             "ACTION_COMPLETE" -> LogStatus.COMPLETED
@@ -43,7 +45,16 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
                 
                 val snoozeRequestCode = ("SNOOZE_" + scheduleId).hashCode()
                 TaskNotificationManager(context).scheduleTaskNotification(
-                    sourceId, scheduleId, title, details, 10, snoozeRequestCode, taskTypeString
+                    sourceId = sourceId,
+                    scheduleId = scheduleId,
+                    title = title,
+                    details = details,
+                    delaySeconds = 10,
+                    requestCode = snoozeRequestCode,
+                    profileId = profileId,
+                    taskType = taskTypeString,
+                    scheduledTimeMillis = scheduledTimeMillis,
+                    dose = dose
                 )
                 // Register snooze in tracker so sync doesn't kill it
                 GlobalContext.get().get<AlarmTracker>().addId(snoozeRequestCode)
@@ -54,18 +65,23 @@ class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
             else -> return
         }
 
+        val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
-            useCase.execute(
-                profileId = profileId,
-                sourceId = sourceId,
-                scheduleId = scheduleId,
-                taskType = taskType,
-                status = status,
-                scheduledTime = Date(),
-                dose = 1.0f
-            )
-            // Cancellation handled local only for immediate effect
-            TaskNotificationManager(context).dismissNotification(scheduleId)
+            try {
+                useCase.execute(
+                    profileId = profileId,
+                    sourceId = sourceId,
+                    scheduleId = scheduleId,
+                    taskType = taskType,
+                    status = status,
+                    scheduledTime = Date(scheduledTimeMillis),
+                    dose = dose
+                )
+                // Cancellation handled local only for immediate effect
+                TaskNotificationManager(context).dismissNotification(scheduleId)
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 }
