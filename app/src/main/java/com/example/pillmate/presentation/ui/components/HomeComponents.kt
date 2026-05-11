@@ -37,7 +37,6 @@ import java.util.Date
 fun HomeHeader(
 //    onAddClick: () -> Unit,
     onDebugClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     onVaultClick: () -> Unit,
     onMapClick: () -> Unit,
     onSuggestionClick: () -> Unit,
@@ -93,13 +92,6 @@ fun HomeHeader(
 			        tint = Color.White
 		        )
 	        }
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = Color.White
-                )
-            }
         }
     }
 }

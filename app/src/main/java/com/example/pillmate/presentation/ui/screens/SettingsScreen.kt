@@ -101,33 +101,32 @@ fun SettingsScreen(
     var currentRoute by remember { mutableStateOf(SettingsRoute.OPTIONS) }
     
     val authViewModel: AuthViewModel = koinViewModel()
-     var showSwitchAccountDialog by remember { mutableStateOf(false) }
-     
-     val webClientId = stringResource(id = R.string.default_web_client_id)
+    var showSwitchAccountDialog by remember { mutableStateOf(false) }
+    val webClientId = stringResource(id = R.string.default_web_client_id)
 
-     // Google launcher dùng cho chuyển tài khoản Google
-     val switchGoogleLauncher = rememberLauncherForActivityResult(
-         ActivityResultContracts.StartActivityForResult()
-     ) { result ->
-         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-         try {
-             val account = task.getResult(ApiException::class.java)
-             val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
-             authViewModel.signInWithGoogle(credential)
-         } catch (e: ApiException) {
-             Toast.makeText(context, "Google: ${e.message}", Toast.LENGTH_SHORT).show()
-         }
-     }
+    // Google launcher dùng cho chuyển tài khoản Google
+    val switchGoogleLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val credential = GoogleAuthProvider.getCredential(account.idToken!!, null)
+            authViewModel.signInWithGoogle(credential)
+        } catch (e: ApiException) {
+            Toast.makeText(context, "Google: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
 
-     fun launchGoogleSignInWithHint(emailHint: String) {
-         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-             .requestIdToken(webClientId)
-             .requestEmail()
-             .setAccountName(emailHint)   // gợi ý tài khoản Google
-             .build()
-         val client = GoogleSignIn.getClient(context, gso)
-         switchGoogleLauncher.launch(client.signInIntent)
-     }
+    fun launchGoogleSignInWithHint(emailHint: String) {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(webClientId)
+            .requestEmail()
+            .setAccountName(emailHint)   // gợi ý tài khoản Google
+            .build()
+        val client = GoogleSignIn.getClient(context, gso)
+        switchGoogleLauncher.launch(client.signInIntent)
+    }
     
     Box(modifier = Modifier.fillMaxSize()) {
         // Shared Background
@@ -236,18 +235,18 @@ fun ProfileOptionsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.CenterStart
         ) {
-            IconButton(
-                onClick = { onBackClick() },
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
+//            IconButton(
+//                onClick = { onBackClick() },
+//                modifier = Modifier.align(Alignment.CenterStart)
+//            ) {
+//                Icon(
+//                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+//                    contentDescription = "Back",
+//                    tint = Color.White
+//                )
+//            }
 
             Text(
                 text = stringResource(id = R.string.profile),
