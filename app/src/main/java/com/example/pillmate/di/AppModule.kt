@@ -168,7 +168,7 @@ val viewModelModule = module {
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }
-    viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }}
+    viewModel { com.example.pillmate.presentation.viewmodel.ImageVaultViewModel(get()) }
     viewModel { VitalsViewModel(get(), get(), get(), get(), get()) }
     viewModel { AppointmentScheduleViewModel(get(), get(), get()) }
 }
