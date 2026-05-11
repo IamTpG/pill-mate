@@ -208,4 +208,42 @@
     <string name="logs_count">%1$d logs</string>
     <string name="close_report">Close Report</string>
 
+    <string name="select_medication_title">Select Medication</string>
+    <string name="no_active_meds_found">No active medications found in your cabinet.</string>
+    <string name="active_medications_label">ACTIVE MEDICATIONS</string>
+
+    <string name="appointment_title">Appointments</string>
+    <string name="cabinet_header_title">Your Cabinet</string>
+    <string name="cabinet_header_sub">Keep track your health journey</string>
+    <string name="overview_label">Overview</string>
+    <string name="total_appointments">Total Appointments: %1$d</string>
+    <string name="add_appointment_label">Add Appointment</string>
+    <string name="edit_appointment_label">Edit Appointment</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="appointment_location_value">Location: %1$s</string>
+    <string name="appointment_doctor_value">Doctor: %1$s</string>
+    <string name="appointment_description_value">Description: %1$s</string>
+
+    <string name="search_desc">Search</string>
+    <string name="clear_search_desc">Clear / Close search</string>
+    <string name="edit_item_desc">Edit item</string>
+    <string name="remove_item_desc">Remove item</string>
+    <string name="appointment_card_icon_desc">Appointment Card Icon</string>
+
+    <string name="health_notif_title">Health Notifications</string>
+    <string name="health_notif_sub">Settings are synced with your profile.</string>
+    <string name="reminder_freq_label">Reminder frequency:</string>
+    <string name="label_hydration">Hydration</string>
+    <string name="label_bp">Blood Pressure</string>
+    <string name="label_weight">Body Weight</string>
+    <string name="interval_1h">1h</string>
+    <string name="interval_4h">4h</string>
+    <string name="interval_8h">8h</string>
+    <string name="interval_daily">Daily</string>
+    <string name="interval_2days">2 Days</string>
+    <string name="interval_weekly">Weekly</string>
+    <string name="interval_2weeks">2 Weeks</string>
+    <string name="interval_monthly">Monthly</string>
 </resources>

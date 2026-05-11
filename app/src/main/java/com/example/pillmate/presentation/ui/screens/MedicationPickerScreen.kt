@@ -25,6 +25,8 @@ import com.example.pillmate.presentation.ui.components.MedicationCard
 import com.example.pillmate.presentation.viewmodel.CabinetViewModel
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.res.stringResource
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicationPickerScreen(
@@ -50,7 +52,7 @@ fun MedicationPickerScreen(
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                 }
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Text("Select Medication", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text(stringResource(id = R.string.select_medication_title), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
                 Spacer(modifier = Modifier.width(48.dp))
             }
@@ -58,12 +60,12 @@ fun MedicationPickerScreen(
             
             if (uiState.activeMedications.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Text("No active medications found in your cabinet.", color = Color.LightGray, fontSize = 16.sp)
+                    Text(stringResource(id = R.string.no_active_meds_found), color = Color.LightGray, fontSize = 16.sp)
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item {
-                        Text("ACTIVE MEDICATIONS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        Text(stringResource(id = R.string.active_medications_label), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
                     }
                     items(uiState.activeMedications) { medication ->
                         MedicationCard(medication = medication, onClick = { onMedicationSelected(medication) })

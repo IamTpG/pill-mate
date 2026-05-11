@@ -208,4 +208,43 @@
     <string name="activity_overview">Biểu đồ hoạt động</string>
     <string name="logs_count">%1$d lượt ghi</string>
     <string name="close_report">Đóng báo cáo</string>
+
+    <string name="select_medication_title">Chọn thuốc</string>
+    <string name="no_active_meds_found">Không tìm thấy thuốc nào đang dùng trong tủ thuốc của bạn.</string>
+    <string name="active_medications_label">THUỐC ĐANG DÙNG</string>
+
+    <string name="appointment_title">Lịch hẹn</string>
+    <string name="cabinet_header_title">Tủ thuốc của bạn</string>
+    <string name="cabinet_header_sub">Theo dõi hành trình sức khỏe của bạn</string>
+    <string name="overview_label">Tổng quan</string>
+    <string name="total_appointments">Tổng lịch hẹn: %1$d</string>
+    <string name="add_appointment_label">Thêm lịch hẹn</string>
+    <string name="edit_appointment_label">Sửa lịch hẹn</string>
+    <string name="btn_create">Tạo</string>
+    <string name="btn_save">Lưu</string>
+    <string name="btn_cancel">Hủy</string>
+    <string name="appointment_location_value">Địa điểm: %1$s</string>
+    <string name="appointment_doctor_value">Bác sĩ: %1$s</string>
+    <string name="appointment_description_value">Mô tả: %1$s</string>
+
+    <string name="search_desc">Tìm kiếm</string>
+    <string name="clear_search_desc">Xóa / Đóng tìm kiếm</string>
+    <string name="edit_item_desc">Chỉnh sửa</string>
+    <string name="remove_item_desc">Xóa</string>
+    <string name="appointment_card_icon_desc">Biểu tượng lịch hẹn</string>
+
+    <string name="health_notif_title">Thông báo sức khỏe</string>
+    <string name="health_notif_sub">Cài đặt được đồng bộ với hồ sơ của bạn.</string>
+    <string name="reminder_freq_label">Tần suất nhắc nhở:</string>
+    <string name="label_hydration">Nhắc uống nước</string>
+    <string name="label_bp">Nhắc đo huyết áp</string>
+    <string name="label_weight">Nhắc cân nặng</string>
+    <string name="interval_1h">1 giờ</string>
+    <string name="interval_4h">4 giờ</string>
+    <string name="interval_8h">8 giờ</string>
+    <string name="interval_daily">Hàng ngày</string>
+    <string name="interval_2days">2 ngày</string>
+    <string name="interval_weekly">Hàng tuần</string>
+    <string name="interval_2weeks">2 tuần</string>
+    <string name="interval_monthly">Hàng tháng</string>
 </resources>
