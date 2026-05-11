@@ -72,4 +72,10 @@ class ImageVaultViewModel(
             null
         }
     }
+
+    fun deleteImage(imageId: String, profileId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            imageRepository.remove(profileId, imageId)
+        }
+    }
 }
