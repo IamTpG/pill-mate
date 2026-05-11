@@ -1,6 +1,7 @@
 package com.example.pillmate.domain.usecase
 
 import com.example.pillmate.domain.model.Schedule
+import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.notification.TaskNotificationManager
 import com.example.pillmate.util.AlarmTracker
@@ -11,7 +12,8 @@ import java.util.*
 class ManageReminderUseCase(
     private val scheduleRepository: ScheduleRepository,
     private val notificationManager: TaskNotificationManager,
-    private val alarmTracker: AlarmTracker
+    private val alarmTracker: AlarmTracker,
+    private val checkLowStockUseCase: CheckLowStockUseCase
 ) {
     suspend operator fun invoke(profileId: String, schedule: Schedule): Result<Unit> {
         val result = scheduleRepository.add(profileId, schedule)
@@ -63,6 +65,9 @@ class ManageReminderUseCase(
                         }
                     }
                 }
+            }
+            if (schedule.type == TaskType.MEDICATION) {
+                checkLowStockUseCase.execute(profileId, schedule.eventSnapshot.sourceId)
             }
         }
         

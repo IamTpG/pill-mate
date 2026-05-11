@@ -8,6 +8,7 @@ import com.example.pillmate.domain.model.ScheduleEvent
 import com.example.pillmate.domain.model.Medication
 import com.example.pillmate.domain.model.Reminder
 import com.example.pillmate.domain.repository.ScheduleRepository
+import com.example.pillmate.domain.usecase.CheckLowStockUseCase
 import com.example.pillmate.domain.usecase.ManageReminderUseCase
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,7 @@ data class ScheduleBuilderUiState(
 class ScheduleBuilderViewModel(
     private val scheduleRepository: ScheduleRepository,
     private val manageReminderUseCase: ManageReminderUseCase,
+    private val checkLowStockUseCase: CheckLowStockUseCase,
     private val profileDao: ProfileDao,
     private val auth: FirebaseAuth
 ) : ViewModel() {
@@ -319,7 +321,11 @@ class ScheduleBuilderViewModel(
                     )
                 )
                 
-                scheduleRepository.add(userId, schedule)
+                val saveResult = scheduleRepository.add(userId, schedule)
+                if (saveResult.isFailure) {
+                    throw saveResult.exceptionOrNull() ?: IllegalStateException("Failed to save schedule")
+                }
+                checkLowStockUseCase.execute(userId, schedule.eventSnapshot.sourceId)
                 
                 // Refresh existing schedules to align with updated DB state
                 val refreshedList = scheduleRepository.getAllOnce(userId).getOrNull()?.filter { it.eventSnapshot.sourceId == state.selectedMedication!!.id } ?: emptyList()

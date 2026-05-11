@@ -104,12 +104,12 @@ val appModule = module {
     single { FcmTokenManager(get()) }
     single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get()) }
     factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
-    factory { CreateScheduleUseCase(get()) }
-    factory { UpdateScheduleUseCase(get()) }
-    factory { ManageReminderUseCase(get(), get(), get()) }
+    factory { CreateScheduleUseCase(get(), get()) }
+    factory { UpdateScheduleUseCase(get(), get()) }
+    factory { ManageReminderUseCase(get(), get(), get(), get()) }
     factory { SyncAlarmsUseCase(get(), get(), get(), get()) }
     factory { SyncFcmTokenUseCase(get()) }
     factory { GetNextTaskUseCase(get(), get()) }
@@ -118,6 +118,7 @@ val appModule = module {
     factory { UpdateHydrationGoalUseCase(get(), get()) }
     factory { GetWidgetDataUseCase(get(), get(), get()) }
     factory { CalculateDailyIntakeUseCase(get(), get()) }
+    factory { CheckLowStockUseCase(get(), get(), get()) }
 
    // viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
     //viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
@@ -183,7 +184,7 @@ val viewModelModule = module {
     viewModel { DebugViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { CabinetViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext() as Application) }
     viewModel { DrugLibraryViewModel(get(), androidContext() as Application) }
-    viewModel { ScheduleBuilderViewModel(get(), get(), get(), get()) }
+    viewModel { ScheduleBuilderViewModel(get(), get(), get(), get(), get()) }
     viewModel { AuthViewModel(get(), get(), get(), get(), get()) }
     viewModel { ProfileViewModel(get(), get(), get()) }
     viewModel { AIChatViewModel(get(), get(), get()) }

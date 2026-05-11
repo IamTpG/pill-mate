@@ -4,21 +4,17 @@ import com.example.pillmate.domain.model.LogStatus
 import com.example.pillmate.domain.model.TaskLog
 import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
-import com.example.pillmate.domain.repository.MedicationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.pillmate.domain.model.SupplyLog
 import com.example.pillmate.domain.repository.SupplyLogRepository
-import com.example.pillmate.notification.TaskNotificationManager
 import java.util.Date
 import java.util.UUID
 
 class LogTaskUseCase(
-    private val medicationRepository: MedicationRepository,
     private val supplyLogRepository: SupplyLogRepository,
     private val logRepository: LogRepository,
-    private val notificationManager: TaskNotificationManager,
-    private val calculateDailyIntakeUseCase: CalculateDailyIntakeUseCase
+    private val checkLowStockUseCase: CheckLowStockUseCase
 ) {
     suspend fun execute(
         profileId: String,
@@ -61,19 +57,7 @@ class LogTaskUseCase(
             }
 
             // 3. IMMEDIATE LOW STOCK ALERT
-            try {
-                val med = medicationRepository.getById(profileId, sourceId).getOrNull()
-                val currentStock = med?.quantity ?: 0f
-
-                val todayIntake = calculateDailyIntakeUseCase.execute(profileId, Date())
-                val dailyRequirement = todayIntake[sourceId] ?: 0f
-
-                if (dailyRequirement > 0f && currentStock < dailyRequirement) {
-                    notificationManager.showLowStockNotification(med?.name ?: "Medication", currentStock)
-                }
-            } catch (e: Exception) {
-                // Non-fatal
-            }
+            checkLowStockUseCase.execute(profileId, sourceId)
         }
 
         // 4. Update widget
