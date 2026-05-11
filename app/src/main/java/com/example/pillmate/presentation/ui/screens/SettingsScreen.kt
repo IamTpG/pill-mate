@@ -58,6 +58,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.vectorResource
 import com.example.pillmate.presentation.ui.components.SwitchAccountDialog
 import com.example.pillmate.presentation.viewmodel.AuthViewModel
 import com.google.android.gms.common.api.ApiException
@@ -151,7 +152,9 @@ fun SettingsScreen(
                     isCaregiver = isCaregiver,
                     onEditClick = { currentRoute = SettingsRoute.EDIT_PROFILE },
                     onLogoutClick = { performSignOut(context, auth, database, onSignOutComplete) },
+                    
                     onCaregiverHubClick = { currentRoute = SettingsRoute.CAREGIVER_HUB },
+                    onShowSwitchAccountDialog = { showSwitchAccountDialog = true},
                     onBackClick = { onBack() }
                 )
             }
@@ -200,6 +203,7 @@ fun ProfileOptionsScreen(
     onEditClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onCaregiverHubClick: () -> Unit,
+    onShowSwitchAccountDialog: () -> Unit,
     onBackClick : () -> Unit
 ) {
     var languageMenuExpanded by remember { mutableStateOf(false) }
@@ -350,7 +354,13 @@ fun ProfileOptionsScreen(
                 }
             }
         }
-
+        
+        SettingsButton(
+            text = "Switch Account",
+            icon = ImageVector.vectorResource(R.drawable.ic_switch_account),
+            onClick = onShowSwitchAccountDialog
+        )
+        
         if (!isCaregiver) {
             SettingsButton(
                 text = stringResource(id = R.string.log_out),

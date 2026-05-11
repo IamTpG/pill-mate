@@ -63,15 +63,22 @@ val appModule = module {
     // Provide profileId dynamically from current user
     factory { get<FirebaseAuth>().currentUser?.uid ?: "" }
     single<DataGenerator> { DataGenerator(get()) }
-
+    
+    single<SupplyLogRepository> {
+        val roomRepo = RoomSupplyLogRepositoryImpl(get())
+        val firestoreRepo = FirestoreSupplyLogRepositoryImpl(get(), get())
+        HybridSupplyLogRepositoryImpl(
+            localLogRepo = roomRepo,
+            remoteLogRepo = firestoreRepo,
+            networkChecker = NetworkChecker(androidContext())
+        )
+    }
     single<MedicationRepository> {
         val roomRepo = RoomMedicationRepositoryImpl(get(), get())
         val firestoreRepo = FirestoreMedicationRepositoryImpl(get(), get())
         HybridMedicationRepositoryImpl(
-            localRepo = roomRepo,
-            remoteRepo = firestoreRepo,
-            supplyLogDao = get(),
-            firestore = get(),
+            localMedRepo = roomRepo,
+            remoteMedRepo = firestoreRepo,
             networkChecker = com.example.pillmate.util.NetworkChecker(androidContext())
         )
     }
@@ -91,7 +98,7 @@ val appModule = module {
     single { FcmTokenManager(get()) }
     single { com.example.pillmate.util.SyncManager(get()) }
 
-    factory { LogTaskUseCase(get(), get(), get()) }
+    factory { LogTaskUseCase(get(), get(), get(), get()) }
     factory { DeleteMedicationUseCase(get(), get(), get()) }
     factory { GetHomeTasksUseCase(get(), get()) }
     factory { CreateScheduleUseCase(get()) }
@@ -106,8 +113,8 @@ val appModule = module {
     factory { GetWidgetDataUseCase(get(), get(), get()) }
     factory { CalculateDailyIntakeUseCase(get(), get()) }
 
-    viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
-    viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
+   // viewModel { (profileId: String) -> TaskLogViewModel(get(), get(), profileId) }
+    //viewModel { (profileId: String) -> VitalsViewModel(get(), get(), get(), get(), profileId) }
 
     single { TaskNotificationManager(get()) }
     single { HealthReminderManager(get(), get()) }

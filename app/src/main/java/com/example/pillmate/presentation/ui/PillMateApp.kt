@@ -160,7 +160,7 @@ fun PillMateApp(
             }
             composable(Screen.AIChat.route) {
                 MainScaffold(navController, onSignOutComplete) { innerPadding ->
-                    AIChatScreen(paddingValues = innerPadding)
+                    AIChatScreen(paddingValues = innerPadding,  onBack = { navController.popBackStack() })
                 }
             }
             composable(Screen.DebugMenu.route) {
