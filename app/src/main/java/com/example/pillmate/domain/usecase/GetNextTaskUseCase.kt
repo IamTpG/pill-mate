@@ -1,8 +1,7 @@
 package com.example.pillmate.domain.usecase
 
 import com.example.pillmate.domain.model.LogStatus
-import com.example.pillmate.domain.model.Schedule
-import com.example.pillmate.domain.model.TaskLog
+import com.example.pillmate.domain.model.TaskType
 import com.example.pillmate.domain.repository.LogRepository
 import com.example.pillmate.domain.repository.ScheduleRepository
 import com.example.pillmate.util.RecurrenceEvaluator
@@ -13,7 +12,10 @@ data class NextTaskInfo(
     val title: String,
     val time: Date,
     val details: String,
-    val scheduleId: String
+    val scheduleId: String,
+    val sourceId: String,
+    val taskType: TaskType,
+    val dose: Float
 )
 
 class GetNextTaskUseCase(
@@ -53,7 +55,10 @@ class GetNextTaskUseCase(
                             title = schedule.eventSnapshot.title,
                             time = nextOccurrence,
                             details = doseTime.doseContext.ifBlank { schedule.eventSnapshot.instructions ?: "" },
-                            scheduleId = schedule.id
+                            scheduleId = schedule.id,
+                            sourceId = schedule.eventSnapshot.sourceId,
+                            taskType = schedule.type,
+                            dose = doseTime.dose
                         )
                     )
                 }
